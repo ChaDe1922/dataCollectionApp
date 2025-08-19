@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Team Periods – Practice Logger</title>
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    /* Page-specific layout (theme handles the rest) */
+    .container{ max-width:calc(100vw - 100px)!important; width:100%; padding:0 50px; margin:0 auto; box-sizing:border-box; }
+    @media (max-width:768px){ .container{ padding:0 25px; max-width:calc(100vw - 50px);} }
+    @media (max-width:600px){ .container{ padding:0 16px; max-width:calc(100vw - 32px);} }
+
+    .grid-3{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+    .grid-2{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+    @media (max-width:900px){ .grid-3{ grid-template-columns:1fr; } .grid-2{ grid-template-columns:1fr; } }
+
+    .panel-card{ container-type:inline-size; min-width:0; width:100%; }
+    .kpi-box{ border:1px solid var(--border); border-radius:14px; padding:16px; background:rgba(255,255,255,.05); }
+    .kpi-title{ font-weight:800; color:#E9D5FF; margin-bottom:4px; }
+    .kpi-sub{ font-size:.9rem; opacity:.85; }
+
+    .outcome-bar{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:center; }
+    .outcome-btn{ min-width:130px; font-size:1.05rem; padding:12px 16px; border-radius:12px; }
+    .scorepad{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:center; margin-top:8px; }
+    .score{ font-weight:800; font-size:1.4rem; color:#D6BCFA; min-width:70px; text-align:center; padding:6px 10px; border-radius:10px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.18); }
+
+    .pill{ display:inline-flex; gap:6px; align-items:center; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); font-size:.9rem; }
+
+    .hidden{ display:none !important; }
+  </style>
+</head>
+<body class="practice-page">
+
+  <header class="page-header">
+    <h1>Team Periods</h1>
+    <nav class="menu-actions" aria-label="Header navigation">
+      <a href="../index.html" class="menu-btn">Home</a>
+      <a href="practice.html" class="menu-btn secondary">Practice</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="panel-card">
+        <form id="team-form" autocomplete="off">
+
+          <!-- ===== Session + Context ===== -->
+          <div class="form-section">
+            <div class="grid-3">
+              <div>
+                <label class="form-label" for="prac-date">Practice Date</label>
+                <input type="date" id="prac-date" class="form-input" required />
+              </div>
+
+              <div>
+                <label class="form-label" for="side">Side</label>
+                <select id="side" class="form-select">
+                  <option value="OFF">Offense</option>
+                  <option value="DEF" selected>Defense</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="form-label" for="period">Period Preset</label>
+                <select id="period" class="form-select">
+                  <option value="RZ7">Red Zone 7v7</option>
+                  <option value="RZ11">Red Zone 11v11</option>
+                  <option value="TMO">Two-Minute Offense</option>
+                  <option value="TMD">Two-Minute Defense</option>
+                  <option value="PURSUIT">Team Pursuit</option>
+                  <option value="GOAL">Goal Line Stand</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid-3" style="margin-top:12px;">
+              <div>
+                <label class="form-label" for="start-yl">Start YL</label>
+                <input id="start-yl" class="form-input" type="number" min="0" max="100" placeholder="e.g., 18" />
+              </div>
+              <div>
+                <label class="form-label" for="down-dist">Down & Distance</label>
+                <input id="down-dist" class="form-input" placeholder="e.g., 3rd & 4" />
+              </div>
+              <div>
+                <label class="form-label" for="remain-time">Remaining Time</label>
+                <input id="remain-time" class="form-input" placeholder="e.g., 1:32" />
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== KPI Panel ===== -->
+          <div class="kpi-box">
+            <div class="kpi-title" id="kpi-title">Touchdown Rate</div>
+            <div class="kpi-sub" id="kpi-sub">Primary measurement • <span id="kpi-unit">percentage</span></div>
+
+            <!-- Quick Actions Row -->
+            <div class="form-section" style="margin-top:12px;">
+              <div class="outcome-bar">
+                <button type="button" id="btnTD" class="btn btn-success outcome-btn">TD (+7 / success)</button>
+                <button type="button" id="btnFG" class="btn btn-info outcome-btn">FG (+3)</button>
+                <button type="button" id="btnNoPts" class="btn btn-neutral outcome-btn">No Points</button>
+                <button type="button" id="btnStop" class="btn btn-neutral outcome-btn">Stop</button>
+                <button type="button" id="btnTurnover" class="btn btn-warning outcome-btn">Turnover</button>
+                <button type="button" id="btnExplosive" class="btn btn-warning outcome-btn">Explosive</button>
+              </div>
+            </div>
+
+            <!-- Percent mode: Rep module -->
+            <div id="percent-wrap" class="form-section hidden">
+              <div class="pill">Reps: <span id="rep-total" style="font-weight:800;margin-left:6px;">0</span></div>
+              <div class="btn-grid" style="margin-top:10px;">
+                <button type="button" id="btnRepSuccess" class="btn btn-success">✓ Success</button>
+                <button type="button" id="btnRepFail" class="btn btn-danger">✕ Fail</button>
+                <button type="button" id="btnRepReset" class="btn btn-neutral">Reset</button>
+              </div>
+              <div class="stats-row" style="margin-top:10px;">
+                <div class="stat-card"><div class="stat-value" id="rep-succ">0</div><div class="stat-label">Success</div></div>
+                <div class="stat-card"><div class="stat-value" id="rep-fail">0</div><div class="stat-label">Fail</div></div>
+                <div class="stat-card"><div class="stat-value" id="rep-rate">0%</div><div class="stat-label">Rate</div></div>
+              </div>
+            </div>
+
+            <!-- Points mode: Score pad -->
+            <div id="points-wrap" class="form-section hidden">
+              <div class="scorepad">
+                <span class="score" id="points-total">0</span>
+                <button type="button" class="btn btn-primary" data-pts="1">+1</button>
+                <button type="button" class="btn btn-primary" data-pts="3">+3</button>
+                <button type="button" class="btn btn-primary" data-pts="6">+6</button>
+                <button type="button" class="btn btn-success" data-pts="7">+7</button>
+                <button type="button" class="btn btn-neutral" id="points-dec">-1</button>
+                <button type="button" class="btn btn-neutral" id="points-reset">Reset</button>
+              </div>
+              <p class="hint" style="text-align:center;margin-top:6px;">Use quick buttons (TD/FG/No Points) above, or tap here to fine-tune.</p>
+            </div>
+
+            <!-- Count/Average mode: Team Pursuit -->
+            <div id="count-wrap" class="form-section hidden">
+              <div class="grid-2">
+                <div>
+                  <label class="form-label" for="cnt-input">Players-to-ball (this rep)</label>
+                  <input id="cnt-input" class="form-input" type="number" min="0" step="1" placeholder="e.g., 12" />
+                </div>
+                <div class="btn-grid" style="align-self:end;">
+                  <button type="button" id="cnt-add" class="btn btn-success">Add Play</button>
+                  <button type="button" id="cnt-reset" class="btn btn-neutral">Reset</button>
+                </div>
+              </div>
+              <div class="stats-row" style="margin-top:10px;">
+                <div class="stat-card"><div class="stat-value" id="cnt-plays">0</div><div class="stat-label">Plays</div></div>
+                <div class="stat-card"><div class="stat-value" id="cnt-avg">0</div><div class="stat-label">Average</div></div>
+                <div class="stat-card"><div class="stat-value" id="cnt-last">—</div><div class="stat-label">Last</div></div>
+              </div>
+            </div>
+
+            <!-- Period notes -->
+            <div class="form-section">
+              <label class="form-label" for="notes">Notes (optional)</label>
+              <input id="notes" class="form-input" placeholder="Any quick note…" />
+              <div style="margin-top:8px;display:flex;gap:10px;flex-wrap:wrap;">
+                <span class="pill">Explosives: <b id="chip-expl">0</b></span>
+                <span class="pill">Turnovers: <b id="chip-tov">0</b></span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Submit -->
+          <button type="button" id="submitPeriod" class="submit-btn">Submit Period</button>
+          <div id="form-status" class="status"></div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer><p>&copy; 2025 Game Speed Data Systems</p></footer>
+
+  <script>
+    /* ===== CONFIG ===== */
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
+    const PRACTICE_SHEET_ID = '1pT-7cXhfzJB5mjswsXayvjt_qC2hIp9WflWggIAyh8g';
+
+    const LS = { date:'team_date', side:'team_side', period:'team_period' };
+
+    // Period meta
+    const PERIODS = {
+      RZ7:      { name:'Red Zone 7v7',     measurement:'touchdown_rate', unit:'percentage', type:'percent' },
+      RZ11:     { name:'Red Zone 11v11',   measurement:'touchdown_rate', unit:'percentage', type:'percent' },
+      TMO:      { name:'Two-Minute Offense', measurement:'points_scored', unit:'points', type:'points' },
+      TMD:      { name:'Two-Minute Defense', measurement:'points_allowed', unit:'points', type:'points' },
+      PURSUIT:  { name:'Team Pursuit',     measurement:'players_to_ball', unit:'count', type:'count' },
+      GOAL:     { name:'Goal Line Stand',  measurement:'stop_rate',       unit:'percentage', type:'percent' }
+    };
+
+    const getEl = (id)=>document.getElementById(id);
+    const clean = (s)=>String(s||'').trim();
+
+    function setTodayIfEmpty(input){
+      if (!input.value){
+        const d=new Date(), y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+        input.value = `${y}-${m}-${day}`;
+      }
+    }
+    function showStatus(msg,type='success'){
+      const box=getEl('form-status');
+      box.textContent=msg; box.className='status '+type+' show';
+      setTimeout(()=>box.classList.remove('show'),2500);
+    }
+
+    /* ===== State ===== */
+    let repSucc=0, repFail=0;                 // percent mode
+    let points=0;                              // points mode
+    let cPlays=0, cSum=0, cLast=null;         // count/avg (pursuit)
+    let explosiveCount=0, turnoverCount=0;    // chips
+
+    /* ===== UI Setup ===== */
+    function savePrefs(){
+      localStorage.setItem(LS.date,  getEl('prac-date').value);
+      localStorage.setItem(LS.side,  getEl('side').value);
+      localStorage.setItem(LS.period,getEl('period').value);
+    }
+
+    function loadPrefs(){
+      const d=localStorage.getItem(LS.date); if(d) getEl('prac-date').value=d; setTodayIfEmpty(getEl('prac-date'));
+      const s=localStorage.getItem(LS.side); if(s) getEl('side').value=s;
+      const p=localStorage.getItem(LS.period); if(p && PERIODS[p]) getEl('period').value=p;
+    }
+
+    function resetAllCounters(){
+      repSucc=0; repFail=0; renderPercent();
+      points=0; renderPoints();
+      cPlays=0; cSum=0; cLast=null; renderCount();
+      explosiveCount=0; turnoverCount=0; renderChips();
+    }
+
+    function renderPercent(){
+      const total=repSucc+repFail, rate = total? (repSucc/total*100):0;
+      getEl('rep-total').textContent = total;
+      getEl('rep-succ').textContent  = repSucc;
+      getEl('rep-fail').textContent  = repFail;
+      getEl('rep-rate').textContent  = `${rate.toFixed(0)}%`;
+    }
+    function renderPoints(){ getEl('points-total').textContent = points; }
+    function renderCount(){
+      getEl('cnt-plays').textContent = cPlays;
+      getEl('cnt-avg').textContent   = cPlays? (cSum/cPlays).toFixed(1) : 0;
+      getEl('cnt-last').textContent  = (cLast==null? '—' : cLast);
+    }
+    function renderChips(){
+      getEl('chip-expl').textContent = explosiveCount;
+      getEl('chip-tov').textContent  = turnoverCount;
+    }
+
+    function setKPIHeader(period){
+      getEl('kpi-title').textContent = (PERIODS[period]?.name || '') + ' — ' + (PERIODS[period]?.measurement || '');
+      getEl('kpi-unit').textContent  = PERIODS[period]?.unit || '';
+    }
+
+    function applyMode(){
+      const p = getEl('period').value;
+      const meta = PERIODS[p];
+      setKPIHeader(p);
+
+      // Show/hide blocks
+      getEl('percent-wrap').classList.toggle('hidden', meta.type!=='percent');
+      getEl('points-wrap').classList.toggle('hidden', meta.type!=='points');
+      getEl('count-wrap').classList.toggle('hidden',   meta.type!=='count');
+
+      // Quick-action labels hint (minor)
+      if(meta.type==='percent'){
+        // keep TD/FG/Stop/NoPoints visible for fast taps
+      }
+      resetAllCounters();
+    }
+
+    /* ===== Quick Actions ===== */
+    function sideIsOff(){ return getEl('side').value==='OFF'; }
+
+    function tapTD(){
+      const meta = PERIODS[getEl('period').value];
+      if(meta.type==='points'){ points += 7; renderPoints(); return; }
+      if(meta.type==='percent'){
+        // TD is offensive success for TD-rate / offensive fail for stop-rate
+        const isStopRate = meta.measurement==='stop_rate';
+        if(isStopRate){ sideIsOff()? (repFail++) : (repFail++); /* TD is a non-stop */ }
+        else { sideIsOff()? (repSucc++) : (repFail++); }
+        renderPercent();
+      }
+    }
+    function tapFG(){
+      const meta = PERIODS[getEl('period').value];
+      if(meta.type==='points'){ points += 3; renderPoints(); return; }
+      if(meta.type==='percent'){
+        // FG = no TD (good for DEF on TD-rate, counts as fail for OFF on TD-rate)
+        if(meta.measurement==='touchdown_rate'){
+          sideIsOff()? (repFail++) : (repSucc++);
+        } else if(meta.measurement==='stop_rate'){
+          // a FG on goal line isn't a stop; treat as fail for DEF (and success for OFF)
+          sideIsOff()? (repSucc++) : (repFail++);
+        }
+        renderPercent();
+      }
+    }
+    function tapNoPoints(){
+      const meta = PERIODS[getEl('period').value];
+      if(meta.type==='points'){ /* nothing to total */ return; }
+      if(meta.type==='percent'){
+        if(meta.measurement==='touchdown_rate'){
+          sideIsOff()? (repFail++) : (repSucc++);
+        } else if(meta.measurement==='stop_rate'){
+          sideIsOff()? (repFail++) : (repSucc++); // No points = stop (DEF success)
+        }
+        renderPercent();
+      }
+    }
+    function tapStop(){
+      const meta = PERIODS[getEl('period').value];
+      if(meta.type==='percent'){
+        if(meta.measurement==='touchdown_rate'){
+          sideIsOff()? (repFail++) : (repSucc++); // stop against TD attempt
+        } else if(meta.measurement==='stop_rate'){
+          sideIsOff()? (repFail++) : (repSucc++); // stop-rate success is DEF
+        }
+        renderPercent();
+      }
+    }
+    function tapTurnover(){
+      turnoverCount++; renderChips();
+      const meta = PERIODS[getEl('period').value];
+      if(meta.type==='percent'){
+        // Turnover is DEF success on TD-rate; OFF fail. On stop-rate it's also a stop.
+        if(meta.measurement==='touchdown_rate'){
+          sideIsOff()? (repFail++) : (repSucc++);
+        } else if(meta.measurement==='stop_rate'){
+          sideIsOff()? (repFail++) : (repSucc++);
+        }
+        renderPercent();
+      } else if(meta.type==='points'){
+        // optional: could zero out drive; we only count chip.
+      }
+    }
+    function tapExplosive(){ explosiveCount++; renderChips(); }
+
+    /* ===== Buttons wiring ===== */
+    function wireButtons(){
+      getEl('btnTD').addEventListener('click', tapTD);
+      getEl('btnFG').addEventListener('click', tapFG);
+      getEl('btnNoPts').addEventListener('click', tapNoPoints);
+      getEl('btnStop').addEventListener('click', tapStop);
+      getEl('btnTurnover').addEventListener('click', tapTurnover);
+      getEl('btnExplosive').addEventListener('click', tapExplosive);
+
+      // percent direct
+      getEl('btnRepSuccess').addEventListener('click', ()=>{ repSucc++; renderPercent(); });
+      getEl('btnRepFail').addEventListener('click',    ()=>{ repFail++; renderPercent(); });
+      getEl('btnRepReset').addEventListener('click',   ()=>{ repSucc=0; repFail=0; renderPercent(); });
+
+      // points pad
+      document.querySelectorAll('#points-wrap [data-pts]').forEach(b=>{
+        b.addEventListener('click', ()=>{ points += Number(b.dataset.pts||0); if(points<0) points=0; renderPoints(); });
+      });
+      getEl('points-dec').addEventListener('click', ()=>{ points=Math.max(0, points-1); renderPoints(); });
+      getEl('points-reset').addEventListener('click', ()=>{ points=0; renderPoints(); });
+
+      // count/avg
+      getEl('cnt-add').addEventListener('click', ()=>{
+        const v = Number(getEl('cnt-input').value);
+        if(Number.isFinite(v)){ cPlays++; cSum+=v; cLast=v; renderCount(); getEl('cnt-input').value=''; }
+      });
+      getEl('cnt-reset').addEventListener('click', ()=>{ cPlays=0; cSum=0; cLast=null; renderCount(); });
+
+      // submit
+      getEl('submitPeriod').addEventListener('click', submitPeriod);
+    }
+
+    /* ===== Build notes string ===== */
+    function buildNotes(){
+      const obj = {
+        startYL: clean(getEl('start-yl').value),
+        downDist: clean(getEl('down-dist').value),
+        time: clean(getEl('remain-time').value),
+        explosives: explosiveCount,
+        turnovers: turnoverCount,
+        note: clean(getEl('notes').value)
+      };
+      return Object.entries(obj)
+        .filter(([k,v]) => v!=='' && v!=null && !(typeof v==='number' && !Number.isFinite(v)))
+        .map(([k,v]) => `${k}=${v}`)
+        .join(' | ');
+    }
+
+    /* ===== Submit period row ===== */
+    async function submitPeriod(){
+      const date = getEl('prac-date').value;
+      if(!date){ showStatus('Pick a date.', 'warning'); return; }
+
+      const side = getEl('side').value; // OFF/DEF
+      const periodKey = getEl('period').value;
+      const meta = PERIODS[periodKey];
+
+      let primary_value = null;
+      let pm_total=0, pm_succ=0, pm_fail=0;
+
+      if(meta.type==='percent'){
+        pm_total = repSucc + repFail;
+        pm_succ  = repSucc;
+        pm_fail  = repFail;
+        primary_value = pm_total ? (pm_succ/pm_total)*100 : 0;
+      } else if(meta.type==='points'){
+        primary_value = points;
+      } else if(meta.type==='count'){
+        // Team Pursuit: use average players-to-ball; also compute successes vs threshold (>=10)
+        const avg = cPlays ? (cSum/cPlays) : 0;
+        primary_value = Number(avg.toFixed(2));
+        pm_total = cPlays;
+        pm_succ  = 0;
+        pm_fail  = 0;
+        // Count per play >=10 as success (coaches table)
+        // We didn't store each sample, so success/fail buckets are optional here; keep zeros.
+      }
+
+      const payload = {
+        action:'practice',
+        sheet_id: PRACTICE_SHEET_ID,
+        sheet_name:'61_Fact_Practice',
+
+        date,
+        player_id: `TEAM:${side}`,
+        drill: meta.name,
+        drill_category: 'Team',
+        position_group: 'ALL',
+        position_specific: 1,
+
+        practice_intensity: '',
+        attendance: '',
+        player_effort: '',
+
+        primary_measurement: meta.measurement,
+        primary_unit: meta.unit,
+        primary_value,
+        primary_success: null,
+
+        secondary_measurement: '',
+        secondary_unit: '',
+        secondary_value: '',
+        secondary_success: '',
+
+        success_threshold:   '',
+        failure_threshold:   '',
+        secondary_threshold: '',
+
+        pm_reps_total:    pm_total,
+        pm_rep_successes: pm_succ,
+        pm_rep_failures:  pm_fail,
+
+        sm_reps_total: 0,
+        sm_rep_successes: 0,
+        sm_rep_failures: 0,
+
+        reps: pm_total || 1,
+        successful_reps: pm_succ || 0,
+
+        drill_notes: buildNotes()
+      };
+
+      const fd = new FormData();
+      fd.append('data', JSON.stringify(payload));
+
+      try{
+        const res = await fetch(APPS_SCRIPT_URL, { method:'POST', body: fd });
+        const text = await res.text();
+        let json=null; try{ json=JSON.parse(text);}catch{}
+        if(res.ok && json && json.ok){
+          showStatus('Team period logged. ✅','success');
+          // Keep context, clear counters for next period
+          resetAllCounters();
+        } else {
+          showStatus((json && json.error)? json.error : 'Submit failed. Try again.','error');
+          console.warn('Submit debug:', text);
+        }
+      }catch(err){
+        console.error(err);
+        showStatus('Network error. Data not sent.','error');
+      }
+    }
+
+    /* ===== Init ===== */
+    (function init(){
+      loadPrefs();
+      setTodayIfEmpty(getEl('prac-date'));
+      applyMode();
+      wireButtons();
+
+      ['prac-date','side','period'].forEach(id=>{
+        getEl(id).addEventListener('change', ()=>{
+          savePrefs();
+          if(id==='period') applyMode();
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

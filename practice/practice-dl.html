@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DL Drills – Practice Logger</title>
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    /* Minimal page-specific layout only (theme handles everything else) */
+    .container{ max-width:calc(100vw - 100px)!important; width:100%; padding:0 50px; margin:0 auto; box-sizing:border-box; }
+    .panels{ display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; }
+    .panel-card{ container-type:inline-size; min-width:0; width:100%; }
+    .panel-card form{ width:100%; }
+    @media (max-width:768px){ .container{ padding:0 25px; max-width:calc(100vw - 50px);} }
+    @media (max-width:600px){ .panels{ grid-template-columns:1fr; } .container{ padding:0 16px; max-width:calc(100vw - 32px); } }
+
+    /* KPI bits not covered by theme */
+    .kpi-wrap{ border:1px solid var(--border); border-radius:12px; padding:12px; margin-top:10px; background:rgba(255,255,255,.05); }
+    .kpi-grid{ display:grid; gap:14px; grid-template-columns:1fr; }
+    .kpi-label{ margin-bottom:6px; font-weight:600; opacity:.9; font-size:0.9rem; }
+    .coaching-note{ font-size:.9rem; opacity:.85; margin-bottom:8px; }
+    .kpi-row{ display:grid; grid-template-columns:1fr auto; gap:10px; align-items:end; }
+    .unit-badge{ font-size:.85rem; padding:6px 10px; border-radius:8px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); height:38px; display:flex; align-items:center; white-space:nowrap; }
+    .kpi-inline{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:6px; }
+    .chip{ display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; font-size:.8rem; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); }
+
+    .timer-bar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0 4px; }
+    .timer-time{ font-variant-numeric:tabular-nums; font-weight:800; min-width:60px; color:#D6BCFA; }
+
+    .dial-wrap{ display:flex; align-items:center; gap:10px; margin-top:6px; }
+    .dial-svg{ width:64px; height:64px; }
+    .dial-needle{ transform-origin:32px 50px; transition:transform .08s linear; }
+
+    .reps-module{ margin-top:10px; padding-top:10px; border-top:1px dashed rgba(255,255,255,.16); }
+    .reps-title{ font-weight:700; margin-bottom:8px; opacity:.9; }
+
+    .hidden{ display:none !important; }
+
+    /* Neutral button (theme lacks this one class) */
+    .btn-neutral{ background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.18); color:#fff; }
+  </style>
+</head>
+<body class="practice-page">
+
+  <header class="page-header">
+    <h1>DL Drills</h1>
+    <div class="menu-actions">
+      <a href="../index.html" class="menu-btn">Home</a>
+      <a href="practice.html" class="menu-btn secondary">Practice</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="panels">
+
+        <!-- ================= PANEL A ================= -->
+        <div class="panel-card">
+          <form id="dl-form-p1" autocomplete="off">
+            <h3 class="form-label">Station A</h3>
+
+            <div class="form-section">
+              <label for="prac-date-p1" class="form-label">Practice Date</label>
+              <input type="date" id="prac-date-p1" class="form-input" required />
+            </div>
+
+            <div class="form-section">
+              <div class="form-label">Player</div>
+              <label for="jersey-p1" class="form-label" style="margin-top:6px;">Jersey #</label>
+              <input type="text" id="jersey-p1" class="form-input" placeholder="e.g., 95" list="jersey-list" inputmode="numeric" />
+              <label for="player-id-p1" class="form-label" style="margin-top:10px;">Player ID</label>
+              <input type="text" id="player-id-p1" class="form-input" placeholder="DL101" list="playerid-list" pattern="DL[0-9]{3}" title="Use format DL###" />
+              <label for="player-name-p1" class="form-label" style="margin-top:10px;">Player Name</label>
+              <input type="text" id="player-name-p1" class="form-input" placeholder="Type a few letters…" list="playername-list" />
+              <small class="hint" style="opacity:.8">Autocomplete lists are DL-only (includes DE/DT/NT/EDGE). Player ID format: <b>DL###</b></small>
+            </div>
+
+            <div class="form-section">
+              <label for="drill-cat-p1" class="form-label">Drill Type (Category)</label>
+              <select id="drill-cat-p1" class="form-select"></select>
+
+              <label for="drill-name-p1" class="form-label" style="margin-top:10px;">Drill Name</label>
+              <select id="drill-name-p1" class="form-select"></select>
+
+              <div style="display:flex;align-items:center;gap:10px;margin-top:12px;">
+                <input type="checkbox" id="pos-specific-p1" />
+                <label for="pos-specific-p1" class="form-label" style="margin:0;text-transform:none;letter-spacing:0;">Position-specific drill (DL room)</label>
+              </div>
+
+              <div class="kpi-wrap">
+                <div class="coaching-note"><strong>Coaching Emphasis:</strong> <span id="coachEmphasis-p1">—</span></div>
+
+                <div class="kpi-grid">
+                  <!-- Primary KPI -->
+                  <div>
+                    <div class="kpi-label" id="pm-title-p1">Primary Measurement</div>
+                    <div class="timer-bar hidden" id="pm-timer-wrap-p1">
+                      <span class="chip">Timer</span>
+                      <span class="timer-time" id="pm-timer-time-p1">0.00 s</span>
+                      <button type="button" id="pm-timer-start-p1" class="btn btn-neutral">Start</button>
+                      <button type="button" id="pm-timer-stop-p1" class="btn btn-neutral">Stop</button>
+                      <button type="button" id="pm-timer-reset-p1" class="btn btn-neutral">Reset</button>
+                      <button type="button" id="pm-timer-save-p1" class="btn btn-success">Save to Field</button>
+                    </div>
+
+                    <div class="kpi-row" id="pm-row-p1">
+                      <input id="pm-value-p1" class="form-input" placeholder="Enter value…" />
+                      <div class="unit-badge" id="pm-unit-p1">—</div>
+                    </div>
+                    <div class="kpi-inline">
+                      <span class="chip" id="pm-success-chip-p1">Result: —</span>
+                      <small id="pm-thresh-p1" style="opacity:.75"></small>
+                    </div>
+
+                    <div id="pm-reps-anchor-p1"></div>
+                  </div>
+
+                  <!-- Secondary KPI -->
+                  <div>
+                    <div class="kpi-label" id="sm-title-p1">Secondary Measurement</div>
+                    <div class="kpi-row" id="sm-row-p1">
+                      <input id="sm-value-p1" class="form-input" placeholder="Enter value…" />
+                      <div class="unit-badge" id="sm-unit-p1">—</div>
+                    </div>
+                    <div class="kpi-inline">
+                      <span class="chip" id="sm-success-chip-p1">Result: —</span>
+                      <small id="sm-thresh-p1" style="opacity:.75"></small>
+                    </div>
+
+                    <div id="sm-reps-anchor-p1"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Reps module -->
+            <div id="reps-module-p1" class="reps-module hidden">
+              <div class="reps-title" id="reps-title-p1">Reps</div>
+              <div class="btn-grid">
+                <button type="button" id="btnSuccess-p1" class="btn btn-success">✓ Success</button>
+                <button type="button" id="btnFail-p1" class="btn btn-danger">✕ Unsuccessful</button>
+                <button type="button" id="btnReset-p1" class="btn btn-neutral">Reset</button>
+              </div>
+              <div class="reps-stats" id="reps-stats-p1" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:12px 0 4px;">
+                <div class="stat-card"><div class="stat-value" id="successCount-p1">0</div><div class="stat-label" id="successLabel-p1">Success</div></div>
+                <div class="stat-card" id="failCard-p1"><div class="stat-value" id="failCount-p1">0</div><div class="stat-label">Unsuccessful</div></div>
+                <div class="stat-card" id="totalCard-p1"><div class="stat-value" id="totalReps-p1">0</div><div class="stat-label" id="totalLabel-p1">Total Reps</div></div>
+                <div class="stat-card" id="rateCard-p1"><div class="stat-value" id="successRate-p1">0%</div><div class="stat-label">Success Rate</div></div>
+              </div>
+              <input type="hidden" id="succ-hidden-p1" value="0" />
+              <input type="hidden" id="fail-hidden-p1" value="0" />
+              <input type="hidden" id="total-hidden-p1" value="0" />
+              <input type="hidden" id="rate-hidden-p1"  value="0" />
+            </div>
+
+            <!-- Intensity / Attendance -->
+            <div class="form-section">
+              <label for="intensity-p1" class="form-label">Drill Intensity</label>
+              <select id="intensity-p1" class="form-select" required>
+                <option value="Low">Low</option><option value="Medium" selected>Medium</option>
+                <option value="High">High</option><option value="Very High">Very High</option>
+              </select>
+              <label for="attendance-p1" class="form-label" style="margin-top:10px;">Attendance</label>
+              <select id="attendance-p1" class="form-select" required>
+                <option value="Present" selected>Present</option><option value="Late">Late</option>
+                <option value="Absent">Absent</option><option value="Excused">Excused</option>
+              </select>
+            </div>
+
+            <div class="form-section">
+              <label for="player-effort-p1" class="form-label">Player Effort</label>
+              <select id="player-effort-p1" class="form-select" required>
+                <option value="High" selected>High</option><option value="Medium">Medium</option><option value="Low">Low</option>
+              </select>
+            </div>
+
+            <div class="form-section">
+              <label for="notes-p1" class="form-label">Drill Notes</label>
+              <textarea id="notes-p1" class="form-input" rows="4" placeholder="Quick notes: get-off, hands, block destruction, pass rush plan…"></textarea>
+            </div>
+
+            <button type="submit" class="submit-btn">Submit Practice Log (A)</button>
+            <div id="form-status-p1" class="status"></div>
+          </form>
+        </div>
+
+        <!-- ================= PANEL B ================= -->
+        <div class="panel-card">
+          <form id="dl-form-p2" autocomplete="off">
+            <h3 class="form-label">Station B</h3>
+
+            <div class="form-section">
+              <label for="prac-date-p2" class="form-label">Practice Date</label>
+              <input type="date" id="prac-date-p2" class="form-input" required />
+            </div>
+
+            <div class="form-section">
+              <div class="form-label">Player</div>
+              <label for="jersey-p2" class="form-label" style="margin-top:6px;">Jersey #</label>
+              <input type="text" id="jersey-p2" class="form-input" placeholder="e.g., 90" list="jersey-list" inputmode="numeric" />
+              <label for="player-id-p2" class="form-label" style="margin-top:10px;">Player ID</label>
+              <input type="text" id="player-id-p2" class="form-input" placeholder="DL101" list="playerid-list" pattern="DL[0-9]{3}" title="Use format DL###" />
+              <label for="player-name-p2" class="form-label" style="margin-top:10px;">Player Name</label>
+              <input type="text" id="player-name-p2" class="form-input" placeholder="Type a few letters…" list="playername-list" />
+              <small class="hint" style="opacity:.8">Autocomplete lists are DL-only (includes DE/DT/NT/EDGE). Player ID format: <b>DL###</b></small>
+            </div>
+
+            <div class="form-section">
+              <label for="drill-cat-p2" class="form-label">Drill Type (Category)</label>
+              <select id="drill-cat-p2" class="form-select"></select>
+
+              <label for="drill-name-p2" class="form-label" style="margin-top:10px;">Drill Name</label>
+              <select id="drill-name-p2" class="form-select"></select>
+
+              <div style="display:flex;align-items:center;gap:10px;margin-top:12px;">
+                <input type="checkbox" id="pos-specific-p2" />
+                <label for="pos-specific-p2" class="form-label" style="margin:0;text-transform:none;letter-spacing:0;">Position-specific drill (DL room)</label>
+              </div>
+
+              <div class="kpi-wrap">
+                <div class="coaching-note"><strong>Coaching Emphasis:</strong> <span id="coachEmphasis-p2">—</span></div>
+
+                <div class="kpi-grid">
+                  <!-- Primary KPI -->
+                  <div>
+                    <div class="kpi-label" id="pm-title-p2">Primary Measurement</div>
+                    <div class="timer-bar hidden" id="pm-timer-wrap-p2">
+                      <span class="chip">Timer</span>
+                      <span class="timer-time" id="pm-timer-time-p2">0.00 s</span>
+                      <button type="button" id="pm-timer-start-p2" class="btn btn-neutral">Start</button>
+                      <button type="button" id="pm-timer-stop-p2" class="btn btn-neutral">Stop</button>
+                      <button type="button" id="pm-timer-reset-p2" class="btn btn-neutral">Reset</button>
+                      <button type="button" id="pm-timer-save-p2" class="btn btn-success">Save to Field</button>
+                    </div>
+                    <div class="kpi-row" id="pm-row-p2">
+                      <input id="pm-value-p2" class="form-input" placeholder="Enter value…" />
+                      <div class="unit-badge" id="pm-unit-p2">—</div>
+                    </div>
+                    <div class="kpi-inline">
+                      <span class="chip" id="pm-success-chip-p2">Result: —</span>
+                      <small id="pm-thresh-p2" style="opacity:.75"></small>
+                    </div>
+
+                    <div id="pm-reps-anchor-p2"></div>
+                  </div>
+
+                  <!-- Secondary KPI -->
+                  <div>
+                    <div class="kpi-label" id="sm-title-p2">Secondary Measurement</div>
+                    <div class="kpi-row" id="sm-row-p2">
+                      <input id="sm-value-p2" class="form-input" placeholder="Enter value…" />
+                      <div class="unit-badge" id="sm-unit-p2">—</div>
+                    </div>
+                    <div class="kpi-inline">
+                      <span class="chip" id="sm-success-chip-p2">Result: —</span>
+                      <small id="sm-thresh-p2" style="opacity:.75"></small>
+                    </div>
+
+                    <div id="sm-reps-anchor-p2"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Reps module -->
+            <div id="reps-module-p2" class="reps-module hidden">
+              <div class="reps-title" id="reps-title-p2">Reps</div>
+              <div class="btn-grid">
+                <button type="button" id="btnSuccess-p2" class="btn btn-success">✓ Success</button>
+                <button type="button" id="btnFail-p2" class="btn btn-danger">✕ Unsuccessful</button>
+                <button type="button" id="btnReset-p2" class="btn btn-neutral">Reset</button>
+              </div>
+              <div class="reps-stats" id="reps-stats-p2" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:12px 0 4px;">
+                <div class="stat-card"><div class="stat-value" id="successCount-p2">0</div><div class="stat-label" id="successLabel-p2">Success</div></div>
+                <div class="stat-card" id="failCard-p2"><div class="stat-value" id="failCount-p2">0</div><div class="stat-label">Unsuccessful</div></div>
+                <div class="stat-card" id="totalCard-p2"><div class="stat-value" id="totalReps-p2">0</div><div class="stat-label" id="totalLabel-p2">Total Reps</div></div>
+                <div class="stat-card" id="rateCard-p2"><div class="stat-value" id="successRate-p2">0%</div><div class="stat-label">Success Rate</div></div>
+              </div>
+              <input type="hidden" id="succ-hidden-p2" value="0" />
+              <input type="hidden" id="fail-hidden-p2" value="0" />
+              <input type="hidden" id="total-hidden-p2" value="0" />
+              <input type="hidden" id="rate-hidden-p2"  value="0" />
+            </div>
+
+            <!-- Intensity / Attendance -->
+            <div class="form-section">
+              <label for="intensity-p2" class="form-label">Drill Intensity</label>
+              <select id="intensity-p2" class="form-select" required>
+                <option value="Low">Low</option><option value="Medium" selected>Medium</option>
+                <option value="High">High</option><option value="Very High">Very High</option>
+              </select>
+              <label for="attendance-p2" class="form-label" style="margin-top:10px;">Attendance</label>
+              <select id="attendance-p2" class="form-select" required>
+                <option value="Present" selected>Present</option><option value="Late">Late</option>
+                <option value="Absent">Absent</option><option value="Excused">Excused</option>
+              </select>
+            </div>
+
+            <div class="form-section">
+              <label for="player-effort-p2" class="form-label">Player Effort</label>
+              <select id="player-effort-p2" class="form-select" required>
+                <option value="High" selected>High</option><option value="Medium">Medium</option><option value="Low">Low</option>
+              </select>
+            </div>
+
+            <div class="form-section">
+              <label for="notes-p2" class="form-label">Drill Notes</label>
+              <textarea id="notes-p2" class="form-input" rows="4" placeholder="Quick notes: strike timing, shed to gap, finish to QB…"></textarea>
+            </div>
+
+            <button type="submit" class="submit-btn">Submit Practice Log (B)</button>
+            <div id="form-status-p2" class="status"></div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer><p>&copy; 2025 Game Speed Data Systems</p></footer>
+
+  <!-- Shared roster datalists -->
+  <div style="display:none">
+    <datalist id="jersey-list"></datalist>
+    <datalist id="playerid-list"></datalist>
+    <datalist id="playername-list"></datalist>
+  </div>
+
+  <script>
+    /* ===== CONFIG ===== */
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
+    const PRACTICE_SHEET_ID = '1pT-7cXhfzJB5mjswsXayvjt_qC2hIp9WflWggIAyh8g';
+    const ROSTER_SHEET_ID   = '1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI';
+    const ROSTER_TAB        = '00_Dim_Roster';
+    const DRILL_TAB         = 'Drill_Library';
+
+    const LS = { date:'dl_prac_date', cat:'dl_drill_cat', name:'dl_drill_name' };
+    const getEl = (id) => document.getElementById(id);
+    const clean = (s)=>String(s||'').trim();
+
+    function setTodayIfEmpty(input){
+      if (!input.value){
+        const d=new Date(), y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+        input.value = `${y}-${m}-${day}`;
+      }
+    }
+    function showStatus(panel, msg, type='success'){
+      const box = getEl(`form-status-${panel}`);
+      box.textContent = msg;
+      box.className = 'status ' + type + ' show';
+      setTimeout(()=>box.classList.remove('show'), 3500);
+    }
+
+    /* ===== Rep tracker ===== */
+    const repTrackers = new Map();
+    function makeRepTracker(panel){
+      const els = {
+        s:getEl(`successCount-${panel}`), f:getEl(`failCount-${panel}`),
+        t:getEl(`totalReps-${panel}`), r:getEl(`successRate-${panel}`),
+        sh:getEl(`succ-hidden-${panel}`), fh:getEl(`fail-hidden-${panel}`),
+        th:getEl(`total-hidden-${panel}`), rh:getEl(`rate-hidden-${panel}`),
+        btnS:getEl(`btnSuccess-${panel}`), btnF:getEl(`btnFail-${panel}`), btnR:getEl(`btnReset-${panel}`)
+      };
+      let success=0, fail=0, onChange = ()=>{};
+      function render(){
+        const total=success+fail, rate= total>0 ? (success/total)*100 : 0;
+        els.s.textContent=success; els.f.textContent=fail; els.t.textContent=total;
+        els.r.textContent=`${rate.toFixed(0)}%`;
+        els.r.style.color = rate>=85 ? '#22C55E' : (rate<65 ? '#EF4444' : '#C4B5FD');
+        els.sh.value=success; els.fh.value=fail; els.th.value=total; els.rh.value=rate.toFixed(2);
+        onChange();
+      }
+      function reset(){ success=0; fail=0; render(); }
+      els.btnS.addEventListener('click', ()=>{ success++; render(); });
+      els.btnF.addEventListener('click', ()=>{ fail++; render(); });
+      els.btnR.addEventListener('click', reset);
+      render();
+      return { reset, get:()=>({success, fail}), setOnChange(fn){ onChange = fn || (()=>{}); } };
+    }
+
+    /* ===== Roster (DL + DE/DT/NT/EDGE) ===== */
+    let roster = [];
+    const byId=new Map(), byJersey=new Map(), byName=new Map();
+    const normId = v => String(v||'').trim().toUpperCase();
+    const normJersey = v => String(v||'').trim().replace(/^0+/, '');
+    const normName = v => String(v||'').trim().toLowerCase();
+
+    function indexRoster(){
+      byId.clear(); byJersey.clear(); byName.clear();
+      roster.forEach(r=>{
+        if(r.player_id)     byId.set(normId(r.player_id), r);
+        if(r.jersey_number) byJersey.set(normJersey(r.jersey_number), r);
+        if(r.player_name)   byName.set(normName(r.player_name), r);
+      });
+    }
+    function fillRosterDatalists(){
+      const jl = getEl('jersey-list'), il = getEl('playerid-list'), nl = getEl('playername-list');
+      jl.innerHTML=''; il.innerHTML=''; nl.innerHTML='';
+      [...roster].sort((a,b)=>(+a.jersey_number||0)-(+b.jersey_number||0)).forEach(r=>{
+        const o1=document.createElement('option'); o1.value = normJersey(r.jersey_number); o1.label = `${r.player_name} (${r.position||''})`; jl.appendChild(o1);
+        const o2=document.createElement('option'); o2.value = r.player_id; o2.label = `${r.player_name}${r.jersey_number?' #'+r.jersey_number:''}`; il.appendChild(o2);
+        const o3=document.createElement('option'); o3.value = r.player_name; o3.label = `${r.player_id}${r.jersey_number?' • #'+r.jersey_number:''}`; nl.appendChild(o3);
+      });
+    }
+    async function fetchRoster(){
+      try{
+        const url = `${APPS_SCRIPT_URL}?action=roster&sheet_id=${encodeURIComponent(ROSTER_SHEET_ID)}&sheet_name=${encodeURIComponent(ROSTER_TAB)}`;
+        const res = await fetch(url, { cache:'no-store' });
+        const json = await res.json();
+        if(json && json.ok && Array.isArray(json.roster)){
+          const raw = json.roster.map(it=>({
+            player_id: String(it.player_id||it.id||'').trim().toUpperCase(),
+            player_name: String(it.player_name||it.name||'').trim(),
+            position: String(it.position||it.pos||'').trim(),
+            jersey_number: String(it.jersey_number||it.jersey||'').trim()
+          }));
+          roster = raw.filter(r =>
+            /^DL\d{3}$/i.test(r.player_id) ||
+            ['DL','DE','DT','NT','EDGE'].includes((r.position||'').toUpperCase())
+          );
+          indexRoster(); fillRosterDatalists();
+        } else { console.warn('Roster empty', json); }
+      }catch(err){ console.warn('Roster fetch failed', err); }
+    }
+
+    /* ===== Drill library (DL) ===== */
+    let dlDrills = [];
+    const drillsByCat = new Map();
+    const drillsByName = new Map();
+    const isDLGroup = (pg) => /(^|\W)(DL|DE|DT|NT|EDGE)(\W|$)/i.test(String(pg||''));
+    const pick = (obj, ...cands) => {
+      for(const c of cands){
+        if(obj[c] != null && obj[c] !== '') return obj[c];
+        const k = Object.keys(obj).find(k=>k.toLowerCase()===String(c).toLowerCase());
+        if(k && obj[k] != null && obj[k] !== '') return obj[k];
+      } return '';
+    };
+
+    function indexDrills(list){
+      drillsByCat.clear(); drillsByName.clear();
+      list.forEach(d=>{
+        const cat = clean(d.category), nm = clean(d.name);
+        if(!drillsByCat.has(cat)) drillsByCat.set(cat, []);
+        if(!drillsByCat.get(cat).includes(nm)) drillsByCat.get(cat).push(nm);
+        const key = nm.toLowerCase(); if(!drillsByName.has(key)) drillsByName.set(key, d);
+      });
+    }
+
+    function setOptions(select, items, {placeholder="— Select —", getLabel=(x)=>x, getValue=(x)=>x}={}){
+      const cur = select.value;
+      select.innerHTML = '';
+      const ph = document.createElement('option'); ph.value=''; ph.textContent = placeholder; select.appendChild(ph);
+      items.forEach(it=>{
+        const opt = document.createElement('option');
+        opt.value = getValue(it);
+        opt.textContent = getLabel(it);
+        select.appendChild(opt);
+      });
+      const has = [...select.options].some(o=>o.value===cur);
+      if(has) select.value = cur;
+    }
+
+    function fillCategorySelect(panel){
+      const catSel = getEl(`drill-cat-${panel}`);
+      const cats = Array.from(drillsByCat.keys()).sort();
+      setOptions(catSel, cats);
+    }
+
+    function fillNameSelect(panel, forCat){
+      const nameSel = getEl(`drill-name-${panel}`);
+      let names = [];
+      if(forCat && drillsByCat.has(forCat)){
+        names = drillsByCat.get(forCat).slice().sort();
+        setOptions(nameSel, names, {
+          placeholder:'— Select Drill —',
+          getLabel:(nm)=>nm,
+          getValue:(nm)=>nm
+        });
+      } else {
+        const all = Array.from(drillsByName.values())
+          .map(d=>({ name:d.name, category:d.category }))
+          .sort((a,b)=> a.name.localeCompare(b.name));
+        setOptions(nameSel, all, {
+          placeholder:'— Select Drill —',
+          getLabel:(o)=> `${o.name} • ${o.category}`,
+          getValue:(o)=> o.name
+        });
+      }
+    }
+
+    async function fetchDrillLibrary(){
+      try{
+        // Prefer DL; fallback: all and filter client-side
+        let url = `${APPS_SCRIPT_URL}?action=drill_library&sheet_id=${encodeURIComponent(PRACTICE_SHEET_ID)}&sheet_name=${encodeURIComponent(DRILL_TAB)}&position_group=DL`;
+        let res = await fetch(url, { cache:'no-store' });
+        let json = await res.json();
+        let all = [];
+
+        if(json && json.ok && Array.isArray(json.drills) && json.drills.length){
+          all = json.drills;
+        } else {
+          const u = `${APPS_SCRIPT_URL}?action=drill_library&sheet_id=${encodeURIComponent(PRACTICE_SHEET_ID)}&sheet_name=${encodeURIComponent(DRILL_TAB)}`;
+          try{
+            const r = await fetch(u, { cache:'no-store' });
+            const j = await r.json();
+            if(j && j.ok && Array.isArray(j.drills)) all = j.drills;
+          }catch(e){ /* ignore */ }
+        }
+
+        if(all.length){
+          const cleaned = all.map(r=>({
+            drill_id:               pick(r,'drill_id','id'),
+            name:                   pick(r,'name','drill_name'),
+            category:               pick(r,'category','drill_category'),
+            drill_type:             pick(r,'drill_type'),
+            position_group:         pick(r,'position_group','group'),
+            position_specific:      pick(r,'position_specific'),
+            primary_measurement:    pick(r,'primary_measurement','primary'),
+            measurement_unit:       pick(r,'measurement_unit','primary_unit','primary_measurement_unit'),
+            success_threshold:      pick(r,'success_threshold','success','primary_success_threshold'),
+            failure_threshold:      pick(r,'failure_threshold','failure','primary_failure_threshold'),
+            secondary_measurement:  pick(r,'secondary_measurement','secondary','sec_measurement','secondary_measurment'),
+            secondary_unit:         pick(r,'secondary_unit','secondary_measure_unit','secondary_measurement_unit','sec_unit'),
+            secondary_threshold:    pick(r,'secondary_threshold','secondary_success','secondary_success_threshold','sec_threshold'),
+            coaching_emphasis:      pick(r,'coaching_emphasis','emphasis'),
+            common_errors:          pick(r,'common_errors','errors')
+          })).filter(r => r.name && r.category);
+
+          dlDrills = cleaned.filter(r => isDLGroup(r.position_group));
+          indexDrills(dlDrills);
+
+          ['p1','p2'].forEach(panel=>{
+            fillCategorySelect(panel);
+            const catSel = getEl(`drill-cat-${panel}`);
+            const nameSel= getEl(`drill-name-${panel}`);
+            const savedCat  = localStorage.getItem(LS.cat)  || '';
+            const savedName = localStorage.getItem(LS.name) || '';
+            if(savedCat && [...catSel.options].some(o=>o.value===savedCat)) catSel.value = savedCat;
+            fillNameSelect(panel, catSel.value);
+            if(savedName && [...nameSel.options].some(o=>o.value===savedName)) nameSel.value = savedName;
+            applyDrillMeta(panel);
+          });
+        } else { console.warn('Drill library empty or unavailable'); }
+      }catch(err){ console.warn('Drill library fetch failed', err); }
+    }
+
+    /* ===== Timer, thresholds, widgets, reps ===== */
+    const timers = new Map();
+    function makeTimer(panel){
+      const wrap = getEl(`pm-timer-wrap-${panel}`);
+      const timeEl = getEl(`pm-timer-time-${panel}`);
+      const startBtn = getEl(`pm-timer-start-${panel}`);
+      const stopBtn  = getEl(`pm-timer-stop-${panel}`);
+      const resetBtn = getEl(`pm-timer-reset-${panel}`);
+      const saveBtn  = getEl(`pm-timer-save-${panel}`);
+      const pmInput  = getEl(`pm-value-${panel}`);
+      let running=false, start=0, acc=0, rafId=null;
+      function fmt(ms){ const s=ms/1000; return s.toFixed(2)+' s'; }
+      function tick(){ const now=performance.now(); const elapsed = acc + (running ? (now - start) : 0); timeEl.textContent = fmt(elapsed); if(running) rafId = requestAnimationFrame(tick); }
+      function startTimer(){ if(running) return; running=true; start=performance.now(); tick(); }
+      function stopTimer(){ if(!running) return; running=false; acc += performance.now()-start; cancelAnimationFrame(rafId); tick(); }
+      function resetTimer(){ running=false; acc=0; cancelAnimationFrame(rafId); tick(); }
+      function saveToField(){ const num = parseFloat(timeEl.textContent.replace(' s','')); if(!isNaN(num)) pmInput.value = num; stopTimer(); evaluatePrimary(panel); }
+      startBtn.addEventListener('click', startTimer); stopBtn.addEventListener('click', stopTimer); resetBtn.addEventListener('click', resetTimer); saveBtn.addEventListener('click', saveToField);
+      tick(); return { show:()=>wrap.classList.remove('hidden'), hide:()=>{ resetTimer(); wrap.classList.add('hidden'); } };
+    }
+
+    function parseNumeric(v){ if(v==null) return null; const n=parseFloat(String(v).replace(/[^\d.\-]/g,'')); return isNaN(n)?null:n; }
+    function checkComparator(value, expr){
+      if(!expr) return null; expr=String(expr).trim();
+      const num = parseNumeric(expr);
+      if(expr.startsWith('≤')||expr.startsWith('<=')) return value<=num;
+      if(expr.startsWith('≥')||expr.startsWith('>=')) return value>=num;
+      if(expr.startsWith('<')) return value<num;
+      if(expr.startsWith('>')) return value>num;
+      if(expr.includes('-')){ const [a,b]=expr.split('-').map(parseNumeric); if(a==null||b==null) return null; return value>=a && value<=b; }
+      if(num!=null) return value===num;
+      return null;
+    }
+    function evalThresholdNumeric(value, successExpr, failureExpr){
+      if(successExpr){ const ok=checkComparator(value, successExpr); if(ok===true) return true; }
+      if(failureExpr){ const bad=checkComparator(value, failureExpr); if(bad===true) return false; }
+      return null;
+    }
+    function evalThresholdString(val, successExpr, failureExpr){
+      if(val==null) return null;
+      const v=String(val).trim().toLowerCase();
+      const sx=(successExpr||'').toString().trim().toLowerCase();
+      const fx=(failureExpr||'').toString().trim().toLowerCase();
+      if(sx && v===sx) return true;
+      if(fx && v===fx) return false;
+      return null;
+    }
+    function isYesish(v){ return /^y(es)?|true|1$/i.test(String(v||'')); }
+    function isNoish(v){ return /^no?|false|0$/i.test(String(v||'')); }
+    function setChip(el, result){
+      if(!el) return;
+      if(result===true){ el.textContent='Result: Success'; el.style.borderColor='#22C55E'; }
+      else if(result===false){ el.textContent='Result: Fail'; el.style.borderColor='#EF4444'; }
+      else { el.textContent='Result: —'; el.style.borderColor='rgba(255,255,255,.18)'; }
+    }
+
+    function unitToMode(unit, measurementName=''){
+      const u = String(unit||'').toLowerCase().trim();
+      const m = String(measurementName||'').toLowerCase().trim();
+      if(u.includes('second') || m.includes('time')) return 'timer';
+      if(u.includes('percentage') || u.includes('%')) return 'percentFromReps';
+      if(u === 'count') return 'countFromReps';
+      if(u === 'boolean') return 'dropdownBool';
+      if(u === 'scale_1-5' || u === 'scale1-5' || u === 'scale 1-5') return 'slider1to5';
+      if(u.includes('degrees')) return 'dialDegrees';
+      if(u.includes('/')) return 'dropdownOptions';
+      return 'number';
+    }
+    function titleCase(s){ return String(s||'').toLowerCase().replace(/\b\w/g,(c)=>c.toUpperCase()); }
+
+    const kpiModes = new Map(); // panel -> { pmMode, smMode, repOwner, repMode }
+    function setRepButtons(panel, mode){
+      const sBtn = getEl(`btnSuccess-${panel}`);
+      const fBtn = getEl(`btnFail-${panel}`);
+      const rBtn = getEl(`btnReset-${panel}`);
+      const failCard = getEl(`failCard-${panel}`);
+      const rateCard = getEl(`rateCard-${panel}`);
+      const totalCard= getEl(`totalCard-${panel}`);
+      const successLabel = getEl(`successLabel-${panel}`);
+      const totalLabel = getEl(`totalLabel-${panel}`);
+      if(mode==='percent'){
+        sBtn.style.display=''; fBtn.style.display=''; rBtn.style.display='';
+        failCard.style.display=''; rateCard.style.display=''; totalCard.style.display='';
+        successLabel.textContent='Success'; totalLabel.textContent='Total Reps';
+      } else if(mode==='count'){
+        sBtn.style.display=''; fBtn.style.display='none'; rBtn.style.display='';
+        failCard.style.display='none'; rateCard.style.display='none'; totalCard.style.display='none';
+        successLabel.textContent='Count';
+      } else {
+        sBtn.style.display='none'; fBtn.style.display='none'; rBtn.style.display='none';
+        failCard.style.display='none'; rateCard.style.display='none'; totalCard.style.display='none';
+        successLabel.textContent='—';
+      }
+    }
+    function moveRepsModule(panel, owner, mode){
+      const module = getEl(`reps-module-${panel}`);
+      const title  = getEl(`reps-title-${panel}`);
+      if(owner==='pm'){
+        const anchor = getEl(`pm-reps-anchor-${panel}`);
+        anchor.parentElement.insertBefore(module, anchor.nextSibling);
+        module.classList.remove('hidden');
+        title.textContent = `Reps (Primary)`;
+        setRepButtons(panel, mode);
+      } else if(owner==='sm'){
+        const anchor = getEl(`sm-reps-anchor-${panel}`);
+        anchor.parentElement.insertBefore(module, anchor.nextSibling);
+        module.classList.remove('hidden');
+        title.textContent = `Reps (Secondary)`;
+        setRepButtons(panel, mode);
+      } else {
+        module.classList.add('hidden');
+        setRepButtons(panel, 'none');
+        repTrackers.get(panel)?.reset();
+      }
+    }
+
+    function buildField(panel, which, mode, unitText) {
+      const row = getEl(`${which}-row-${panel}`);
+      const input = getEl(`${which}-value-${panel}`);
+      const unit = getEl(`${which}-unit-${panel}`);
+      const oldSel = getEl(`${which}-select-${panel}`); if(oldSel) oldSel.remove();
+      const oldDial = getEl(`${which}-dial-${panel}`); if(oldDial) oldDial.remove();
+      input.classList.remove('hidden'); input.type='text'; input.value=''; input.min=''; input.max=''; input.step='';
+      unit.textContent = unitText || '—';
+      const attachEval = ()=> (which==='pm'? input.addEventListener('input', ()=>evaluatePrimary(panel))
+                                        : input.addEventListener('input', ()=>evaluateSecondary(panel)));
+      if(mode==='number'){ input.type='number'; input.step='0.1'; attachEval(); }
+      else if(mode==='slider1to5'){ input.type='range'; input.min='1'; input.max='5'; input.step='1'; attachEval(); }
+      else if(mode==='dropdownBool'){
+        input.classList.add('hidden'); const sel=document.createElement('select');
+        sel.id=`${which}-select-${panel}`; sel.className='form-select';
+        sel.innerHTML=`<option value="">—</option><option>Yes</option><option>No</option>`;
+        sel.addEventListener('change', ()=> which==='pm'?evaluatePrimary(panel):evaluateSecondary(panel));
+        row.insertBefore(sel, unit);
+      }
+      else if(mode==='dropdownOptions'){
+        input.classList.add('hidden'); const sel=document.createElement('select');
+        sel.id=`${which}-select-${panel}`; sel.className='form-select';
+        const opts = unitText.split('/').map(titleCase);
+        sel.innerHTML=['<option value="">—</option>', ...opts.map(o=>`<option>${o}</option>`)].join('');
+        sel.addEventListener('change', ()=> which==='pm'?evaluatePrimary(panel):evaluateSecondary(panel));
+        row.insertBefore(sel, unit);
+      }
+      else if(mode==='dialDegrees'){
+        input.type='range'; input.min='0'; input.max='180'; input.step='1';
+        const wrap=document.createElement('div'); wrap.id=`${which}-dial-${panel}`; wrap.className='dial-wrap';
+        wrap.innerHTML=`<svg class="dial-svg" viewBox="0 0 64 64" aria-hidden="true">
+            <circle cx="32" cy="32" r="30" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="2"/>
+            <line id="${which}-needle-${panel}" class="dial-needle" x1="32" y1="52" x2="32" y2="12" stroke="currentColor" stroke-width="3" />
+          </svg>`;
+        row.parentElement.insertBefore(wrap, row.nextSibling);
+        const needle = wrap.querySelector(`#${which}-needle-${panel}`);
+        const updateNeedle = ()=>{ const deg = Number(input.value||0); needle.style.transform = `rotate(${deg}deg)`; };
+        input.addEventListener('input', updateNeedle);
+        input.addEventListener('input', ()=> which==='pm'?evaluatePrimary(panel):evaluateSecondary(panel));
+        updateNeedle();
+      }
+      else if(mode==='percentFromReps' || mode==='countFromReps'){ input.classList.add('hidden'); }
+      else if(mode==='timer'){ input.type='number'; input.step='0.01'; attachEval(); }
+    }
+
+    function applyDrillMeta(panel){
+      const nameSel = getEl(`drill-name-${panel}`);
+      const meta = drillsByName.get(clean(nameSel.value).toLowerCase());
+      if(!meta) return;
+
+      const chk = getEl(`pos-specific-${panel}`);
+      if(chk){
+        const flag = String(meta.position_specific||'').toLowerCase();
+        chk.checked = (flag==='1'||flag==='true'||flag==='yes') ? true
+                  : (flag==='0'||flag==='false'||flag==='no') ? false : true;
+      }
+
+      const coachEl = getEl(`coachEmphasis-${panel}`); if (coachEl) coachEl.textContent = meta.coaching_emphasis || '';
+
+      getEl(`pm-title-${panel}`).textContent = `Primary: ${meta.primary_measurement||'—'}`;
+      getEl(`pm-unit-${panel}`).textContent  = meta.measurement_unit || '—';
+      getEl(`pm-thresh-${panel}`).textContent = [
+        meta.success_threshold ? `Success ${meta.success_threshold}` : '',
+        meta.failure_threshold ? `| Fail ${meta.failure_threshold}` : ''
+      ].filter(Boolean).join(' ');
+
+      getEl(`sm-title-${panel}`).textContent = `Secondary: ${meta.secondary_measurement||'—'}`;
+      getEl(`sm-unit-${panel}`).textContent  = meta.secondary_unit || '—';
+      getEl(`sm-thresh-${panel}`).textContent = meta.secondary_threshold ? `Success ${meta.secondary_threshold}` : '';
+
+      const pmMode = unitToMode(meta.measurement_unit, meta.primary_measurement);
+      const smMode = unitToMode(meta.secondary_unit,  meta.secondary_measurement);
+      buildField(panel, 'pm', pmMode, meta.measurement_unit||'');
+      buildField(panel, 'sm', smMode, meta.secondary_unit||'');
+
+      if(!timers.has(panel)) timers.set(panel, makeTimer(panel));
+      if(pmMode==='timer') timers.get(panel).show(); else timers.get(panel).hide();
+
+      let repOwner = null, repMode = 'none';
+      if(pmMode==='percentFromReps' || pmMode==='countFromReps'){ repOwner='pm'; repMode = (pmMode==='countFromReps'?'count':'percent'); }
+      else if(smMode==='percentFromReps' || smMode==='countFromReps'){ repOwner='sm'; repMode = (smMode==='countFromReps'?'count':'percent'); }
+      moveRepsModule(panel, repOwner, repMode);
+
+      setChip(getEl(`pm-success-chip-${panel}`), null);
+      setChip(getEl(`sm-success-chip-${panel}`), null);
+
+      kpiModes.set(panel, { pmMode, smMode, repOwner, repMode });
+    }
+
+    function syncFromName(panel){
+      const nameSel = getEl(`drill-name-${panel}`);
+      const catSel  = getEl(`drill-cat-${panel}`);
+      const meta = drillsByName.get(clean(nameSel.value).toLowerCase());
+      if (meta){
+        if (!clean(catSel.value) || clean(catSel.value) !== meta.category) {
+          catSel.value = meta.category || '';
+          fillNameSelect(panel, catSel.value);
+          if([...getEl(`drill-name-${panel}`).options].some(o=>o.value===meta.name)) nameSel.value = meta.name;
+        }
+      }
+      applyDrillMeta(panel);
+    }
+
+    function syncFromCat(panel){
+      const catSel  = getEl(`drill-cat-${panel}`);
+      const nameSel = getEl(`drill-name-${panel}`);
+      const cat = clean(catSel.value);
+      const prev = nameSel.value;
+      fillNameSelect(panel, cat);
+      if(![...nameSel.options].some(o=>o.value===prev)) nameSel.value = '';
+      applyDrillMeta(panel);
+    }
+
+    /* Tri-directional player autofill (DL) */
+    function attachTriAuto(panel, jEl, iEl, nEl){
+      let filling = false;
+      const fill = (rec) => {
+        if (!rec) return;
+        filling = true;
+        if (rec.jersey_number != null) jEl.value = String(rec.jersey_number).replace(/^0+/,'');
+        if (rec.player_id)             iEl.value = rec.player_id;
+        if (rec.player_name)           nEl.value = rec.player_name;
+        filling = false;
+      };
+      jEl.addEventListener('input',  ()=>{ if(!filling){ const rec = byJersey.get(String(jEl.value).replace(/^0+/,'')); if(rec) fill(rec); }});
+      jEl.addEventListener('change', ()=>{ if(!filling){ const rec = byJersey.get(String(jEl.value).replace(/^0+/,'')); if(rec) fill(rec); }});
+      iEl.addEventListener('input',  ()=>{ if(!filling){ const rec = byId.get(String(iEl.value||'').toUpperCase()); if(rec) fill(rec); }});
+      iEl.addEventListener('change', ()=>{ if(!filling){ const rec = byId.get(String(iEl.value||'').toUpperCase()); if(rec) fill(rec); }});
+      nEl.addEventListener('input',  ()=>{
+        if (filling) return;
+        const k = String(nEl.value||'').trim().toLowerCase();
+        if (!k) return;
+        if (byName.has(k)) return fill(byName.get(k));
+        if (k.length >= 2){
+          const hits = roster.filter(r => String(r.player_name||'').trim().toLowerCase().includes(k));
+          if (hits.length === 1) fill(hits[0]);
+        }
+      });
+      nEl.addEventListener('change', ()=>{ const k=String(nEl.value||'').trim().toLowerCase(); if(byName.has(k)) fill(byName.get(k)); });
+    }
+
+    function readControlValue(panel, which, mode){
+      if(mode==='percentFromReps'){
+        const total = Number(getEl(`total-hidden-${panel}`).value||0);
+        const succ  = Number(getEl(`succ-hidden-${panel}`).value||0);
+        return total>0 ? (succ/total)*100 : 0;
+      }
+      if(mode==='countFromReps'){
+        const succ  = Number(getEl(`succ-hidden-${panel}`).value||0);
+        return succ;
+      }
+      const sel = getEl(`${which}-select-${panel}`);
+      if(sel && !sel.classList.contains('hidden')) return sel.value || '';
+      const input = getEl(`${which}-value-${panel}`);
+      if(!input || input.classList.contains('hidden')) return '';
+      if(input.type==='range' || input.type==='number') return parseNumeric(input.value);
+      return input.value;
+    }
+
+    function evaluatePrimary(panel){
+      const nameSel = getEl(`drill-name-${panel}`);
+      const meta = drillsByName.get(clean(nameSel.value).toLowerCase());
+      if(!meta) return null;
+      const { pmMode } = kpiModes.get(panel) || {};
+      let value = readControlValue(panel, 'pm', pmMode);
+      let result = null;
+
+      if(typeof value === 'number' && value!=null){
+        result = evalThresholdNumeric(value, meta.success_threshold, meta.failure_threshold);
+      } else if (typeof value === 'string' && value){
+        if(isYesish(value) || isNoish(value)){
+          const want = (meta.success_threshold||'').toString().toLowerCase();
+          if(want.includes('yes')) result = isYesish(value);
+          else if(want.includes('no')) result = isNoish(value);
+        }
+        if(result===null){ result = evalThresholdString(value, meta.success_threshold, meta.failure_threshold); }
+      }
+      setChip(getEl(`pm-success-chip-${panel}`), result);
+      return { value, success: result };
+    }
+
+    function evaluateSecondary(panel){
+      const nameSel = getEl(`drill-name-${panel}`);
+      const meta = drillsByName.get(clean(nameSel.value).toLowerCase());
+      if(!meta) return null;
+      const { smMode } = kpiModes.get(panel) || {};
+      let value = readControlValue(panel, 'sm', smMode);
+      let result = null;
+
+      if(smMode==='percentFromReps'){
+        result = evalThresholdNumeric(value, meta.secondary_threshold, null);
+      } else if (typeof value === 'number' && value!=null){
+        result = evalThresholdNumeric(value, meta.secondary_threshold, null);
+      } else if (typeof value === 'string' && value){
+        if(isYesish(value) || isNoish(value)){
+          const want = (meta.secondary_threshold||'').toString().toLowerCase();
+          if(want.includes('yes')) result = isYesish(value);
+          else if(want.includes('no')) result = isNoish(value);
+        }
+        if(result===null){ result = evalThresholdString(value, meta.secondary_threshold, null); }
+      }
+      setChip(getEl(`sm-success-chip-${panel}`), result);
+      return { value, success: result };
+    }
+
+    function calcRepBuckets(panel){
+      const modes = kpiModes.get(panel) || {};
+      const prim  = evaluatePrimary(panel)  || { success:null };
+      const sec   = evaluateSecondary(panel)|| { success:null };
+
+      const totalFromUI = Number(getEl(`total-hidden-${panel}`).value || 0);
+      const succFromUI  = Number(getEl(`succ-hidden-${panel}`).value  || 0);
+
+      let pm = { total:0, succ:0, fail:0 };
+      if (modes.pmMode === 'percentFromReps') {
+        pm.total = totalFromUI; pm.succ = succFromUI; pm.fail = Math.max(0, pm.total - pm.succ);
+      } else if (modes.pmMode === 'countFromReps') {
+        pm.total = succFromUI; pm.succ = succFromUI; pm.fail = 0;
+      } else {
+        pm.total = 1; pm.succ = prim.success === true ? 1 : 0; pm.fail = prim.success === false ? 1 : 0;
+      }
+
+      let sm = { total:0, succ:0, fail:0 };
+      if (modes.smMode === 'percentFromReps') {
+        sm.total = totalFromUI; sm.succ = succFromUI; sm.fail = Math.max(0, sm.total - sm.succ);
+      } else if (modes.smMode === 'countFromReps') {
+        sm.total = succFromUI; sm.succ = succFromUI; sm.fail = 0;
+      } else if (drillsByName.get(String(getEl(`drill-name-${panel}`).value).toLowerCase())?.secondary_measurement) {
+        sm.total = 1; sm.succ = sec.success === true ? 1 : 0; sm.fail = sec.success === false ? 1 : 0;
+      } else { sm.total=0; sm.succ=0; sm.fail=0; }
+
+      return { pm, sm };
+    }
+
+    function wirePanel(panel){
+      const form = getEl(`dl-form-${panel}`);
+      const date = getEl(`prac-date-${panel}`);
+      const savedDate = localStorage.getItem(LS.date); if (savedDate) date.value = savedDate; setTodayIfEmpty(date);
+      date.addEventListener('change', ()=> localStorage.setItem(LS.date, date.value));
+
+      const catSel  = getEl(`drill-cat-${panel}`);
+      const nameSel = getEl(`drill-name-${panel}`);
+
+      catSel.addEventListener('change', ()=>{ localStorage.setItem(LS.cat,  catSel.value ); syncFromCat(panel); });
+      nameSel.addEventListener('change',()=>{ localStorage.setItem(LS.name, nameSel.value); syncFromName(panel); });
+
+      if(!timers.has(panel)) timers.set(panel, makeTimer(panel));
+
+      const reps = makeRepTracker(panel);
+      repTrackers.set(panel, reps);
+      reps.setOnChange(()=>{
+        const modes = kpiModes.get(panel) || {};
+        if(modes.pmMode==='percentFromReps' || modes.pmMode==='countFromReps') evaluatePrimary(panel);
+        if(modes.smMode==='percentFromReps' || modes.smMode==='countFromReps') evaluateSecondary(panel);
+      });
+
+      const jEl = getEl(`jersey-${panel}`);
+      const iEl = getEl(`player-id-${panel}`);
+      const nEl = getEl(`player-name-${panel}`);
+      attachTriAuto(panel, jEl, iEl, nEl);
+
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+
+        // Resolve player
+        const jEl = getEl(`jersey-${panel}`);
+        const iEl = getEl(`player-id-${panel}`);
+        const nEl = getEl(`player-name-${panel}`);
+        let entry = null;
+        const pid = (iEl.value||'').trim().toUpperCase();
+        const jer = (jEl.value||'').trim().replace(/^0+/, '');
+        const pnm = (nEl.value||'').trim().toLowerCase();
+        if (pid && byId.get(pid)) entry = byId.get(pid);
+        else if (jer && byJersey.get(jer)) entry = byJersey.get(jer);
+        else if (pnm && byName.get(pnm)) entry = byName.get(pnm);
+        if (!entry || !/^DL[0-9]{3}$/i.test(entry.player_id)){
+          showStatus(panel,'Pick a valid DL (Player ID format DL###).','warning'); 
+          return;
+        }
+
+        // Validate drill selections
+        const drillCat  = (getEl(`drill-cat-${panel}`).value||'').trim();
+        const drillName = (getEl(`drill-name-${panel}`).value||'').trim();
+        if(!drillCat || !drillName){
+          showStatus(panel,'Choose a drill category and name.','warning'); 
+          return;
+        }
+        const meta = drillsByName.get(drillName.toLowerCase());
+        if(!meta){
+          showStatus(panel,'Drill not found in library.','warning'); 
+          return;
+        }
+
+        // Evaluate KPIs + rep buckets
+        const primary   = evaluatePrimary(panel)  || { value:null, success:null };
+        const secondary = evaluateSecondary(panel)|| { value:null, success:null };
+        const modes = kpiModes.get(panel) || {};
+        const buckets = calcRepBuckets(panel);
+        const pm = buckets.pm, sm = buckets.sm;
+
+        // Legacy overall
+        let reps, successful_reps;
+        if (modes.repOwner){
+          reps = Number(getEl(`total-hidden-${panel}`).value || 0);
+          successful_reps = Number(getEl(`succ-hidden-${panel}`).value || 0);
+        } else {
+          reps = 1;
+          successful_reps = primary.success === true ? 1 : 0;
+        }
+
+        const pg = (entry.position||'').toUpperCase();
+        const payload = {
+          action:'practice',
+          sheet_id: PRACTICE_SHEET_ID,
+          sheet_name:'61_Fact_Practice',
+
+          date: getEl(`prac-date-${panel}`).value,
+          player_id: entry.player_id,
+
+          drill: drillName,
+          drill_category: drillCat,
+          position_group: ['DL','DE','DT','NT','EDGE'].includes(pg) ? pg : 'DL',
+          position_specific: (getEl(`pos-specific-${panel}`)?.checked ? 1 : 0),
+
+          practice_intensity: getEl(`intensity-${panel}`).value,
+          attendance:        getEl(`attendance-${panel}`).value,
+          player_effort:     getEl(`player-effort-${panel}`).value,
+
+          // Primary KPI
+          primary_measurement: meta.primary_measurement || '',
+          primary_unit:        meta.measurement_unit    || '',
+          primary_value:       primary.value,
+          primary_success:     primary.success,
+
+          // Secondary KPI
+          secondary_measurement: meta.secondary_measurement || '',
+          secondary_unit:        meta.secondary_unit        || '',
+          secondary_value:       secondary.value,
+          secondary_success:     secondary.success,
+
+          // Thresholds
+          success_threshold:   meta.success_threshold   || '',
+          failure_threshold:   meta.failure_threshold   || '',
+          secondary_threshold: meta.secondary_threshold || '',
+
+          // Reps buckets
+          pm_reps_total:     pm.total,
+          pm_rep_successes:  pm.succ,
+          pm_rep_failures:   pm.fail,
+
+          sm_reps_total:     sm.total,
+          sm_rep_successes:  sm.succ,
+          sm_rep_failures:   sm.fail,
+
+          // Legacy overall
+          reps,
+          successful_reps,
+
+          drill_notes: getEl(`notes-${panel}`).value || ''
+        };
+
+        const fd = new FormData();
+        fd.append('data', JSON.stringify(payload));
+
+        try{
+          const res  = await fetch(APPS_SCRIPT_URL, { method:'POST', body: fd });
+          const text = await res.text();
+          let json=null; try{ json=JSON.parse(text);}catch{}
+          if (res.ok && json && json.ok){
+            showStatus(panel,'Practice log submitted. ✅','success');
+
+            // preserve date / saved selects
+            const sDate = localStorage.getItem(LS.date);
+            const sCat  = localStorage.getItem(LS.cat);
+            const sName = localStorage.getItem(LS.name);
+
+            form.reset();
+            getEl(`prac-date-${panel}`).value = sDate || getEl(`prac-date-${panel}`).value;
+            if (sCat)  getEl(`drill-cat-${panel}`).value  = sCat;
+            if (sName) getEl(`drill-name-${panel}`).value = sName;
+
+            applyDrillMeta(panel);
+            repTrackers.get(panel)?.reset();
+            setChip(getEl(`pm-success-chip-${panel}`), null);
+            setChip(getEl(`sm-success-chip-${panel}`), null);
+          } else {
+            showStatus(panel, (json && json.error) ? json.error : 'Submit failed. Try again.','error');
+            console.warn('Submit debug:', text);
+          }
+        }catch(err){
+          console.error(err);
+          showStatus(panel,'Network error. Data not sent.','error');
+        }
+      });
+    }
+
+    (async function init(){
+      wirePanel('p1');
+      wirePanel('p2');
+      setTodayIfEmpty(getEl('prac-date-p1'));
+      setTodayIfEmpty(getEl('prac-date-p2'));
+      await Promise.all([fetchRoster(), fetchDrillLibrary()]);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wellness - Football Data Tracker</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body class="practice-page">
+  <header class="page-header">
+    <h1>Wellness</h1>
+    <nav class="menu-actions" aria-label="Header navigation">
+      <a href="../index.html" class="menu-btn">Home</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="container">
+      <p class="page-intro"><center>Log and monitor player wellness.</center></p>
+      <br>
+
+      <nav class="sub-nav" aria-label="Wellness menus">
+        <a href="./wellness-daily.html" class="nav-button">💪 Daily Wellness</a>
+        <!-- Add more wellness tools here as needed -->
+      </nav>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Game Speed Data Systems</p>
+  </footer>
+
+  <script>
+      // Make the back link robust: use browser history if possible, else go to home.
+      const link = document.getElementById('homeBack');
+      link.addEventListener('click', function (e) {
+          const sameOrigin = document.referrer && new URL(document.referrer).origin === location.origin;
+          if (sameOrigin) {
+              e.preventDefault();
+              history.back();
+          }
+      });
+  </script>
+</body>
+</html>

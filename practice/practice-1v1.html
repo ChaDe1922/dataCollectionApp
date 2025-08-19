@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>1v1 Competitions – Practice Logger</title>
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    /* Page-specific layout (theme handles the rest) */
+    .container{ max-width:calc(100vw - 100px)!important; width:100%; padding:0 50px; margin:0 auto; box-sizing:border-box; }
+    @media (max-width:768px){ .container{ padding:0 25px; max-width:calc(100vw - 50px);} }
+    @media (max-width:600px){ .container{ padding:0 16px; max-width:calc(100vw - 32px);} }
+
+    .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; }
+    .grid-3{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; }
+    @media (max-width:820px){ .grid-2{ grid-template-columns:1fr; } .grid-3{ grid-template-columns:1fr; } }
+
+    .panel-card{ container-type:inline-size; min-width:0; width:100%; }
+    .side-card{ border:1px solid var(--border); border-radius:12px; padding:12px; background:rgba(255,255,255,.04); }
+    .side-title{ font-weight:700; opacity:.9; margin-bottom:8px; }
+
+    .chip-toggle{ display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); cursor:pointer; user-select:none; }
+    .chip-toggle input{ accent-color: var(--accent, #8b5cf6); }
+
+    .outcome-bar{ display:flex; gap:14px; flex-wrap:wrap; align-items:center; justify-content:center; margin:14px 0; }
+    .outcome-btn{ font-size:1.15rem; padding:14px 20px; border-radius:12px; }
+    .outcome-btn.big{ font-size:1.25rem; padding:16px 24px; }
+
+    .hint{ opacity:.8; font-size:.85rem; }
+  </style>
+</head>
+<body class="practice-page">
+
+  <header class="page-header">
+    <h1>1v1 Competitions</h1>
+    <nav class="menu-actions" aria-label="Header navigation">
+      <a href="../index.html" class="menu-btn">Home</a>
+      <a href="practice.html" class="menu-btn secondary">Practice</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="panel-card">
+        <form id="v1-form" autocomplete="off">
+          <!-- Session / context -->
+          <div class="form-section">
+            <div class="grid-3">
+              <div>
+                <label class="form-label" for="prac-date">Practice Date</label>
+                <input type="date" id="prac-date" class="form-input" required />
+              </div>
+
+              <div>
+                <label class="form-label" for="matchup">Matchup</label>
+                <select id="matchup" class="form-select">
+                  <option value="WRTE-DB">WR/TE vs DB</option>
+                  <option value="RB-LB">RB vs LB</option>
+                  <option value="OL-DL">OL vs DL</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="form-label" for="drill-name">Drill Name (optional)</label>
+                <input id="drill-name" class="form-input" placeholder="e.g., 1v1 – Fade/Bump" />
+                <small class="hint">Defaults to “1v1 – &lt;matchup&gt;” if left empty.</small>
+              </div>
+            </div>
+
+            <div class="grid-3" style="margin-top:12px;">
+              <div>
+                <label class="form-label" for="route">Route / Rush</label>
+                <input id="route" class="form-input" placeholder="e.g., Fade, Slant, Bull, Swim…" />
+              </div>
+              <div>
+                <label class="form-label" for="coverage">Coverage / Set</label>
+                <input id="coverage" class="form-input" placeholder="e.g., Press, Off, 2-Gap…" />
+              </div>
+              <div>
+                <label class="form-label" for="notes">Notes</label>
+                <input id="notes" class="form-input" placeholder="Quick note (optional)" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Players -->
+          <div class="form-section grid-2">
+            <div class="side-card">
+              <div class="side-title">Offense</div>
+              <label class="form-label" for="off-jersey">Jersey #</label>
+              <input id="off-jersey" class="form-input" list="off-jersey-list" inputmode="numeric" placeholder="e.g., 5" />
+              <label class="form-label" for="off-id" style="margin-top:8px;">Player ID</label>
+              <input id="off-id" class="form-input" list="off-playerid-list" placeholder="e.g., WR123 / TE045 / RB028 / OL010" />
+              <label class="form-label" for="off-name" style="margin-top:8px;">Player Name</label>
+              <input id="off-name" class="form-input" list="off-playername-list" placeholder="Type a few letters…" />
+            </div>
+
+            <div class="side-card">
+              <div class="side-title">Defense</div>
+              <label class="form-label" for="def-jersey">Jersey #</label>
+              <input id="def-jersey" class="form-input" list="def-jersey-list" inputmode="numeric" placeholder="e.g., 21" />
+              <label class="form-label" for="def-id" style="margin-top:8px;">Player ID</label>
+              <input id="def-id" class="form-input" list="def-playerid-list" placeholder="e.g., DB042 / LB053 / DL077" />
+              <label class="form-label" for="def-name" style="margin-top:8px;">Player Name</label>
+              <input id="def-name" class="form-input" list="def-playername-list" placeholder="Type a few letters…" />
+            </div>
+          </div>
+
+          <!-- Optional chips -->
+          <div class="form-section" aria-label="Outcome detail toggles">
+            <div class="outcome-bar" style="margin-top:0;">
+              <label class="chip-toggle"><input type="checkbox" id="chip-release"> Clean release</label>
+              <label class="chip-toggle"><input type="checkbox" id="chip-catch"> Ball caught</label>
+              <label class="chip-toggle"><input type="checkbox" id="chip-ontime"> QB on-time</label>
+            </div>
+          </div>
+
+          <!-- Big outcome buttons -->
+          <div class="form-section">
+            <div class="outcome-bar">
+              <button type="button" class="btn btn-success outcome-btn big" id="btnOffWin">Offense Win</button>
+              <button type="button" class="btn btn-danger outcome-btn big" id="btnDefWin">Defense Win</button>
+              <button type="button" class="btn btn-neutral outcome-btn" id="btnTie">Tie / PI</button>
+            </div>
+            <div class="outcome-bar">
+              <button type="button" class="btn submit-btn" id="btnSwap">Swap Sides ↔︎</button>
+              <button type="button" class="btn" id="btnClear">Clear Players</button>
+            </div>
+            <div id="form-status" class="status"></div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer><p>&copy; 2025 Game Speed Data Systems</p></footer>
+
+  <!-- Datalists for each side -->
+  <div style="display:none">
+    <datalist id="off-jersey-list"></datalist>
+    <datalist id="off-playerid-list"></datalist>
+    <datalist id="off-playername-list"></datalist>
+    <datalist id="def-jersey-list"></datalist>
+    <datalist id="def-playerid-list"></datalist>
+    <datalist id="def-playername-list"></datalist>
+  </div>
+
+  <script>
+    /* ===== CONFIG ===== */
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
+    const PRACTICE_SHEET_ID = '1pT-7cXhfzJB5mjswsXayvjt_qC2hIp9WflWggIAyh8g';
+    const ROSTER_SHEET_ID   = '1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI';
+    const ROSTER_TAB        = '00_Dim_Roster';
+
+    const LS = { date:'v1_date', matchup:'v1_matchup', drill:'v1_drill' };
+
+    const getEl = (id) => document.getElementById(id);
+    const clean = (s)=>String(s||'').trim();
+
+    function setTodayIfEmpty(input){
+      if (!input.value){
+        const d=new Date(), y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+        input.value = `${y}-${m}-${day}`;
+      }
+    }
+    function showStatus(msg, type='success'){
+      const box = getEl('form-status');
+      box.textContent = msg;
+      box.className = 'status ' + type + ' show';
+      setTimeout(()=>box.classList.remove('show'), 2500);
+    }
+
+    /* ===== ROSTER ===== */
+    let rosterRaw = [];
+    function splitTags(s){ return String(s||'').toUpperCase().split(/[\/,\s]+/).filter(Boolean); }
+
+    // broad position groups
+    const POS = {
+      WRTE: new Set(['WR','TE']),
+      DB:   new Set(['DB','CB','S','SS','FS','NICKEL']),
+      RB:   new Set(['RB']),
+      LB:   new Set(['LB','ILB','OLB']),
+      OL:   new Set(['OL','LT','LG','C','RG','RT']),
+      DL:   new Set(['DL','DE','DT','NT','EDGE'])
+    };
+
+    function hasAnyPos(posStr, posSet){
+      const tags = splitTags(posStr);
+      return tags.some(t => posSet.has(t));
+    }
+
+    async function fetchRoster(){
+      try{
+        const url = `${APPS_SCRIPT_URL}?action=roster&sheet_id=${encodeURIComponent(ROSTER_SHEET_ID)}&sheet_name=${encodeURIComponent(ROSTER_TAB)}`;
+        const res = await fetch(url, { cache:'no-store' });
+        const json = await res.json();
+        if(json && json.ok && Array.isArray(json.roster)){
+          rosterRaw = json.roster.map(it=>({
+            player_id: String(it.player_id||it.id||'').trim().toUpperCase(),
+            player_name: String(it.player_name||it.name||'').trim(),
+            position: String(it.position||it.pos||'').trim(),
+            jersey_number: String(it.jersey_number||it.jersey||'').trim()
+          }));
+        } else {
+          console.warn('Roster empty', json);
+        }
+      }catch(err){ console.warn('Roster fetch failed', err); }
+    }
+
+    function buildSideIndexes(filterSet){
+      const list = rosterRaw.filter(r => hasAnyPos(r.position, filterSet));
+      const byId = new Map(), byJersey = new Map(), byName = new Map();
+      const normId = v => String(v||'').trim().toUpperCase();
+      const normJ = v => String(v||'').trim().replace(/^0+/, '');
+      const normN = v => String(v||'').trim().toLowerCase();
+      list.forEach(r=>{
+        if(r.player_id)     byId.set(normId(r.player_id), r);
+        if(r.jersey_number) byJersey.set(normJ(r.jersey_number), r);
+        if(r.player_name)   byName.set(normN(r.player_name), r);
+      });
+      return { list, byId, byJersey, byName };
+    }
+
+    function fillDatalist(prefix, list){
+      const jl = getEl(`${prefix}-jersey-list`),
+            il = getEl(`${prefix}-playerid-list`),
+            nl = getEl(`${prefix}-playername-list`);
+      jl.innerHTML=''; il.innerHTML=''; nl.innerHTML='';
+      [...list].sort((a,b)=>(+a.jersey_number||0)-(+b.jersey_number||0)).forEach(r=>{
+        const o1=document.createElement('option'); o1.value = String(r.jersey_number||'').replace(/^0+/,''); o1.label = `${r.player_name} (${r.position||''})`; jl.appendChild(o1);
+        const o2=document.createElement('option'); o2.value = r.player_id; o2.label = `${r.player_name}${r.jersey_number?' #'+r.jersey_number:''}`; il.appendChild(o2);
+        const o3=document.createElement('option'); o3.value = r.player_name; o3.label = `${r.player_id}${r.jersey_number?' • #'+r.jersey_number:''}`; nl.appendChild(o3);
+      });
+    }
+
+    function attachTriAuto(prefix, indexes){
+      const jEl = getEl(`${prefix}-jersey`);
+      const iEl = getEl(`${prefix}-id`);
+      const nEl = getEl(`${prefix}-name`);
+      const normJ = v => String(v||'').trim().replace(/^0+/, '');
+      const normI = v => String(v||'').trim().toUpperCase();
+      const normN = v => String(v||'').trim().toLowerCase();
+
+      let filling = false;
+      const fill = (rec) => {
+        if (!rec) return;
+        filling = true;
+        if (rec.jersey_number != null) jEl.value = String(rec.jersey_number).replace(/^0+/,'');
+        if (rec.player_id)             iEl.value = rec.player_id;
+        if (rec.player_name)           nEl.value = rec.player_name;
+        filling = false;
+      };
+      function tryByJ(){ const rec = indexes.byJersey.get(normJ(jEl.value)); if(rec) fill(rec); }
+      function tryByI(){ const rec = indexes.byId.get(normI(iEl.value)); if(rec) fill(rec); }
+      function tryByN(){
+        const key = normN(nEl.value);
+        if(!key) return;
+        if(indexes.byName.has(key)) return fill(indexes.byName.get(key));
+        if(key.length>=2){
+          const hits = indexes.list.filter(r => String(r.player_name||'').trim().toLowerCase().includes(key));
+          if(hits.length===1) fill(hits[0]);
+        }
+      }
+
+      jEl.addEventListener('input', ()=>{ if(!filling) tryByJ(); });
+      jEl.addEventListener('change',()=>{ if(!filling) tryByJ(); });
+      iEl.addEventListener('input', ()=>{ if(!filling) tryByI(); });
+      iEl.addEventListener('change',()=>{ if(!filling) tryByI(); });
+      nEl.addEventListener('input', ()=>{ if(!filling) tryByN(); });
+      nEl.addEventListener('change',()=>{ if(!filling) tryByN(); });
+    }
+
+    /* ===== MATCHUP FILTERS ===== */
+    function currentFilterSets(){
+      const val = getEl('matchup').value;
+      if(val==='WRTE-DB') return { off: POS.WRTE, def: POS.DB, label:'WR/TE vs DB' };
+      if(val==='RB-LB')   return { off: POS.RB,   def: POS.LB, label:'RB vs LB' };
+      return { off: POS.OL, def: POS.DL, label:'OL vs DL' };
+    }
+
+    let offIdx = null, defIdx = null;
+
+    function buildSideUIs(){
+      const { off, def } = currentFilterSets();
+      offIdx = buildSideIndexes(off);
+      defIdx = buildSideIndexes(def);
+      fillDatalist('off', offIdx.list);
+      fillDatalist('def', defIdx.list);
+      attachTriAuto('off', offIdx);
+      attachTriAuto('def', defIdx);
+    }
+
+    /* ===== HELPERS ===== */
+    function resolveFrom(prefix, idx){
+      const jer = clean(getEl(`${prefix}-jersey`).value).replace(/^0+/, '');
+      const pid = clean(getEl(`${prefix}-id`).value).toUpperCase();
+      const pnm = clean(getEl(`${prefix}-name`).value).toLowerCase();
+      return idx.byId.get(pid) || idx.byJersey.get(jer) || idx.byName.get(pnm) || null;
+    }
+
+    function defaultDrillName(){
+      const lbl = currentFilterSets().label;
+      return `1v1 – ${lbl}`;
+    }
+
+    function collectChips(){
+      return {
+        clean_release: !!getEl('chip-release').checked,
+        ball_caught:   !!getEl('chip-catch').checked,
+        qb_on_time:    !!getEl('chip-ontime').checked
+      };
+    }
+
+    function buildNotes(extra={}){
+      const vsOff = extra.vsOff || '', vsDef = extra.vsDef || '';
+      const base = {
+        route: clean(getEl('route').value),
+        coverage: clean(getEl('coverage').value),
+        matchup: getEl('matchup').value,
+        vs_player_id: extra.vsId || '',
+        chips: collectChips(),
+        note: clean(getEl('notes').value)
+      };
+      return Object.entries(base)
+        .filter(([k,v]) => !(v==='' || v==null || (typeof v==='object' && Object.values(v).every(x=>!x))))
+        .map(([k,v]) => typeof v==='object' ? `${k}=${JSON.stringify(v)}` : `${k}=${v}`)
+        .join(' | ');
+    }
+
+    /* ===== WRITES ===== */
+    async function writeRow({ date, player_id, side, opponent_id, outcome }){
+      // outcome: 'OFF','DEF','TIE'
+      const isOff = side==='OFF';
+      const success = outcome==='TIE' ? null : (isOff ? (outcome==='OFF') : (outcome==='DEF'));
+      const primaryValue = success==null ? '' : (success ? 'Yes' : 'No');
+
+      const drillName = clean(getEl('drill-name').value) || defaultDrillName();
+
+      const payload = {
+        action:'practice',
+        sheet_id: PRACTICE_SHEET_ID,
+        sheet_name:'61_Fact_Practice',
+
+        date,
+        player_id,
+
+        drill: drillName,
+        drill_category: '1v1',
+        position_group: side,                 // OFF / DEF (easy to pivot later)
+        position_specific: 1,
+
+        practice_intensity: '',               // keep minimal for speed
+        attendance:        '',
+        player_effort:     '',
+
+        primary_measurement: 'win',
+        primary_unit:        'boolean',
+        primary_value:       primaryValue,
+        primary_success:     success,
+
+        secondary_measurement: '',
+        secondary_unit:        '',
+        secondary_value:       '',
+        secondary_success:     '',
+
+        success_threshold:   'Yes',
+        failure_threshold:   'No',
+        secondary_threshold: '',
+
+        // legacy "reps"
+        reps: 1,
+        successful_reps: success===true ? 1 : 0,
+
+        drill_notes: buildNotes({ vsId: opponent_id })
+      };
+
+      const fd = new FormData();
+      fd.append('data', JSON.stringify(payload));
+      const res  = await fetch(APPS_SCRIPT_URL, { method:'POST', body: fd });
+      const txt  = await res.text();
+      let json=null; try{ json=JSON.parse(txt);}catch{}
+      if(!(res.ok && json && json.ok)){
+        throw new Error((json && json.error) ? json.error : 'Write failed');
+      }
+    }
+
+    async function submitOutcome(outcome){ // 'OFF' | 'DEF' | 'TIE'
+      const date = getEl('prac-date').value;
+      const off = resolveFrom('off', offIdx);
+      const def = resolveFrom('def', defIdx);
+      if(!date){ showStatus('Pick a date.', 'warning'); return; }
+      if(!off || !def){
+        showStatus('Pick both players for Offense and Defense.', 'warning');
+        return;
+      }
+      try{
+        await Promise.all([
+          writeRow({ date, player_id: off.player_id, side:'OFF', opponent_id:def.player_id, outcome }),
+          writeRow({ date, player_id: def.player_id, side:'DEF', opponent_id:off.player_id, outcome })
+        ]);
+        // After write, prepare next fast entry: keep players & context, just flash success
+        showStatus('Logged 1v1 result. ✅', 'success');
+        // If you want to clear chips each time:
+        ['chip-release','chip-catch','chip-ontime'].forEach(id=> getEl(id).checked=false);
+      }catch(err){
+        console.warn(err);
+        showStatus('Network/Write error. Not saved.', 'error');
+      }
+    }
+
+    /* ===== UI WIRING ===== */
+    function wireUI(){
+      // Persist date & matchup & drill name
+      const date = getEl('prac-date');
+      const matchup = getEl('matchup');
+      const drill = getEl('drill-name');
+
+      const sDate = localStorage.getItem(LS.date); if (sDate) date.value = sDate; setTodayIfEmpty(date);
+      const sMat  = localStorage.getItem(LS.matchup); if (sMat) matchup.value = sMat;
+      const sDr   = localStorage.getItem(LS.drill); if (sDr) drill.value = sDr;
+
+      date.addEventListener('change', ()=> localStorage.setItem(LS.date, date.value));
+      matchup.addEventListener('change', ()=>{
+        localStorage.setItem(LS.matchup, matchup.value);
+        // If drill is empty or previously auto, refresh default
+        if(!clean(drill.value) || drill.dataset.auto==='1'){
+          drill.value = defaultDrillName();
+          drill.dataset.auto = '1';
+          localStorage.setItem(LS.drill, drill.value);
+        }
+        // Rebuild datalists for sides
+        buildSideUIs();
+        // Clear currently typed players (to avoid cross-pos errors)
+        ['off','def'].forEach(p=>{
+          ['jersey','id','name'].forEach(f=> getEl(`${p}-${f}`).value='');
+        });
+      });
+      drill.addEventListener('input', ()=>{
+        // If user types their own, drop auto flag
+        drill.dataset.auto = clean(drill.value) ? '0' : '1';
+        localStorage.setItem(LS.drill, drill.value);
+      });
+
+      // Set a default drill if none
+      if(!clean(drill.value)){ drill.value = defaultDrillName(); drill.dataset.auto='1'; }
+
+      // Buttons
+      getEl('btnOffWin').addEventListener('click', ()=> submitOutcome('OFF'));
+      getEl('btnDefWin').addEventListener('click', ()=> submitOutcome('DEF'));
+      getEl('btnTie').addEventListener('click',    ()=> submitOutcome('TIE'));
+
+      getEl('btnSwap').addEventListener('click', ()=>{
+        const fields=['jersey','id','name'];
+        const cache = {};
+        fields.forEach(f=> cache[f]=getEl(`off-${f}`).value);
+        fields.forEach(f=> getEl(`off-${f}`).value = getEl(`def-${f}`).value);
+        fields.forEach(f=> getEl(`def-${f}`).value = cache[f]);
+      });
+      getEl('btnClear').addEventListener('click', ()=>{
+        ['off','def'].forEach(p=> ['jersey','id','name'].forEach(f=> getEl(`${p}-${f}`).value=''));
+      });
+    }
+
+    /* ===== BOOT ===== */
+    (async function init(){
+      wireUI();
+      await fetchRoster();
+      buildSideUIs();
+    })();
+  </script>
+</body>
+</html>

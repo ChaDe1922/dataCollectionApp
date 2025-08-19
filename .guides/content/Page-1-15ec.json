@@ -1,0 +1,17 @@
+{
+	"id": "15ec7238-4c5a-dd1f-482a-deafeccd54df",
+	"title": "Page 1",
+	"files": [
+		{
+			"path": "#tabs",
+			"action": "close"
+		}
+	],
+	"path": [],
+	"contentType": "markdown",
+	"type": "page",
+	"teacherOnly": false,
+	"closeTerminalSession": true,
+	"learningObjectives": "",
+	"layout": "1-panel"
+}

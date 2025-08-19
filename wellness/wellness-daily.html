@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Daily Wellness - Football Data Tracker</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body class="practice-page">
+  <header class="page-header">
+    <h1>Daily Wellness</h1>
+    <nav class="menu-actions" aria-label="Header navigation">
+      <a href="../index.html" class="menu-btn">Home</a>
+      <a href="./wellness.html" class="menu-btn secondary">Wellness</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="container">
+      <form id="wellness-form">
+        <!-- Player selectors (bi-directional) -->
+        <div class="form-section">
+          <label for="jersey" class="form-label">Jersey #</label>
+          <input type="text" id="jersey" class="form-input" placeholder="e.g., 12" list="jersey-list" inputmode="numeric" autocomplete="off" />
+          <datalist id="jersey-list"></datalist>
+        </div>
+
+        <div class="form-section">
+          <label for="player-id" class="form-label">Player ID</label>
+          <input type="text" id="player-id" class="form-input" placeholder="e.g., QB001" list="playerid-list" autocomplete="off" />
+          <datalist id="playerid-list"></datalist>
+        </div>
+
+        <div class="form-section">
+          <label for="player-name" class="form-label">Player Name</label>
+          <input type="text" id="player-name" class="form-input" placeholder="Type a few letters…" list="playername-list" autocomplete="off" />
+          <datalist id="playername-list"></datalist>
+        </div>
+
+        <!-- Core sliders -->
+        <div class="form-section slider-group">
+          <label for="energy" class="form-label">Energy Level: <span class="slider-value" data-for="energy">3</span></label>
+          <input type="range" id="energy" min="1" max="5" value="3" />
+        </div>
+
+        <div class="form-section slider-group">
+          <label for="soreness" class="form-label">Soreness Level: <span class="slider-value" data-for="soreness">3</span></label>
+          <input type="range" id="soreness" min="1" max="5" value="3" />
+        </div>
+
+        <div class="form-section slider-group">
+          <label for="sleep_quality" class="form-label">Sleep Quality: <span class="slider-value" data-for="sleep_quality">3</span></label>
+          <input type="range" id="sleep_quality" min="1" max="5" value="3" />
+        </div>
+
+        <!-- Optional extras -->
+        <div class="form-section slider-group">
+          <label for="stress_level" class="form-label">Stress Level: <span class="slider-value" data-for="stress_level">3</span></label>
+          <input type="range" id="stress_level" min="1" max="5" value="3" />
+        </div>
+
+        <div class="form-section slider-group">
+          <label for="motivation" class="form-label">Motivation: <span class="slider-value" data-for="motivation">3</span></label>
+          <input type="range" id="motivation" min="1" max="5" value="3" />
+        </div>
+
+        <div class="form-section slider-group">
+          <label for="hydration" class="form-label">Hydration: <span class="slider-value" data-for="hydration">3</span></label>
+          <input type="range" id="hydration" min="1" max="5" value="3" />
+        </div>
+
+        <div class="form-section slider-group">
+          <label for="nutrition_quality" class="form-label">Nutrition Quality: <span class="slider-value" data-for="nutrition_quality">3</span></label>
+          <input type="range" id="nutrition_quality" min="1" max="5" value="3" />
+        </div>
+
+        <!-- Injury -->
+        <div class="form-section">
+          <div class="form-label">Any Injury Concern?</div>
+          <div class="btn-grid" style="grid-template-columns: repeat(2,1fr);">
+            <button type="button" class="btn btn-danger" data-injury="1">YES</button>
+            <button type="button" class="btn btn-success active" data-injury="0">NO</button>
+          </div>
+          <input type="hidden" id="injury_concern" value="0" />
+        </div>
+
+        <div class="form-section" id="injury-location-group" style="display:none;">
+          <label for="injury_status" class="form-label">Injury Status</label>
+          <select id="injury_status" class="form-select">
+            <option value="">-- Select Status --</option>
+            <option value="New">New</option>
+            <option value="Ongoing">Ongoing</option>
+            <option value="Cleared">Cleared</option>
+          </select>
+
+          <label for="injury_location" class="form-label" style="margin-top:10px;">Location of Injury</label>
+          <select id="injury_location" class="form-select">
+            <option value="">-- Select Location --</option>
+            <option value="Head">Head</option><option value="Neck">Neck</option>
+            <option value="Shoulder">Shoulder</option><option value="Elbow">Elbow</option>
+            <option value="Wrist">Wrist</option><option value="Hand">Hand</option>
+            <option value="Back">Back</option><option value="Hip">Hip</option>
+            <option value="Knee">Knee</option><option value="Ankle">Ankle</option>
+            <option value="Foot">Foot</option><option value="Other">Other</option>
+          </select>
+
+          <!-- Short answer note: always appears after a selection when concern = YES -->
+          <input
+            id="injury_location_other"
+            type="text"
+            class="form-input"
+            style="display:none; margin-top:10px;"
+            placeholder="Describe the injury (optional)"
+          />
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="submit-btn">Submit Wellness Data</button>
+
+        <div id="form-status" class="status"></div>
+      </form>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Game Speed Data Systems</p>
+  </footer>
+
+  <div id="offline-indicator" class="offline-indicator">📡 Offline — Data will sync when connected</div>
+
+  <script>
+    /*********** CONFIG ***********/
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzKk3MlCDfFyeBo5xLds9Bc8sm88j05vVCMNOATiieZsN9H8ltvB7kiwtwJOa0KTubf3w/exec';
+    const QUEUE_KEY = 'wellnessQueue';
+    const ROSTER_CACHE_KEY = 'rosterCache_v3';
+
+    const MAX_BACKOFF_MS = 5 * 60 * 1000;
+    const BASE_BACKOFF_MS = 5000;
+    const PERIODIC_FLUSH_MS = 60000;
+
+    /*********** UI helpers ***********/
+    const statusBox = document.getElementById('form-status');
+    const offlineBadge = document.getElementById('offline-indicator');
+
+    function showStatus(msg, type='success') {
+      statusBox.textContent = msg;
+      statusBox.className = 'status ' + type + ' show';
+      setTimeout(() => statusBox.classList.remove('show'), 3500);
+    }
+    function updateOfflineBadge() {
+      if (navigator.onLine) offlineBadge.classList.remove('show');
+      else offlineBadge.classList.add('show');
+    }
+
+    /*********** Slider mirrors ***********/
+    document.querySelectorAll('input[type="range"]').forEach(slider => {
+      const span = document.querySelector('.slider-value[data-for="'+ slider.id +'"]');
+      const update = () => { if (span) span.textContent = slider.value; };
+      update();
+      slider.addEventListener('input', update);
+    });
+
+    /*********** Injury UI ***********/
+    const injuryButtons = document.querySelectorAll('[data-injury]');
+    const injuryHidden  = document.getElementById('injury_concern');
+    const injuryGroup   = document.getElementById('injury-location-group');
+
+    injuryButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        injuryButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        injuryHidden.value = btn.dataset.injury;
+
+        const show = btn.dataset.injury === '1';
+        injuryGroup.style.display = show ? 'block' : 'none';
+
+        if (!show) {
+          document.getElementById('injury_status').value = '';
+          document.getElementById('injury_location').value = '';
+          const other = document.getElementById('injury_location_other');
+          other.value = '';
+          other.style.display = 'none';
+          other.removeAttribute('required');
+        } else {
+          // If switching to YES and a body part is already selected, trigger handler
+          document.getElementById('injury_location').dispatchEvent(new Event('change'));
+        }
+      });
+    });
+
+    const locSelect = document.getElementById('injury_location');
+    const locOther  = document.getElementById('injury_location_other');
+
+    // Show short-answer box AFTER a body part is selected (when concern = YES)
+    locSelect.addEventListener('change', () => {
+      const concernYes = injuryHidden.value === '1';
+      const choice = locSelect.value;
+      if (!concernYes || !choice) {
+        locOther.style.display = 'none';
+        locOther.value = '';
+        locOther.removeAttribute('required');
+        return;
+      }
+      const isOther = choice === 'Other';
+      locOther.style.display = 'block';
+      locOther.placeholder = isOther
+        ? 'Please describe the location'
+        : 'Describe the injury (optional)';
+      // Make it required only when "Other" is selected
+      if (isOther) locOther.setAttribute('required', 'true');
+      else locOther.removeAttribute('required');
+    });
+
+    /*********** Roster autocomplete ***********/
+    let roster = []; // [{player_id, player_name, position, jersey_number}]
+    const byId     = new Map();
+    const byJersey = new Map();
+    const byName   = new Map();
+
+    function normId(v){ return String(v||'').trim().toUpperCase(); }
+    function normJersey(v){ return String(v||'').trim().replace(/^0+/, ''); }
+    function normName(v){ return String(v||'').trim().toLowerCase(); }
+
+    function indexRoster() {
+      byId.clear(); byJersey.clear(); byName.clear();
+      roster.forEach(r => {
+        const id = normId(r.player_id);
+        const j  = normJersey(r.jersey_number);
+        const n  = normName(r.player_name);
+        if (id) byId.set(id, r);
+        if (j)  byJersey.set(j, r);
+        if (n)  byName.set(n, r);
+      });
+    }
+
+    function populateDatalists() {
+      const jl = document.getElementById('jersey-list');
+      const il = document.getElementById('playerid-list');
+      const nl = document.getElementById('playername-list');
+      jl.innerHTML = ''; il.innerHTML = ''; nl.innerHTML = '';
+
+      const sorted = [...roster].sort((a,b) => (Number(a.jersey_number)||0) - (Number(b.jersey_number)||0));
+      sorted.forEach(r => {
+        const optJ = document.createElement('option');
+        optJ.value = normJersey(r.jersey_number);
+        optJ.label = `${r.player_name} (${r.position || ''})`.trim();
+        jl.appendChild(optJ);
+
+        const optI = document.createElement('option');
+        optI.value = r.player_id;
+        optI.label = `${r.player_name}${r.jersey_number ? ' #' + r.jersey_number : ''} ${r.position ? '('+r.position+')' : ''}`;
+        il.appendChild(optI);
+
+        const optN = document.createElement('option');
+        optN.value = r.player_name;
+        optN.label = `${r.player_id}${r.jersey_number ? ' • #' + r.jersey_number : ''} ${r.position ? '('+r.position+')' : ''}`;
+        nl.appendChild(optN);
+      });
+    }
+
+    async function fetchRosterFromServer() {
+      try {
+        const res = await fetch(`${APPS_SCRIPT_URL}?action=roster`, { method: 'GET' });
+        const txt = await res.text();
+        const json = JSON.parse(txt);
+        if (json && json.ok && Array.isArray(json.roster)) return normalizeRoster(json.roster);
+      } catch {}
+      try {
+        const fd = new FormData(); fd.append('action', 'roster');
+        const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: fd });
+        const txt = await res.text();
+        theJson = JSON.parse(txt);
+        if (theJson && theJson.ok && Array.isArray(theJson.roster)) return normalizeRoster(theJson.roster);
+      } catch {}
+      throw new Error('Roster fetch failed');
+    }
+
+    function normalizeRoster(items) {
+      return items.map(it => ({
+        player_id: String(it.player_id || '').trim(),
+        player_name: String(it.player_name || '').trim(),
+        position: String(it.position || '').trim(),
+        jersey_number: String(it.jersey_number || '').trim()
+      }));
+    }
+
+    async function loadRoster() {
+      try {
+        const cached = JSON.parse(localStorage.getItem(ROSTER_CACHE_KEY) || '[]');
+        if (Array.isArray(cached) && cached.length) {
+          roster = cached;
+          indexRoster();
+          populateDatalists();
+        }
+      } catch {}
+      try {
+        const fresh = await fetchRosterFromServer();
+        if (fresh && fresh.length) {
+          roster = fresh;
+          localStorage.setItem(ROSTER_CACHE_KEY, JSON.stringify(roster));
+          indexRoster();
+          populateDatalists();
+        }
+      } catch (err) {
+        if (!roster.length) console.warn('No roster available (offline + no cache).');
+      }
+    }
+
+    let autofilling = false;
+    function applyEntry(entry) {
+      if (!entry) return;
+      autofilling = true;
+      const j = document.getElementById('jersey');
+      const i = document.getElementById('player-id');
+      const n = document.getElementById('player-name');
+      if (entry.jersey_number) j.value = normJersey(entry.jersey_number);
+      if (entry.player_id)     i.value = entry.player_id;
+      if (entry.player_name)   n.value = entry.player_name;
+      autofilling = false;
+    }
+
+    function setupBiDirectional() {
+      const j = document.getElementById('jersey');
+      const i = document.getElementById('player-id');
+      const n = document.getElementById('player-name');
+
+      function tryResolveFromJersey() {
+        if (autofilling) return;
+        const entry = byJersey.get(normJersey(j.value));
+        if (entry) applyEntry(entry);
+      }
+      function tryResolveFromId() {
+        if (autofilling) return;
+        const entry = byId.get(normId(i.value));
+        if (entry) applyEntry(entry);
+      }
+      function tryResolveFromName() {
+        if (autofilling) return;
+        const key = normName(n.value);
+        if (byName.has(key)) { applyEntry(byName.get(key)); return; }
+        if (key.length >= 2) {
+          const matches = roster.filter(r => normName(r.player_name).includes(key));
+          if (matches.length === 1) applyEntry(matches[0]);
+        }
+      }
+
+      j.addEventListener('input', tryResolveFromJersey);
+      j.addEventListener('change', tryResolveFromJersey);
+      i.addEventListener('input', tryResolveFromId);
+      i.addEventListener('change', tryResolveFromId);
+      n.addEventListener('input', tryResolveFromName);
+      n.addEventListener('change', tryResolveFromName);
+    }
+
+    /*********** Offline queue ***********/
+    function loadQueue(){ try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); } catch { return []; } }
+    function saveQueue(q){ localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); }
+    function uuid(){ return (crypto && crypto.randomUUID) ? crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.random().toString(16).slice(2); }
+
+    async function sendToServer(payload) {
+      console.log('[Wellness] sending payload:', payload);
+      const fd = new FormData();
+      fd.append('data', JSON.stringify(payload));
+
+      let res, text;
+      try {
+        res  = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: fd });
+        text = await res.text();
+      } catch (netErr) {
+        console.error('[Wellness] network error:', netErr);
+        throw new Error('Network error (fetch failed)');
+      }
+
+      let json = null;
+      try { json = JSON.parse(text); } catch (_) {}
+      console.log('[Wellness] server status:', res.status, 'body:', text);
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${text?.slice(0,200)}`);
+      if (!json || json.ok !== true) throw new Error((json && json.error) ? json.error : (text || 'Unknown server response'));
+      return json;
+    }
+
+    let flushing = false, flushTimer = null;
+    function backoffDelay(retries){ const exp = Math.max(0, retries-1); return Math.min(MAX_BACKOFF_MS, BASE_BACKOFF_MS * Math.pow(2, exp)); }
+
+    async function flushQueue({force=false} = {}) {
+      if (flushing) return;
+      let q = loadQueue();
+      if (!navigator.onLine || q.length === 0) { schedulePeriodicFlush(); return; }
+      flushing = true;
+      try {
+        for (let i=0; i<q.length; i++){
+          const item = q[i];
+          const now = Date.now();
+          if (!force && item.nextAttemptAt && now < item.nextAttemptAt) break;
+          try {
+            await sendToServer(item.payload);
+            q.splice(i,1); i--;
+          } catch (err) {
+            item.retries = (item.retries || 0) + 1;
+            item.nextAttemptAt = Date.now() + backoffDelay(item.retries);
+            q[i] = item;
+            break;
+          }
+        }
+        saveQueue(q);
+      } finally {
+        flushing = false;
+        schedulePeriodicFlush();
+      }
+    }
+    function schedulePeriodicFlush(){
+      if (flushTimer) clearTimeout(flushTimer);
+      const q = loadQueue();
+      if (!navigator.onLine || q.length === 0) return;
+      const now = Date.now();
+      const nextTimes = q.map(it => it.nextAttemptAt || now).filter(t => t >= now);
+      const soonest = nextTimes.length ? Math.min(...nextTimes) : now + PERIODIC_FLUSH_MS;
+      const delay = Math.max(1000, Math.min(soonest - now, PERIODIC_FLUSH_MS));
+      flushTimer = setTimeout(() => flushQueue(), delay);
+    }
+
+    /*********** Local preview calculation ***********/
+    function computeWellnessScore(p){
+      const num = v => Number(v) || 0;
+      const energy     = num(p.energy);
+      const sleep      = num(p.sleep_quality);
+      const soreness   = 6 - num(p.soreness);
+      const stress     = 6 - num(p.stress_level);
+      const motivation = num(p.motivation);
+      const hydration  = num(p.hydration);
+      const nutrition  = num(p.nutrition_quality);
+      const avg = (energy + sleep + soreness + stress + motivation + hydration + nutrition) / 7;
+      return Math.round(avg * 100) / 100;
+    }
+
+    /*********** Submit ***********/
+    document.getElementById('wellness-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const jerseyVal = document.getElementById('jersey').value.trim();
+      const playerIdVal = document.getElementById('player-id').value.trim();
+      const playerNameVal = document.getElementById('player-name').value.trim();
+
+      let entry = null;
+      if (playerIdVal && byId.get(normId(playerIdVal))) entry = byId.get(normId(playerIdVal));
+      else if (jerseyVal && byJersey.get(normJersey(jerseyVal))) entry = byJersey.get(normJersey(jerseyVal));
+      else if (playerNameVal && byName.get(normName(playerNameVal))) entry = byName.get(normName(playerNameVal));
+
+      if (!entry) { showStatus('Please select a valid player (ID/Jersey/Name).', 'warning'); return; }
+      if (!entry.player_id) { showStatus('Player ID missing after selection. Pick by ID or Jersey again.', 'warning'); return; }
+
+      applyEntry(entry);
+
+      const payload = {
+        timestamp: new Date().toISOString(),
+        player_id: entry.player_id,
+        jersey_number: entry.jersey_number || '',
+        player_name: entry.player_name || '',
+        position: entry.position || '',
+        energy: document.getElementById('energy').value,
+        soreness: document.getElementById('soreness').value,
+        sleep_quality: document.getElementById('sleep_quality').value,
+        stress_level: document.getElementById('stress_level').value,
+        motivation: document.getElementById('motivation').value,
+        hydration: document.getElementById('hydration').value,
+        nutrition_quality: document.getElementById('nutrition_quality').value,
+        injury_concern: document.getElementById('injury_concern').value,
+        injury_status: document.getElementById('injury_status').value || '',
+        injury_location: document.getElementById('injury_location').value || '',
+        injury_location_other: document.getElementById('injury_location_other').value || '',
+        wellness_score_preview: 0,
+        wellness_risk_flag_preview: ''
+      };
+
+      payload.wellness_score_preview = computeWellnessScore(payload);
+      payload.wellness_risk_flag_preview = (payload.wellness_score_preview < 2.5) ? 'FLAG' : '';
+
+      const record = { id: uuid(), payload, retries: 0, nextAttemptAt: Date.now() };
+      const q = loadQueue(); q.push(record); saveQueue(q);
+
+      showStatus(navigator.onLine ? 'Submitting…' : 'Saved offline. Will sync when online.', navigator.onLine ? 'success' : 'warning');
+
+      e.target.reset();
+      document.querySelectorAll('input[type="range"]').forEach(slider => {
+        const span = document.querySelector('.slider-value[data-for="'+ slider.id +'"]');
+        if (span) span.textContent = slider.value;
+      });
+      injuryButtons.forEach(b => b.classList.remove('active'));
+      document.querySelector('[data-injury="0"]').classList.add('active');
+      injuryHidden.value = '0';
+      injuryGroup.style.display = 'none';
+      locOther.value = ''; locOther.style.display = 'none'; locOther.removeAttribute('required');
+
+      if (navigator.onLine) {
+        try {
+          await flushQueue({ force: true });
+          const stillQueued = loadQueue().some(it => it.id === record.id);
+          showStatus(stillQueued ? 'Server busy. Queued for retry.' : 'Wellness submitted. Thanks!', stillQueued ? 'warning' : 'success');
+        } catch (err) {
+          console.error('[Wellness] immediate flush error:', err);
+          showStatus(`Submit failed: ${err.message}`, 'error');
+        }
+      }
+    });
+
+    /*********** Lifecycle ***********/
+    window.addEventListener('online', () => { updateOfflineBadge(); flushQueue({ force:true }); });
+    window.addEventListener('offline', updateOfflineBadge);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') { updateOfflineBadge(); flushQueue(); }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateOfflineBadge();
+      loadRoster().then(() => {
+        indexRoster();
+        populateDatalists();
+        setupBiDirectional();
+      });
+      flushQueue();
+      setInterval(() => { if (navigator.onLine) flushQueue(); }, PERIODIC_FLUSH_MS);
+    });
+  </script>
+</body>
+</html>

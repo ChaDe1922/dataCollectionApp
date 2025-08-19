@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Primary / Drives – Football Data Tracker</title>
+  <link rel="stylesheet" href="../style.css"/>
+  <style>
+    .container{max-width:1200px;margin:0 auto;padding:1rem}
+    .grid{display:grid;gap:1rem}
+    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .card{background:var(--panel-bg,rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:1rem}
+    .card h2{margin:0 0 .5rem 0;font-size:1.1rem}
+    .row{display:flex;gap:.75rem;flex-wrap:wrap}
+    .row > *{flex:1 1 160px}
+    label{display:block;font-size:.85rem;opacity:.9;margin-bottom:.25rem}
+    input,select,textarea{width:100%;padding:.6rem .7rem;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.2);color:#fff}
+    .btnbar{display:flex;gap:.5rem;flex-wrap:wrap}
+    .btn{padding:.6rem .9rem;border-radius:999px;border:1px solid transparent;cursor:pointer}
+    .btn.primary{background:#43b581;color:#071a12}
+    .btn.subtle{background:transparent;border-color:rgba(255,255,255,.25);color:#fff}
+    .btn.warn{background:#ffa142;color:#2a1800}
+    .chip{display:inline-block;padding:.25rem .6rem;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);font-size:.8rem}
+    .tiny{font-size:.8rem;opacity:.85}
+    .success{color:#7CFC98}.error{color:#ff6b6b}
+    .section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:.35rem}
+    .kpi{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.6rem}
+    .togglebar{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.5rem}
+    .clock-face{font-variant-numeric:tabular-nums;font-size:2rem;letter-spacing:.5px}
+    .clock-wrap{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+    .clock-keys{display:flex;gap:.35rem;flex-wrap:wrap}
+    .clock-keys .btn{padding:.45rem .7rem}
+    /* schedule meta */
+    .meta{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.5rem;margin-top:.5rem}
+    .meta .chip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  </style>
+</head>
+
+<body class="practice-page">
+  <header class="page-header">
+    <h1>Primary / Drives</h1>
+    <nav class="menu-actions" aria-label="Header navigation">
+      <a href="game-day.html" class="menu-btn">Game Day</a>
+      <a href="../index.html" class="menu-btn">Home</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="container grid grid-2">
+      <!-- ===== Game Context ===== -->
+      <section class="card">
+        <div class="section-title">
+          <h2>Game Context</h2>
+          <span id="status" class="tiny">Ready</span>
+        </div>
+        <div class="row">
+          <div>
+            <label>Game ID <span class="tiny">(from schedule)</span></label>
+            <input id="game_id" list="list_game_ids" placeholder="e.g. G2025-01"/>
+            <datalist id="list_game_ids"></datalist>
+          </div>
+          <div><label>Our Team Label</label><input id="our_team" placeholder="Us" value="Us"/></div>
+          <div><label>Opponent Label</label><input id="opp_team" placeholder="Opponent" value="Opponent"/></div>
+        </div>
+        <div id="game_meta" class="meta" aria-live="polite" style="display:none">
+          <span class="chip" id="meta_date"></span>
+          <span class="chip" id="meta_week"></span>
+          <span class="chip" id="meta_opp"></span>
+          <span class="chip" id="meta_ha"></span>
+          <span class="chip" id="meta_weather"></span>
+        </div>
+        <div class="btnbar" style="margin-top:.5rem">
+          <button class="btn subtle" id="setDefaultsBtn">Set Defaults</button>
+          <button class="btn subtle" id="pickNextBtn">Pick Next on Schedule</button>
+          <span class="chip">Schedule drives the Game ID</span>
+        </div>
+      </section>
+
+      <!-- ===== In-screen Game Clock ===== -->
+      <section class="card">
+        <div class="section-title">
+          <h2>Game Clock</h2>
+          <span class="tiny">Snap stamps Quarter + Clock into the Play form</span>
+        </div>
+        <div class="clock-wrap">
+          <div>
+            <label>Quarter</label>
+            <select id="clk_quarter">
+              <option value="1">Q1</option><option value="2">Q2</option>
+              <option value="3">Q3</option><option value="4">Q4</option>
+              <option value="OT">OT</option>
+            </select>
+          </div>
+          <div>
+            <label>Time (mm:ss)</label>
+            <div class="clock-face" id="clk_display">15:00</div>
+          </div>
+        </div>
+        <div class="clock-keys" style="margin-top:.5rem">
+          <button class="btn primary" id="clk_start">Start</button>
+          <button class="btn subtle" id="clk_pause">Pause</button>
+          <button class="btn warn" id="clk_reset">Reset Q</button>
+          <button class="btn subtle" data-dt="-10">-10s</button>
+          <button class="btn subtle" data-dt="-5">-5s</button>
+          <button class="btn subtle" data-dt="+5">+5s</button>
+          <button class="btn subtle" data-dt="+10">+10s</button>
+          <button class="btn primary" id="clk_snap">Snap → Play</button>
+        </div>
+        <div class="togglebar">
+          <label class="tiny"><input type="checkbox" id="auto_accum" checked/> Auto-accumulate possession time for active drive</label>
+        </div>
+      </section>
+
+      <!-- ===== Drive Controls ===== -->
+      <section class="card">
+        <div class="section-title">
+          <h2>Drive</h2>
+          <span class="chip" id="driveBadge">No active drive</span>
+        </div>
+        <div class="btnbar" style="margin-bottom:.5rem">
+          <button class="btn primary" id="newDriveBtn">Start New Drive</button>
+          <button class="btn warn" id="endDriveBtn" disabled>End / Save Drive</button>
+        </div>
+
+        <div class="row">
+          <div><label>Active Drive ID</label><input id="drive_id" placeholder="auto" disabled/></div>
+          <div><label>Team In Possession</label>
+            <select id="drive_poss"><option>Us</option><option>Opponent</option></select>
+          </div>
+          <div><label>Start Yardline (+/-)</label><input id="drive_start" type="number" step="1" placeholder="-25 = our 25, +40 = opp 40"/></div>
+          <div><label>End Yardline (+/-)</label><input id="drive_end" type="number" step="1"/></div>
+        </div>
+
+        <div class="row">
+          <div><label>Plays in Drive</label><input id="drive_plays" type="number" step="1"/></div>
+          <div><label>Yards Gained</label><input id="drive_yards" type="number" step="1" placeholder="auto from start/end"/></div>
+          <div><label>Possession Time (sec)</label><input id="drive_posstime" type="number" step="1" placeholder="auto from snaps"/></div>
+          <div><label>Result</label>
+            <select id="drive_result">
+              <option value="">—</option><option>TD</option><option>FG</option><option>Punt</option>
+              <option>TO on Downs</option><option>INT</option><option>Fumble</option>
+              <option>End Half</option><option>End Game</option>
+            </select>
+          </div>
+          <div><label>Scoring Type</label>
+            <select id="drive_scoretype">
+              <option value="">—</option><option>Rush TD</option><option>Pass TD</option><option>Return TD</option>
+              <option>FG</option><option>Safety</option><option>PAT</option><option>2PT</option>
+            </select>
+          </div>
+        </div>
+        <div class="togglebar">
+          <label class="tiny"><input type="checkbox" id="auto_drive_yards" checked/> Auto-calc Yards (end − start)</label>
+          <label class="tiny"><input type="checkbox" id="auto_drive_plays" checked/> Auto-count Plays in Drive</label>
+        </div>
+      </section>
+
+      <!-- ===== Play Entry ===== -->
+      <section class="card">
+        <div class="section-title">
+          <h2>Play</h2>
+          <span class="chip" id="playBadge">No play ID yet</span>
+        </div>
+
+        <div class="btnbar" style="margin-bottom:.5rem">
+          <button class="btn subtle" id="newPlayIdBtn">New Play ID</button>
+          <button class="btn primary" id="addPlayBtn">Add Play to Table</button>
+        </div>
+
+        <div class="row">
+          <div><label>Play ID</label><input id="play_id" placeholder="auto or click 'New Play ID'"/></div>
+          <div><label>Drive ID</label><input id="play_drive_id" placeholder="auto from active drive" disabled/></div>
+          <div><label>Offense Team</label>
+            <select id="play_offense"><option>Us</option><option>Opponent</option></select>
+          </div>
+          <div><label>Quarter</label>
+            <select id="play_qtr"><option>1</option><option>2</option><option>3</option><option>4</option><option>OT</option></select>
+          </div>
+          <div><label>Clock (mm:ss)</label><input id="play_clock" placeholder="12:34"/></div>
+        </div>
+
+        <div class="row">
+          <div><label>Down</label><select id="play_down"><option>1</option><option>2</option><option>3</option><option>4</option></select></div>
+          <div><label>Distance (yds)</label><input id="play_dist" type="number" step="1"/></div>
+          <div><label>Yard Line (+/-)</label><input id="play_yardline" type="number" step="1"/></div>
+          <div><label>Play Type</label><select id="play_type"></select></div>
+          <div><label>Result Yards</label><input id="play_yards" type="number" step="1"/></div>
+        </div>
+
+        <div class="row">
+          <div><label>Formation</label><input id="play_form" list="list_formations" placeholder="e.g. Gun Trips"/></div>
+          <div><label>Personnel</label><input id="play_pers" list="list_personnel" placeholder="e.g. 11, 12, 21"/></div>
+          <div><label>Motion</label><input id="play_motion" list="list_motions" placeholder="Jet, Orbit, None"/></div>
+          <div><label>Play Name (Playbook)</label><input id="play_name" list="list_playnames" placeholder="Type to autocomplete…"/></div>
+        </div>
+
+        <div class="row">
+          <div><label><input type="checkbox" id="flag_explosive"/> Explosive</label></div>
+          <div><label><input type="checkbox" id="flag_rz"/> Red Zone</label></div>
+          <div><label><input type="checkbox" id="flag_g2g"/> Goal-to-Go</label></div>
+          <div><label><input type="checkbox" id="flag_2min"/> Two-Minute</label></div>
+          <div><label><input type="checkbox" id="flag_success"/> Success (EPA+)</label></div>
+        </div>
+
+        <div class="row">
+          <div><label>EP Before</label><input id="ep_before" type="number" step="0.01"/></div>
+          <div><label>EP After</label><input id="ep_after" type="number" step="0.01"/></div>
+          <div><label>EPA</label><input id="epa" type="number" step="0.01" placeholder="auto if EP fields set"/></div>
+        </div>
+
+        <div class="togglebar">
+          <label class="tiny"><input type="checkbox" id="auto_offense_from_drive" checked/> Auto: Offense = Drive Possession</label>
+          <label class="tiny"><input type="checkbox" id="auto_epa" checked/> Auto: EPA = EP After − EP Before</label>
+          <label class="tiny"><input type="checkbox" id="auto_next_yardline" checked/> Auto: Next Yard Line = current + result yds</label>
+          <label class="tiny"><input type="checkbox" id="auto_playbook_fill" checked/> Auto: Fill from Playbook selection</label>
+        </div>
+
+        <!-- datalists populated at runtime -->
+        <datalist id="list_formations"></datalist>
+        <datalist id="list_personnel"></datalist>
+        <datalist id="list_motions"></datalist>
+        <datalist id="list_playnames"></datalist>
+      </section>
+
+      <!-- ===== Game Summary Quick Helpers (optional) ===== -->
+      <section class="card">
+        <div class="section-title">
+          <h2>Game Summary — Helpers</h2>
+          <span class="tiny">Writes to <strong>05_Fact_GameSummary</strong></span>
+        </div>
+        <div class="kpi">
+          <div><label>Team Points</label><input id="sum_pts_team" type="number" step="1"/></div>
+          <div><label>Opponent Points</label><input id="sum_pts_opp" type="number" step="1"/></div>
+          <div><label>Team Offensive Yards</label><input id="sum_yards" type="number" step="1"/></div>
+          <div><label>First Downs</label><input id="sum_firstdowns" type="number" step="1"/></div>
+          <div><label>Plays</label><input id="sum_plays" type="number" step="1"/></div>
+          <div><label>Time of Poss (sec)</label><input id="sum_top" type="number" step="1"/></div>
+          <div><label>Penalties</label><input id="sum_pens" type="number" step="1"/></div>
+          <div><label>Penalty Yards</label><input id="sum_penyds" type="number" step="1"/></div>
+          <div><label>Drives</label><input id="sum_drives" type="number" step="1"/></div>
+          <div><label>Game Control (min)</label><input id="sum_gcmin" type="number" step="1"/></div>
+          <div><label>Snap Count Total</label><input id="sum_snaps" type="number" step="1"/></div>
+        </div>
+        <div class="btnbar" style="margin-top:.5rem">
+          <button class="btn primary" id="saveSummaryBtn">Update Game Summary</button>
+        </div>
+      </section>
+
+      <!-- ===== Log ===== -->
+      <section class="card">
+        <div class="section-title">
+          <h2>Log</h2><span class="tiny">Most recent first</span>
+        </div>
+        <div id="log" class="tiny" style="max-height:260px;overflow:auto"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer><p>&copy; 2025 Game Speed Data Systems</p></footer>
+
+  <script>
+  /* =======================
+  * SHARED GAME CONTEXT (master publisher)
+  * ======================= */
+  (function(global){
+    const KEY = 'gsds_game_ctx_v1';
+    const chan = ('BroadcastChannel' in window) ? new BroadcastChannel('gsds_ctx') : null;
+    const subs = new Set();
+    const read = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } };
+    const write = (ctx) => { localStorage.setItem(KEY, JSON.stringify(ctx)); if (chan) chan.postMessage({type:'ctx', ctx}); };
+    const merge = (partial) => { const next = { ...read(), ...partial, updated_at: Date.now() }; write(next); subs.forEach(fn=>fn(next)); };
+
+    if (typeof window !== 'undefined'){
+      window.addEventListener('storage', (e)=>{ if(e.key===KEY){ try{ const ctx=JSON.parse(e.newValue||'{}'); subs.forEach(fn=>fn(ctx)); }catch{} }});
+      if (chan) chan.onmessage = ev => { if (ev.data?.type==='ctx') subs.forEach(fn=>fn(ev.data.ctx)); };
+    }
+    global.GameContext = {
+      get: read,
+      set: merge,
+      setGame:  id => merge({ game_id:  (id||'').trim() }),
+      setDrive: id => merge({ drive_id: (id||'').trim() }),
+      setPlay:  id => merge({ play_id:  (id||'').trim() }),
+      clear: () => merge({ game_id:'', drive_id:'', play_id:'' }),
+      subscribe(fn){ subs.add(fn); fn(read()); return ()=>subs.delete(fn); }
+    };
+  })(window);
+
+  /* =======================
+  * CONFIG
+  * ======================= */
+  const API_BASE = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
+
+  // Playbook dictionary (optional but recommended)
+  const DICT_SHEET_ID = '1oHO-5gM9l3PTSjUxwQlYzFaAMTtlco2VZj8l315Uk1c';
+  const PLAYBOOK_TAB  = 'Playbook_Dictionary';
+
+  // 🔗 SCHEDULE: set this to your MASTER_DATA_2025 file ID
+  const SCHEDULE_SHEET_ID = '1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI';
+  const SCHEDULE_TAB = '01_Dim_Schedule';
+
+  // Route names (must match Apps Script)
+  const ROUTE_DRIVES = 'drives';
+  const ROUTE_PLAYS  = 'plays';
+  const ROUTE_SUM    = 'game_summary';
+  const ROUTE_GC     = 'game_control';
+
+  // Clock constants
+  const QUARTER_LEN = 15 * 60;
+  const OT_LEN = 10 * 60;
+
+  /* =======================
+  * STATE
+  * ======================= */
+  const el = id => document.getElementById(id);
+  const logBox = el('log');
+  const log = (msg, type='')=>{
+    const row = document.createElement('div');
+    if(type==='success') row.className='success';
+    if(type==='error') row.className='error';
+    row.textContent = '['+new Date().toLocaleTimeString()+'] '+msg;
+    logBox.prepend(row);
+    el('status').textContent = (type==='error'?'Error':'Ready');
+  };
+
+  let activeDriveId = '';
+  let drivePlayCount = 0;
+  let driveElapsedSec = 0;
+  let lastSnap = null;
+
+  // playbook + schedule
+  let playbook = [];
+  let playMap = {};
+  let schedule = [];
+  let scheduleMap = {}; // game_id -> row
+
+  const options = {
+    playTypes: ['Run','Pass','Sack','Kneel','Spike','Penalty only'],
+    formations: [],
+    personnel: [],
+    motions: []
+  };
+
+  /* =======================
+  * API helpers
+  * ======================= */
+  async function apiGet(params){
+    const url = new URL(API_BASE);
+    Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,v));
+    const r = await fetch(url);
+    return r.json();
+  }
+  async function apiPost(payload){
+    const r = await fetch(API_BASE,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    return r.json();
+  }
+  async function appendRow(route,row,ensure=[]){
+    const res = await apiPost({ action:'append', route, row, ensure_headers: ensure });
+    if(!res.ok) throw new Error(res.error||'Append failed');
+    return res;
+  }
+  async function nextId(prefix){
+    const res = await apiGet({ action:'next_id', prefix });
+    if(!res.ok) throw new Error(res.error||'ID failed');
+    return res.id;
+  }
+  function ensureGame(){
+    const gid = el('game_id').value.trim();
+    if(!gid) throw new Error('Set a Game ID first (pick from schedule).');
+    return gid;
+  }
+
+  /* =======================
+  * CLOCK
+  * ======================= */
+  let secLeft = QUARTER_LEN;
+  let clkTimer = null;
+
+  function displayClock(){
+    const m = Math.floor(secLeft/60).toString().padStart(2,'0');
+    const s = (secLeft%60).toString().padStart(2,'0');
+    el('clk_display').textContent = `${m}:${s}`;
+  }
+  function getQSeconds(){ return (el('clk_quarter').value==='OT') ? OT_LEN : QUARTER_LEN; }
+  function startClock(){ if(clkTimer) return; clkTimer = setInterval(()=>{ if(secLeft>0){ secLeft--; displayClock(); } },1000); }
+  function pauseClock(){ if(clkTimer){ clearInterval(clkTimer); clkTimer=null; } }
+  function resetQuarter(){ pauseClock(); secLeft = getQSeconds(); displayClock(); }
+  function nudgeSeconds(delta){ secLeft = Math.max(0, Math.min(getQSeconds(), secLeft + delta)); displayClock(); }
+
+  // Snap: stamp to Play form + accumulate drive time
+  function snapToPlay(){
+    const q = el('clk_quarter').value;
+    const m = Math.floor(secLeft/60).toString().padStart(2,'0');
+    const s = (secLeft%60).toString().padStart(2,'0');
+    el('play_qtr').value = q;
+    el('play_clock').value = `${m}:${s}`;
+
+    if(el('auto_accum').checked && activeDriveId){
+      if(lastSnap){
+        const prevQ = lastSnap.q;
+        const prevSec = lastSnap.secLeft;
+        const currQ = q;
+        const currSec = secLeft;
+
+        const qIndex = x => x==='OT' ? 5 : Number(x);
+        const lenForQ = x => x==='OT' ? OT_LEN : QUARTER_LEN;
+
+        let elapsed = 0;
+        if(qIndex(currQ) === qIndex(prevQ)){
+          elapsed = Math.max(0, prevSec - currSec);
+        } else {
+          elapsed += prevSec;
+          for(let k=qIndex(prevQ)+1; k<qIndex(currQ); k++){
+            elapsed += (k===5 ? OT_LEN : QUARTER_LEN);
+          }
+          elapsed += (lenForQ(currQ) - currSec);
+        }
+        driveElapsedSec += elapsed;
+        el('drive_posstime').value = Math.round(driveElapsedSec);
+      }
+      lastSnap = { q, secLeft };
+    }
+  }
+
+  // Wire clock buttons
+  el('clk_start').onclick = startClock;
+  el('clk_pause').onclick = pauseClock;
+  el('clk_reset').onclick = resetQuarter;
+  el('clk_snap').onclick  = snapToPlay;
+  document.querySelectorAll('.clock-keys .btn[data-dt]').forEach(b=>{
+    b.addEventListener('click',()=>nudgeSeconds(parseInt(b.dataset.dt,10)));
+  });
+  el('clk_quarter').addEventListener('change', resetQuarter);
+  displayClock();
+
+  /* =======================
+  * PLAYBOOK: load & wire
+  * ======================= */
+  async function loadPlaybook(){
+    if(!DICT_SHEET_ID) return;
+    try{
+      const res = await apiGet({ action:'table', sheet_id: DICT_SHEET_ID, sheet_name: PLAYBOOK_TAB });
+      if(!res.ok) throw new Error(res.error || 'Playbook fetch failed');
+      playbook = res.rows || [];
+      playMap = {};
+      const names = new Set(), forms=new Set(), pers=new Set(), mot=new Set();
+      playbook.forEach(r=>{
+        const name = (r.play_name||'').toString().trim();
+        if(name){ names.add(name); playMap[name.toUpperCase()] = r; }
+        if(r.formation) forms.add(String(r.formation));
+        if(r.personnel) pers.add(String(r.personnel));
+        if(r.motion)    mot.add(String(r.motion));
+      });
+      fillDatalist('list_playnames', Array.from(names).sort());
+      options.formations = Array.from(forms).sort();
+      options.personnel  = Array.from(pers).sort();
+      options.motions    = Array.from(mot).sort();
+      fillDatalist('list_formations', options.formations);
+      fillDatalist('list_personnel',  options.personnel);
+      fillDatalist('list_motions',    options.motions);
+      log(`Playbook loaded (${playbook.length} rows).`, 'success');
+    } catch(err){ log(err.message, 'error'); }
+  }
+  function fillDatalist(id, arr){
+    const dl = el(id);
+    dl.innerHTML='';
+    arr.forEach(v=>{
+      const o = document.createElement('option');
+      o.value = v; dl.appendChild(o);
+    });
+  }
+  function fillSelect(id, arr){
+    const s = el(id); s.innerHTML='';
+    arr.forEach(v=>{
+      const o = document.createElement('option');
+      o.textContent = v; s.appendChild(o);
+    });
+  }
+  // seed play type options immediately
+  fillSelect('play_type', options.playTypes);
+
+  el('play_name').addEventListener('change', ()=>{
+    if(!el('auto_playbook_fill').checked) return;
+    const key = el('play_name').value.trim().toUpperCase();
+    const rec = playMap[key];
+    if(rec){
+      if(rec.play_type && options.playTypes.includes(rec.play_type)) el('play_type').value = rec.play_type;
+      if(rec.formation) el('play_form').value = rec.formation;
+      if(rec.personnel) el('play_pers').value = rec.personnel;
+      if(rec.motion)    el('play_motion').value = rec.motion;
+    }
+  });
+
+  /* =======================
+  * SCHEDULE: load & bind
+  * ======================= */
+  async function loadSchedule(){
+    if(!SCHEDULE_SHEET_ID) return;
+    try{
+      const res = await apiGet({ action:'table', sheet_id: SCHEDULE_SHEET_ID, sheet_name: SCHEDULE_TAB });
+      if(!res.ok) throw new Error(res.error || 'Schedule fetch failed');
+      schedule = (res.rows || []).filter(r => r.game_id);
+      scheduleMap = {};
+      const ids = [];
+      schedule.forEach(r=>{
+        const gid = String(r.game_id).trim();
+        if(!gid) return;
+        scheduleMap[gid] = r;
+        ids.push(gid);
+      });
+      // sort by date then week if available
+      ids.sort((a,b)=>{
+        const ra=scheduleMap[a], rb=scheduleMap[b];
+        const da=(ra.date||''), db=(rb.date||'');
+        if(da && db && da!==db) return da<db?-1:1;
+        const wa=Number(ra.week||0), wb=Number(rb.week||0);
+        return wa-wb;
+      });
+      fillDatalist('list_game_ids', ids);
+      log(`Schedule loaded (${ids.length} games).`, 'success');
+
+      // If context already has a game (from a previous session), snap UI to it
+      const ctx = GameContext.get();
+      if (ctx.game_id && scheduleMap[ctx.game_id]) {
+        el('game_id').value = ctx.game_id;
+        el('game_id').dispatchEvent(new Event('change'));
+      }
+    } catch(err){ log(err.message, 'error'); }
+  }
+
+  function renderGameMeta(gid){
+    const box = el('game_meta');
+    const r = scheduleMap[gid];
+    if(!r){ box.style.display='none'; return; }
+    el('meta_date').textContent   = r.date ? `Date: ${r.date}` : 'Date: —';
+    el('meta_week').textContent   = r.week ? `Week: ${r.week}` : 'Week: —';
+    el('meta_opp').textContent    = r.opponent ? `Opponent: ${r.opponent}` : 'Opponent: —';
+    el('meta_ha').textContent     = r.home_away ? `Venue: ${r.home_away}` : 'Venue: —';
+    el('meta_weather').textContent= r.weather_conditions ? `Weather: ${r.weather_conditions}` : 'Weather: —';
+    box.style.display='grid';
+  }
+
+  el('game_id').addEventListener('change', ()=>{
+    const gid = el('game_id').value.trim();
+    if(!gid) return;
+    if(!scheduleMap[gid]){ log(`Game ID "${gid}" not found in schedule.`, 'error'); renderGameMeta(''); return; }
+    renderGameMeta(gid);
+    const opp = scheduleMap[gid].opponent || 'Opponent';
+    el('opp_team').placeholder = opp;
+    log(`Game selected: ${gid} vs ${opp}`, 'success');
+
+    // PUBLISH master game_id
+    GameContext.setGame(gid);
+  });
+
+  // One-click: pick next upcoming by date (>= today) else first
+  el('pickNextBtn').addEventListener('click', ()=>{
+    if(!schedule.length) return;
+    const today = new Date().toISOString().slice(0,10);
+    let next = schedule.find(r => (r.date||'') >= today)?.game_id || schedule[0].game_id;
+    el('game_id').value = next;
+    el('game_id').dispatchEvent(new Event('change'));
+  });
+
+  /* =======================
+  * QoL defaults
+  * ======================= */
+  el('setDefaultsBtn').addEventListener('click', ()=>{
+    if(!el('our_team').value) el('our_team').value = 'Us';
+    if(!el('opp_team').value) el('opp_team').value = 'Opponent';
+    el('drive_poss').value = 'Us';
+    el('play_offense').value = 'Us';
+    log('Defaults applied.', 'success');
+  });
+
+  // Keep Play Offense synced to drive possession if enabled
+  el('drive_poss').addEventListener('change', ()=>{
+    if(el('auto_offense_from_drive').checked) el('play_offense').value = el('drive_poss').value;
+  });
+
+  /* =======================
+  * DRIVES (publish drive_id)
+  * ======================= */
+  el('newDriveBtn').addEventListener('click', async ()=>{
+    try{
+      ensureGame();
+      activeDriveId = await nextId('DRIVE');
+      drivePlayCount = 0;
+      driveElapsedSec = 0;
+      lastSnap = null;
+      el('drive_id').value = activeDriveId;
+      el('play_drive_id').value = activeDriveId;
+      el('driveBadge').textContent = `Active: ${activeDriveId}`;
+      el('endDriveBtn').disabled = false;
+      if(el('auto_offense_from_drive').checked){
+        el('play_offense').value = el('drive_poss').value;
+      }
+      // PUBLISH master drive_id
+      GameContext.setDrive(activeDriveId);
+
+      log(`Started drive ${activeDriveId}`, 'success');
+    } catch(err){ log(err.message, 'error'); }
+  });
+
+  el('endDriveBtn').addEventListener('click', async ()=>{
+    try{
+      const game_id = ensureGame();
+      if(!activeDriveId) throw new Error('No active drive to end.');
+
+      if(el('auto_drive_yards').checked && el('drive_yards').value==='' &&
+        el('drive_start').value!=='' && el('drive_end').value!==''){
+        const yds = Number(el('drive_end').value) - Number(el('drive_start').value);
+        el('drive_yards').value = yds;
+      }
+      if(el('auto_drive_plays').checked && el('drive_plays').value===''){
+        el('drive_plays').value = drivePlayCount;
+      }
+
+      const row = {
+        game_id,
+        drive_id: activeDriveId,
+        'Team In Possession': el('drive_poss').value,
+        'Start Yardline': numVal(el('drive_start').value),
+        'End Yardline':   numVal(el('drive_end').value),
+        'Plays in Drive': numVal(el('drive_plays').value),
+        'Yards Gained':   numVal(el('drive_yards').value),
+        'Possession Time (sec)': numVal(el('drive_posstime').value),
+        'Result': el('drive_result').value,
+        'Scoring Type': el('drive_scoretype').value
+      };
+      await appendRow(ROUTE_DRIVES, row, Object.keys(row));
+      log(`Drive saved: ${activeDriveId}`, 'success');
+
+      // clear active drive + PUBLISH clear
+      el('driveBadge').textContent = 'No active drive';
+      el('endDriveBtn').disabled = true;
+      activeDriveId = '';
+      el('drive_id').value = '';
+      el('play_drive_id').value = '';
+      GameContext.setDrive('');
+    } catch(err){ log(err.message, 'error'); }
+  });
+
+  /* =======================
+  * PLAYS (publish play_id)
+  * ======================= */
+  el('newPlayIdBtn').addEventListener('click', async ()=>{
+    try{
+      const id = await nextId('PLAY');
+      el('play_id').value = id;
+      el('playBadge').textContent = `Editing: ${id}`;
+      // PUBLISH master play_id
+      GameContext.setPlay(id);
+    } catch(err){ log(err.message, 'error'); }
+  });
+
+  el('addPlayBtn').addEventListener('click', async ()=>{
+    try{
+      const game_id = ensureGame();
+      const play_id = el('play_id').value.trim();
+      if(!play_id) throw new Error('Create a Play ID first.');
+      const drive_id = activeDriveId || el('play_drive_id').value.trim();
+      if(!drive_id) throw new Error('No drive_id (start a drive or paste one).');
+
+      if(el('auto_offense_from_drive').checked){
+        el('play_offense').value = el('drive_poss').value;
+      }
+
+      if(el('auto_epa').checked){
+        const epb = el('ep_before').value;
+        const epaft = el('ep_after').value;
+        if(epb!=='' && epaft!==''){
+          el('epa').value = (Number(epaft) - Number(epb)).toFixed(2);
+        }
+      }
+
+      const row = {
+        play_id,
+        drive_id,
+        game_id,
+        'Offense Team': el('play_offense').value,
+        Quarter: el('play_qtr').value,
+        Clock: el('play_clock').value,
+        Down: el('play_down').value,
+        Distance: numVal(el('play_dist').value),
+        'Yard Line': numVal(el('play_yardline').value),
+        'Play Type': el('play_type').value,
+        Formation: el('play_form').value,
+        Personnel: el('play_pers').value,
+        Motion: el('play_motion').value,
+        'Result Yards': numVal(el('play_yards').value),
+        'Explosive Flag': boolVal(el('flag_explosive').checked),
+        'Red Zone Flag': boolVal(el('flag_rz').checked),
+        'Goal-to-Go Flag': boolVal(el('flag_g2g').checked),
+        'Two-Minute Flag': boolVal(el('flag_2min').checked),
+        'EP Before': numVal(el('ep_before').value),
+        'EP After':  numVal(el('ep_after').value),
+        EPA: numVal(el('epa').value),
+        'Success Flag': boolVal(el('flag_success').checked)
+      };
+
+      await appendRow(ROUTE_PLAYS, row, Object.keys(row));
+      log(`Play saved: ${play_id}`, 'success');
+
+      if(activeDriveId) drivePlayCount++;
+
+      if(el('auto_next_yardline').checked && el('play_yardline').value!=='' && el('play_yards').value!==''){
+        const next = Number(el('play_yardline').value) + Number(el('play_yards').value);
+        el('play_yardline').value = String(next);
+      }
+
+      // PUBLISH last saved play_id so follower pages stay pinned to it
+      GameContext.setPlay(play_id);
+
+      // Prep UI for next entry, but keep context on last saved
+      el('play_id').value = '';
+      el('playBadge').textContent = 'No play ID yet';
+      ['play_yards','play_dist','ep_before','ep_after','epa'].forEach(i=>el(i).value='');
+      ['flag_explosive','flag_rz','flag_g2g','flag_2min','flag_success'].forEach(i=>el(i).checked=false);
+    } catch(err){ log(err.message, 'error'); }
+  });
+
+  /* =======================
+  * SUMMARY HELPERS
+  * ======================= */
+  el('saveSummaryBtn').addEventListener('click', async ()=>{
+    try{
+      const game_id = ensureGame();
+      const row = {
+        game_id,
+        'Team Points': numVal(el('sum_pts_team').value),
+        'Opponent Points': numVal(el('sum_pts_opp').value),
+        'Team Offensive Yards': numVal(el('sum_yards').value),
+        'First Downs': numVal(el('sum_firstdowns').value),
+        'Plays': numVal(el('sum_plays').value),
+        'Time of Possession (sec)': numVal(el('sum_top').value),
+        'Penalties': numVal(el('sum_pens').value),
+        'Penalty Yards': numVal(el('sum_penyds').value),
+        'Drives': numVal(el('sum_drives').value),
+        'game_control_minutes': numVal(el('sum_gcmin').value),
+        'snap_count_total': numVal(el('sum_snaps').value)
+      };
+      await appendRow(ROUTE_SUM, row, Object.keys(row));
+      log('Game summary updated.', 'success');
+    } catch(err){ log(err.message, 'error'); }
+  });
+
+  /* =======================
+  * UTIL + INIT
+  * ======================= */
+  const numVal = v => (v===''||v==null ? '' : Number(v));
+  const boolVal = v => (v ? 1 : 0);
+
+  // init
+  loadPlaybook();
+  loadSchedule();
+
+  // publish any pre-filled Game ID on load (manual paste case)
+  if (el('game_id').value.trim()) {
+    GameContext.setGame(el('game_id').value.trim());
+  }
+  </script>
+
+</body>
+</html>

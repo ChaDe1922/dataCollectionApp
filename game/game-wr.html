@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WR / TE Tracking – Football Data Tracker</title>
+  <link rel="stylesheet" href="../style.css"/>
+  <script src="../js/game-context.js"></script>
+  <style>
+    .container{max-width:1200px;margin:0 auto;padding:1rem}
+    .grid{display:grid;gap:1rem}
+    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .card{background:var(--panel-bg,rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:1rem}
+    .card h2{margin:0 0 .5rem 0;font-size:1.1rem}
+    .row{display:flex;gap:.75rem;flex-wrap:wrap}
+    .row>*{flex:1 1 180px}
+    label{display:block;font-size:.85rem;opacity:.9;margin-bottom:.25rem}
+    input,select{width:100%;padding:.6rem .7rem;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.2);color:#fff}
+    .btnbar{display:flex;gap:.5rem;flex-wrap:wrap}
+    .btn{padding:.6rem .9rem;border-radius:999px;border:1px solid transparent;cursor:pointer}
+    .btn.primary{background:#43b581;color:#071a12}
+    .btn.subtle{background:transparent;border-color:rgba(255,255,255,.25);color:#fff}
+    .btn.warn{background:#ffa142;color:#2a1800}
+    .chip{display:inline-block;padding:.25rem .6rem;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);font-size:.8rem}
+    .tiny{font-size:.8rem;opacity:.85}
+    .success{color:#7CFC98}.error{color:#ff6b6b}
+    .meta{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.5rem;margin-top:.5rem}
+    .meta .chip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+    /* --- Hotbar --- */
+    .hotbar{display:flex;flex-wrap:wrap;gap:.4rem}
+    .hotbar button{padding:.35rem .6rem;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;cursor:pointer}
+    .hotbar button:hover{background:rgba(255,255,255,.12)}
+
+    /* --- Segmented pills --- */
+    .seg{display:flex;flex-wrap:wrap;gap:.4rem}
+    .seg-btn{padding:.35rem .7rem;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.06);color:rgba(255,255,255,.92);font-weight:500;cursor:pointer}
+    .seg-btn[aria-pressed="true"]{background:#43b581;border-color:#43b581;color:#071a12}
+    .seg-btn:focus-visible{outline:2px solid #7CE5A5;outline-offset:2px;border-color:transparent}
+
+    /* --- Toggle (Yes/No) --- */
+    .tgl{--h:30px;position:relative;display:inline-flex;align-items:center;width:54px;height:var(--h);border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);cursor:pointer}
+    .tgl::after{content:'';width:24px;height:24px;border-radius:50%;background:#bbb;transform:translateX(4px);transition:transform .18s ease,background .18s ease}
+    .tgl[aria-checked="true"]{background:#43b581;border-color:#43b581}
+    .tgl[aria-checked="true"]::after{background:#071a12;transform:translateX(26px)}
+    .tgl-label{display:flex;align-items:center;gap:.5rem}
+
+    /* Three-column detail cluster */
+    .tripgrid{display:grid;gap:1rem;grid-template-columns:repeat(3,minmax(0,1fr))}
+    .fieldset{border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:1rem}
+    .fieldset h3{margin:0 0 .6rem 0;font-size:.95rem;opacity:.9}
+    .numpad{display:flex;flex-wrap:wrap;gap:.5rem}
+    .numpad .btn{padding:.45rem .7rem}
+  </style>
+</head>
+
+<body class="practice-page">
+  <header class="page-header">
+    <h1>WR / TE Tracking</h1>
+    <nav class="menu-actions">
+      <a href="game-day.html" class="menu-btn">Game Day</a>
+      <a href="game-primary.html" class="menu-btn">Primary / Drives</a>
+      <a href="../index.html" class="menu-btn">Home</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="container grid grid-2">
+      <!-- ===== Game Context ===== -->
+      <section class="card">
+        <div class="section-title">
+          <h2>Game Context</h2>
+          <span id="status" class="tiny">Ready</span>
+        </div>
+        <div class="row">
+          <div>
+            <label>Game ID <span class="tiny">(from schedule)</span></label>
+            <input id="game_id" list="list_game_ids" placeholder="Pick game…"/>
+            <datalist id="list_game_ids"></datalist>
+          </div>
+          <div>
+            <label>Play ID</label>
+            <input id="play_id" placeholder="e.g. PLAY_000234"/>
+          </div>
+          <div>
+            <label>Lookup Play</label>
+            <div class="btnbar">
+              <button class="btn subtle" id="lookupPlayBtn">Fetch from Plays</button>
+              <button class="btn subtle" id="newPlayIdBtn">New Play ID</button>
+            </div>
+          </div>
+        </div>
+        <div id="game_meta" class="meta" style="display:none">
+          <span class="chip" id="meta_date"></span>
+          <span class="chip" id="meta_week"></span>
+          <span class="chip" id="meta_opp"></span>
+          <span class="chip" id="meta_ha"></span>
+          <span class="chip" id="meta_weather"></span>
+        </div>
+      </section>
+
+      <!-- ===== Receiver picker ===== -->
+      <section class="card">
+        <div class="section-title">
+          <h2>Receiver</h2>
+          <span class="tiny">Filtered to WR / TE (type to search)</span>
+        </div>
+        <div class="row">
+          <div>
+            <label>Receiver (name)</label>
+            <input id="rcv_name" list="list_rcv_names" placeholder="WR/TE name…"/>
+            <datalist id="list_rcv_names"></datalist>
+          </div>
+          <div>
+            <label>Receiver ID</label>
+            <input id="rcv_id" placeholder="auto from name/roster"/>
+          </div>
+        </div>
+        <div class="tiny" style="margin:.4rem 0 .25rem">Recent</div>
+        <div id="hotbar" class="hotbar" aria-label="Recent receivers"></div>
+        <div class="btnbar" style="margin-top:.6rem">
+          <button class="btn subtle" id="loadRosterBtn">Reload Roster</button>
+          <span class="chip tiny">Roster from 00_Dim_Roster</span>
+        </div>
+      </section>
+
+      <!-- ===== Run Detail ===== -->
+      <section class="card">
+        <div class="section-title">
+          <h2>Receive Detail</h2>
+          <span class="tiny">Fast toggles & pills</span>
+        </div>
+
+        <div class="tripgrid">
+          <!-- Outcome / flags -->
+          <div class="fieldset">
+            <h3>Outcome / Flags</h3>
+
+            <div class="row">
+              <div class="tgl-label"><span>Target</span><button class="tgl" data-target="target" role="switch" aria-checked="false"></button></div>
+              <input id="target" hidden>
+            </div>
+
+            <div class="row">
+              <div class="tgl-label"><span>Reception</span><button class="tgl" data-target="reception" role="switch" aria-checked="false"></button></div>
+              <input id="reception" hidden>
+            </div>
+
+            <div class="row">
+              <div class="tgl-label"><span>Drop</span><button class="tgl" data-target="drop" role="switch" aria-checked="false"></button></div>
+              <input id="drop" hidden>
+            </div>
+
+            <div class="row">
+              <div class="tgl-label"><span>Contested Target</span><button class="tgl" data-target="cont_target" role="switch" aria-checked="false"></button></div>
+              <input id="cont_target" hidden>
+            </div>
+
+            <div class="row">
+              <div class="tgl-label"><span>Contested Catch</span><button class="tgl" data-target="cont_catch" role="switch" aria-checked="false"></button></div>
+              <input id="cont_catch" hidden>
+            </div>
+
+            <div class="row">
+              <div class="tgl-label"><span>Red Zone Target</span><button class="tgl" data-target="rz_target" role="switch" aria-checked="false"></button></div>
+              <input id="rz_target" hidden>
+            </div>
+
+            <div class="row">
+              <div class="tgl-label"><span>Red Zone TD</span><button class="tgl" data-target="rz_td" role="switch" aria-checked="false"></button></div>
+              <input id="rz_td" hidden>
+            </div>
+          </div>
+
+          <!-- Route + separation -->
+          <div class="fieldset">
+            <h3>Route Family</h3>
+            <div class="seg" data-target="route_family" id="routeSeg">
+              <!-- common families; wrap-friendly -->
+              <button class="seg-btn" data-val="Screen" aria-pressed="false">Screen</button>
+              <button class="seg-btn" data-val="Quick" aria-pressed="false">Quick</button>
+              <button class="seg-btn" data-val="Slant" aria-pressed="false">Slant</button>
+              <button class="seg-btn" data-val="Out" aria-pressed="false">Out</button>
+              <button class="seg-btn" data-val="In/Dig" aria-pressed="false">In/Dig</button>
+              <button class="seg-btn" data-val="Curl" aria-pressed="false">Curl</button>
+              <button class="seg-btn" data-val="Comeback" aria-pressed="false">Comeback</button>
+              <button class="seg-btn" data-val="Cross" aria-pressed="false">Cross</button>
+              <button class="seg-btn" data-val="Drag" aria-pressed="false">Drag</button>
+              <button class="seg-btn" data-val="Post" aria-pressed="false">Post</button>
+              <button class="seg-btn" data-val="Corner" aria-pressed="false">Corner</button>
+              <button class="seg-btn" data-val="Go" aria-pressed="false">Go</button>
+              <button class="seg-btn" data-val="Fade" aria-pressed="false">Fade</button>
+              <button class="seg-btn" data-val="Wheel" aria-pressed="false">Wheel</button>
+              <button class="seg-btn" data-val="Seam" aria-pressed="false">Seam</button>
+              <button class="seg-btn" data-val="Other" aria-pressed="false">Other</button>
+            </div>
+            <input id="route_family" hidden>
+
+            <div class="row" style="margin-top:.8rem">
+              <div>
+                <label>Separation at Break (yds)</label>
+                <input id="sep_break" type="number" step="0.1" placeholder="e.g. 1.8"/>
+              </div>
+            </div>
+          </div>
+
+          <!-- Yards -->
+          <div class="fieldset">
+            <h3>Yards</h3>
+            <div class="row">
+              <div>
+                <label>Receiving Yards</label>
+                <input id="rec_yards" type="number" step="1" placeholder="yards on catch"/>
+              </div>
+              <div>
+                <label>YAC</label>
+                <input id="yac" type="number" step="1" placeholder="after catch"/>
+              </div>
+            </div>
+            <div class="numpad" style="margin-top:.6rem">
+              <button class="btn subtle" data-bump="rec_yards:-3">-3</button>
+              <button class="btn subtle" data-bump="rec_yards:-1">-1</button>
+              <button class="btn subtle" data-bump="rec_yards:+1">+1</button>
+              <button class="btn subtle" data-bump="rec_yards:+5">+5</button>
+              <button class="btn subtle" data-bump="rec_yards:+10">+10</button>
+            </div>
+            <div class="numpad" style="margin-top:.4rem">
+              <button class="btn subtle" data-bump="yac:-1">YAC -1</button>
+              <button class="btn subtle" data-bump="yac:+1">YAC +1</button>
+              <button class="btn subtle" data-bump="yac:+5">YAC +5</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="btnbar" style="margin-top:.75rem">
+          <button class="btn primary" id="saveBtn">Save Receive Detail</button>
+          <button class="btn subtle" id="clearBtn">Clear Fields</button>
+        </div>
+      </section>
+
+      <!-- ===== Log ===== -->
+      <section class="card">
+        <div class="section-title">
+          <h2>Log</h2><span class="tiny">Most recent first</span>
+        </div>
+        <div id="log" class="tiny" style="max-height:260px;overflow:auto"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer><p>&copy; 2025 Game Speed Data Systems</p></footer>
+
+  <script>
+    /* =======================
+     * CONFIG
+     * ======================= */
+    const API_BASE = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
+
+    // Schedule
+    const SCHEDULE_SHEET_ID = '1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI';
+    const SCHEDULE_TAB = '01_Dim_Schedule';
+
+    // Roster (WR/TE only)
+    const ROSTER_SHEET_ID = '1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI';
+    const ROSTER_TAB = '00_Dim_Roster';
+    const RECEIVER_POS = ['WR','TE'];
+
+    // Writer route → 23_Fact_ReceiveDetail (map on Apps Script)
+    const ROUTE_RECV = 'receive_detail';
+
+    /* =======================
+     * STATE + LOG
+     * ======================= */
+    const el = id => document.getElementById(id);
+    const logBox = el('log');
+    const log = (msg, type='')=>{
+      const row=document.createElement('div');
+      if(type==='success') row.className='success';
+      if(type==='error') row.className='error';
+      row.textContent='['+new Date().toLocaleTimeString()+'] '+msg;
+      logBox.prepend(row);
+      el('status').textContent=(type==='error'?'Error':'Ready');
+    };
+
+    let schedule=[], scheduleMap={};
+    let roster=[];
+    const playersById=new Map();
+    const playersByName=new Map();
+    const playersByNum=new Map();
+    const receivers=[]; // names only for datalist
+    let recent=[];
+
+    /* =======================
+     * API helpers
+     * ======================= */
+    async function apiGet(params){
+      const url = new URL(API_BASE);
+      Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,v));
+      const r = await fetch(url);
+      return r.json();
+    }
+    async function apiPost(payload){
+      const r = await fetch(API_BASE,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      return r.json();
+    }
+    async function appendRow(route,row,ensure=[]){
+      const res = await apiPost({ action:'append', route, row, ensure_headers: ensure });
+      if(!res.ok) throw new Error(res.error||'Append failed');
+      return res;
+    }
+    async function nextId(prefix){
+      const res = await apiGet({ action:'next_id', prefix });
+      if(!res.ok) throw new Error(res.error||'ID failed');
+      return res.id;
+    }
+
+    /* =======================
+     * SCHEDULE
+     * ======================= */
+    function fillDatalist(id,arr){ const dl=el(id); dl.innerHTML=''; arr.forEach(v=>{const o=document.createElement('option'); o.value=v; dl.appendChild(o)}); }
+    async function loadSchedule(){
+      try{
+        const res = await apiGet({ action:'table', sheet_id:SCHEDULE_SHEET_ID, sheet_name:SCHEDULE_TAB });
+        if(!res.ok) throw new Error(res.error||'Schedule fetch failed');
+        schedule=(res.rows||[]).filter(r=>r.game_id);
+        scheduleMap={};
+        const ids=[];
+        schedule.forEach(r=>{ const gid=String(r.game_id||'').trim(); if(!gid) return; scheduleMap[gid]=r; ids.push(gid); });
+        ids.sort((a,b)=>{
+          const ra=scheduleMap[a], rb=scheduleMap[b];
+          const da=(ra.date||''), db=(rb.date||'');
+          if(da && db && da!==db) return da<db?-1:1;
+          return (Number(ra.week||0) - Number(rb.week||0));
+        });
+        fillDatalist('list_game_ids', ids);
+        log(`Schedule loaded (${ids.length} games).`, 'success');
+      }catch(err){ log(err.message,'error'); }
+    }
+    function renderGameMeta(gid){
+      const box=el('game_meta'); const r=scheduleMap[gid];
+      if(!r){ box.style.display='none'; return; }
+      el('meta_date').textContent = r.date ? `Date: ${r.date}` : 'Date: —';
+      el('meta_week').textContent = r.week ? `Week: ${r.week}` : 'Week: —';
+      el('meta_opp').textContent  = r.opponent ? `Opponent: ${r.opponent}` : 'Opponent: —';
+      el('meta_ha').textContent   = r.home_away ? `Venue: ${r.home_away}` : 'Venue: —';
+      el('meta_weather').textContent = r.weather_conditions ? `Weather: ${r.weather_conditions}` : 'Weather: —';
+      box.style.display='grid';
+    }
+    el('game_id').addEventListener('change',()=>{
+      const gid=el('game_id').value.trim();
+      if(!gid){ renderGameMeta(''); return; }
+      if(!scheduleMap[gid]){ log(`Game ID "${gid}" not found in schedule.`,'error'); renderGameMeta(''); return; }
+      renderGameMeta(gid);
+    });
+
+    /* =======================
+     * ROSTER (WR/TE filter)
+     * ======================= */
+    function pushOption(dlId, text){ const o=document.createElement('option'); o.value=text; el(dlId).appendChild(o); }
+    function buildRosterIndexes(rows){
+      playersById.clear(); playersByName.clear(); playersByNum.clear(); receivers.length=0;
+      el('list_rcv_names').innerHTML='';
+      rows.forEach(r=>{
+        const id=(r.player_id||r.id||'').toString().trim();
+        const name=(r.player_name||r.name||'').toString().trim();
+        const pos=(r.position||r.pos||'').toString().trim().toUpperCase();
+        const num=(r.jersey_number||r.jersey||'').toString().trim();
+        if(!id || !name) return;
+        playersById.set(id.toUpperCase(),{id,name,pos,num});
+        playersByName.set(name.toUpperCase(), id);
+        if(num) playersByNum.set(String(num), id);
+        if(RECEIVER_POS.includes(pos)) receivers.push(name);
+      });
+      receivers.sort((a,b)=>a.localeCompare(b));
+      receivers.forEach(n=>pushOption('list_rcv_names', n));
+    }
+    async function loadRoster(){
+      try{
+        const res = await apiGet({ action:'roster', sheet_id:ROSTER_SHEET_ID, sheet_name:ROSTER_TAB });
+        if(!res.ok) throw new Error(res.error||'Roster fetch failed');
+        roster = res.roster||[];
+        buildRosterIndexes(roster);
+        log(`Roster loaded (${roster.length} players).`, 'success');
+      }catch(err){ log(err.message,'error'); }
+    }
+    function resolvePlayerId(s){
+      const t=(s||'').toString().trim();
+      if(!t) return '';
+      if(playersById.has(t.toUpperCase())) return t;
+      if(playersByName.has(t.toUpperCase())) return playersByName.get(t.toUpperCase());
+      const num=t.replace(/[^0-9]/g,'');
+      if(num && playersByNum.has(num)) return playersByNum.get(num);
+      return '';
+    }
+    function syncReceiver(){
+      const id = resolvePlayerId(el('rcv_name').value) || resolvePlayerId(el('rcv_id').value);
+      if(id) el('rcv_id').value = id;
+    }
+    el('rcv_name').addEventListener('change', syncReceiver);
+    el('loadRosterBtn').addEventListener('click', loadRoster);
+
+    /* =======================
+     * Recent hotbar
+     * ======================= */
+    const HOTKEY='gsds_wr_recent';
+    function loadRecent(){
+      try{ recent = JSON.parse(localStorage.getItem(HOTKEY)||'[]'); }catch{ recent=[]; }
+      renderHotbar();
+    }
+    function pushRecent(pid){
+      if(!pid) return;
+      recent = [pid, ...recent.filter(x=>x!==pid)].slice(0,8);
+      localStorage.setItem(HOTKEY, JSON.stringify(recent));
+      renderHotbar();
+    }
+    function renderHotbar(){
+      const hb=el('hotbar'); hb.innerHTML='';
+      recent.forEach(pid=>{
+        const p = playersById.get(pid.toUpperCase());
+        if(!p) return;
+        const b=document.createElement('button');
+        b.textContent = p.num ? `#${p.num} ${p.name}` : p.name;
+        b.addEventListener('click', ()=>{
+          el('rcv_name').value=p.name; el('rcv_id').value=p.id;
+        });
+        hb.appendChild(b);
+      });
+    }
+
+    /* =======================
+     * UI helpers: toggles & seg
+     * ======================= */
+    function setToggle(id,on){
+      const btn=document.querySelector(`.tgl[data-target="${id}"]`);
+      const hidden=el(id);
+      if(!btn||!hidden) return;
+      btn.setAttribute('aria-checked', String(!!on));
+      hidden.value = on ? 'Yes' : 'No';
+    }
+    function mountToggles(){
+      document.querySelectorAll('.tgl[data-target]').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          const id = btn.dataset.target;
+          const next = btn.getAttribute('aria-checked')!=='true';
+          setToggle(id,next);
+
+          // tie-ins
+          if(id==='drop' && next){ setToggle('reception', false); setToggle('target', true); }
+          if(id==='reception' && next){ setToggle('target', true); }
+          if(id==='rz_td' && next){ setToggle('rz_target', true); setToggle('reception', true); setToggle('target', true); }
+        });
+      });
+      // defaults
+      ['target','reception','drop','cont_target','cont_catch','rz_target','rz_td'].forEach(id=>setToggle(id,false));
+    }
+
+    function setSegValue(id,val){
+      const hidden=el(id); hidden.value=val||'';
+      const group=document.querySelector(`.seg[data-target="${id}"]`);
+      if(!group) return;
+      group.querySelectorAll('.seg-btn').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.val===val)));
+    }
+    function initSegGroups(){
+      document.querySelectorAll('.seg[data-target]').forEach(group=>{
+        group.addEventListener('click',ev=>{
+          const b=ev.target.closest('.seg-btn'); if(!b) return;
+          const id=group.dataset.target;
+          setSegValue(id, b.dataset.val);
+        });
+      });
+    }
+
+    // numpad bumpers
+    document.addEventListener('click', e=>{
+      const btn=e.target.closest('[data-bump]');
+      if(!btn) return;
+      const [field, delta] = btn.dataset.bump.split(':');
+      const v = Number(el(field).value||0) + Number(delta);
+      el(field).value = String(v);
+    });
+
+    /* =======================
+     * Plays lookup
+     * ======================= */
+    async function lookupPlay(){
+      try{
+        const pid=el('play_id').value.trim();
+        if(!pid) throw new Error('Enter a Play ID first.');
+        const res=await apiGet({ action:'table', sheet_id:SCHEDULE_SHEET_ID, sheet_name:'20_Fact_Plays' });
+        if(!res.ok) throw new Error(res.error||'Fetch plays failed');
+        const row=(res.rows||[]).find(r=>String(r.play_id||'').trim()===pid);
+        if(!row){ log(`Play ${pid} not found in 20_Fact_Plays`,'error'); return; }
+        log(`Play ${pid} found (Q${row.quarter||'?'} @ ${row.clock||'??:??'})`,'success');
+      }catch(err){ log(err.message,'error'); }
+    }
+    el('lookupPlayBtn').addEventListener('click', lookupPlay);
+    el('newPlayIdBtn').addEventListener('click', async ()=>{
+      try{ const id=await nextId('PLAY'); el('play_id').value=id; log(`New Play ID: ${id}`,'success'); }
+      catch(err){ log(err.message,'error'); }
+    });
+
+    /* =======================
+     * SAVE
+     * ======================= */
+    const numVal = v => (v===''||v==null ? '' : Number(v));
+    const ynTo01 = v => v==='Yes'?1 : (v==='No'?0 : '');
+
+    function ensureContext(){
+      const game_id = el('game_id').value.trim();
+      if(!game_id) throw new Error('Pick a Game ID from schedule.');
+      if(!scheduleMap[game_id]) throw new Error('Game ID not found in schedule.');
+      const play_id = el('play_id').value.trim();
+      if(!play_id) throw new Error('Enter a Play ID.');
+      const rcv_id = (syncReceiver(), el('rcv_id').value.trim());
+      if(!rcv_id) throw new Error('Select a Receiver (name or ID).');
+      return { game_id, play_id, rcv_id };
+    }
+
+    el('saveBtn').addEventListener('click', async ()=>{
+      try{
+        const { game_id, play_id, rcv_id } = ensureContext();
+
+        // remember for hotbar
+        pushRecent(rcv_id);
+
+        const row = {
+          play_id,
+          receiver_id: rcv_id,
+          Target: ynTo01(el('target').value),
+          Reception: ynTo01(el('reception').value),
+          'Receiving Yards': numVal(el('rec_yards').value),
+          YAC: numVal(el('yac').value),
+          'Route Family': el('route_family').value || '',
+          'Separation at Break': numVal(el('sep_break').value),
+          'Contested Target': ynTo01(el('cont_target').value),
+          'Contested Catch': ynTo01(el('cont_catch').value),
+          Drop: ynTo01(el('drop').value),
+          'Red Zone Target': ynTo01(el('rz_target').value),
+          'Red Zone TD': ynTo01(el('rz_td').value)
+        };
+
+        await appendRow(ROUTE_RECV, row, Object.keys(row));
+        log(`Receive detail saved for ${play_id} (WR/TE ${rcv_id}).`, 'success');
+
+        // quick clear for next target (keep receiver & route)
+        ['target','reception','drop','cont_target','cont_catch','rz_target','rz_td'].forEach(id=>setToggle(id,false));
+        ['rec_yards','yac','sep_break'].forEach(id=>el(id).value='');
+      }catch(err){ log(err.message,'error'); }
+    });
+
+    el('clearBtn').addEventListener('click', ()=>{
+      document.querySelectorAll('input').forEach(n=>{
+        if(['game_id','play_id','rcv_name','rcv_id','route_family'].includes(n.id)) return;
+        n.value='';
+      });
+      ['target','reception','drop','cont_target','cont_catch','rz_target','rz_td'].forEach(id=>setToggle(id,false));
+      setSegValue('route_family','');
+    });
+
+    /* =======================
+     * INIT
+     * ======================= */
+    initSegGroups();
+    mountToggles();
+    loadSchedule();
+    loadRoster();
+    loadRecent();
+
+    // GameContext follower (same-device)
+    if (window.GameContext){
+      GameContext.subscribe(ctx=>{
+        if(ctx.game_id && el('game_id').value!==ctx.game_id){ el('game_id').value=ctx.game_id; el('game_id').dispatchEvent(new Event('change')); }
+        if(ctx.play_id && !el('play_id').value){ el('play_id').value = ctx.play_id; }
+      });
+    }
+  </script>
+</body>
+</html>

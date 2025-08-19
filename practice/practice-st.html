@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Special Teams – Practice Logger</title>
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    /* Minimal page-specific layout (theme handles the rest) */
+    .container{ max-width:calc(100vw - 100px)!important; width:100%; padding:0 50px; margin:0 auto; box-sizing:border-box; }
+    .panel-card{ container-type:inline-size; min-width:0; width:100%; }
+    .panel-card form{ width:100%; }
+    @media (max-width:768px){ .container{ padding:0 25px; max-width:calc(100vw - 50px);} }
+    @media (max-width:600px){ .container{ padding:0 16px; max-width:calc(100vw - 32px); } }
+
+    .form-inline{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; align-items:end; }
+    .toggle-row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .chip{ display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; font-size:.8rem; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); }
+    .hint{ opacity:.8; font-size:.85rem; }
+
+    /* KPI bits not covered by theme */
+    .kpi-wrap{ border:1px solid var(--border); border-radius:12px; padding:12px; margin-top:10px; background:rgba(255,255,255,.05); }
+    .kpi-grid{ display:grid; gap:14px; grid-template-columns:1fr; }
+    .kpi-label{ margin-bottom:6px; font-weight:600; opacity:.9; font-size:0.9rem; }
+    .kpi-row{ display:grid; grid-template-columns:1fr auto; gap:10px; align-items:end; }
+    .unit-badge{ font-size:.85rem; padding:6px 10px; border-radius:8px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); height:38px; display:flex; align-items:center; white-space:nowrap; }
+    .kpi-inline{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:6px; }
+
+    .timer-bar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0 4px; }
+    .timer-time{ font-variant-numeric:tabular-nums; font-weight:800; min-width:60px; color:#D6BCFA; }
+
+    .hidden{ display:none !important; }
+    .btn-neutral{ background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.18); color:#fff; }
+  </style>
+</head>
+<body class="practice-page">
+
+  <header class="page-header">
+    <h1>Special Teams</h1>
+    <nav class="menu-actions" aria-label="Header navigation">
+      <a href="../index.html" class="menu-btn">Home</a>
+      <a href="practice.html" class="menu-btn secondary">Practice</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="panel-card">
+        <form id="st-form" autocomplete="off">
+          <h3 class="form-label">Session</h3>
+
+          <div class="form-section">
+            <div class="form-inline">
+              <div>
+                <label for="prac-date" class="form-label">Practice Date</label>
+                <input type="date" id="prac-date" class="form-input" required />
+              </div>
+
+              <div>
+                <label class="form-label">Target</label>
+                <div class="toggle-row" role="group" aria-label="Target selection">
+                  <label class="chip">
+                    <input type="radio" name="target" id="t-team" value="team" checked />
+                    Team Unit
+                  </label>
+                  <label class="chip">
+                    <input type="radio" name="target" id="t-player" value="player" />
+                    Player
+                  </label>
+                </div>
+              </div>
+
+              <div id="unitWrap">
+                <label for="unit-select" class="form-label">Unit (Team)</label>
+                <select id="unit-select" class="form-select">
+                  <option value="KO">Kickoff</option>
+                  <option value="KOR">Kickoff Return</option>
+                  <option value="PUNT">Punt</option>
+                  <option value="PR">Punt Return</option>
+                  <option value="FG">FG / PAT</option>
+                  <option value="FG_BLOCK">FG Block</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div id="playerWrap" class="form-section hidden" aria-live="polite">
+            <div class="form-label">Player</div>
+            <label for="jersey" class="form-label" style="margin-top:6px;">Jersey #</label>
+            <input type="text" id="jersey" class="form-input" placeholder="e.g., 17" list="jersey-list" inputmode="numeric" />
+            <label for="player-id" class="form-label" style="margin-top:10px;">Player ID</label>
+            <input type="text" id="player-id" class="form-input" placeholder="K101" list="playerid-list" />
+            <label for="player-name" class="form-label" style="margin-top:10px;">Player Name</label>
+            <input type="text" id="player-name" class="form-input" placeholder="Type a few letters…" list="playername-list" />
+            <label for="role-select" class="form-label" style="margin-top:10px;">Role</label>
+            <select id="role-select" class="form-select">
+              <option value="">— Optional —</option>
+              <option>K</option><option>P</option><option>LS</option>
+              <option>KR</option><option>PR</option>
+              <option>Gunner</option><option>Vice</option>
+              <option>H</option><option>PP</option>
+            </select>
+            <small class="hint">Autocomplete is ST-focused. Example Player IDs: K###, P###, LS###, etc.</small>
+          </div>
+
+          <div class="form-section">
+            <div class="form-inline">
+              <div>
+                <label for="drill-cat" class="form-label">Drill Type (Category)</label>
+                <select id="drill-cat" class="form-select"></select>
+              </div>
+              <div>
+                <label for="drill-name" class="form-label">Drill Name</label>
+                <select id="drill-name" class="form-select"></select>
+              </div>
+            </div>
+
+            <div class="kpi-wrap">
+              <div class="kpi-grid">
+                <!-- Primary KPI -->
+                <div>
+                  <div class="kpi-label" id="pm-title">Primary Measurement</div>
+
+                  <div class="timer-bar hidden" id="pm-timer-wrap">
+                    <span class="chip">Timer</span>
+                    <span class="timer-time" id="pm-timer-time">0.00 s</span>
+                    <button type="button" id="pm-timer-start" class="btn btn-neutral">Start</button>
+                    <button type="button" id="pm-timer-stop"  class="btn btn-neutral">Stop</button>
+                    <button type="button" id="pm-timer-reset" class="btn btn-neutral">Reset</button>
+                    <button type="button" id="pm-timer-save"  class="btn btn-success">Save to Field</button>
+                  </div>
+
+                  <div class="kpi-row" id="pm-row">
+                    <input id="pm-value" class="form-input" placeholder="Enter value…" />
+                    <div class="unit-badge" id="pm-unit">—</div>
+                  </div>
+                  <div class="kpi-inline">
+                    <span class="chip" id="pm-success-chip">Result: —</span>
+                    <small id="pm-thresh" style="opacity:.75"></small>
+                  </div>
+
+                  <div id="pm-reps-anchor"></div>
+                </div>
+
+                <!-- Secondary KPI -->
+                <div>
+                  <div class="kpi-label" id="sm-title">Secondary Measurement</div>
+                  <div class="kpi-row" id="sm-row">
+                    <input id="sm-value" class="form-input" placeholder="Enter value…" />
+                    <div class="unit-badge" id="sm-unit">—</div>
+                  </div>
+                  <div class="kpi-inline">
+                    <span class="chip" id="sm-success-chip">Result: —</span>
+                    <small id="sm-thresh" style="opacity:.75"></small>
+                  </div>
+
+                  <div id="sm-reps-anchor"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reps module (for %/count KPIs) -->
+          <div id="reps-module" class="form-section hidden">
+            <div class="form-label">Reps</div>
+            <div class="btn-grid">
+              <button type="button" id="btnSuccess" class="btn btn-success">✓ Success</button>
+              <button type="button" id="btnFail" class="btn btn-danger">✕ Unsuccessful</button>
+              <button type="button" id="btnReset" class="btn btn-neutral">Reset</button>
+            </div>
+            <div class="reps-stats" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:12px 0 4px;">
+              <div class="stat-card"><div class="stat-value" id="successCount">0</div><div class="stat-label" id="successLabel">Success</div></div>
+              <div class="stat-card" id="failCard"><div class="stat-value" id="failCount">0</div><div class="stat-label">Unsuccessful</div></div>
+              <div class="stat-card" id="totalCard"><div class="stat-value" id="totalReps">0</div><div class="stat-label" id="totalLabel">Total Reps</div></div>
+              <div class="stat-card" id="rateCard"><div class="stat-value" id="successRate">0%</div><div class="stat-label">Success Rate</div></div>
+            </div>
+            <input type="hidden" id="succ-hidden" value="0" />
+            <input type="hidden" id="fail-hidden" value="0" />
+            <input type="hidden" id="total-hidden" value="0" />
+            <input type="hidden" id="rate-hidden"  value="0" />
+          </div>
+
+          <!-- Session meta -->
+          <div class="form-section">
+            <div class="form-inline">
+              <div>
+                <label for="intensity" class="form-label">Period Intensity</label>
+                <select id="intensity" class="form-select" required>
+                  <option value="Low">Low</option><option value="Medium" selected>Medium</option>
+                  <option value="High">High</option><option value="Very High">Very High</option>
+                </select>
+              </div>
+              <div>
+                <label for="attendance" class="form-label">Attendance</label>
+                <select id="attendance" class="form-select" required>
+                  <option value="Present" selected>Present</option><option value="Late">Late</option>
+                  <option value="Absent">Absent</option><option value="Excused">Excused</option>
+                </select>
+              </div>
+              <div>
+                <label for="effort" class="form-label">Effort (Player)</label>
+                <select id="effort" class="form-select">
+                  <option value="">—</option>
+                  <option>High</option><option>Medium</option><option>Low</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <label for="notes" class="form-label">Notes</label>
+            <textarea id="notes" class="form-input" rows="4" placeholder="e.g., KO: great lane integrity • LS: snap on time • Punter: 4.6s hang"></textarea>
+          </div>
+
+          <button type="submit" class="submit-btn">Submit Special Teams Log</button>
+          <div id="form-status" class="status"></div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer><p>&copy; 2025 Game Speed Data Systems</p></footer>
+
+  <!-- Shared roster datalists -->
+  <div style="display:none">
+    <datalist id="jersey-list"></datalist>
+    <datalist id="playerid-list"></datalist>
+    <datalist id="playername-list"></datalist>
+  </div>
+
+  <script>
+    /* ===== CONFIG ===== */
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
+    const PRACTICE_SHEET_ID = '1pT-7cXhfzJB5mjswsXayvjt_qC2hIp9WflWggIAyh8g';
+    const ROSTER_SHEET_ID   = '1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI';
+    const ROSTER_TAB        = '00_Dim_Roster';
+    const DRILL_TAB         = 'Drill_Library';
+
+    const LS = { date:'st_prac_date', cat:'st_drill_cat', name:'st_drill_name', target:'st_target', unit:'st_unit' };
+    const getEl = (id) => document.getElementById(id);
+    const clean = (s)=>String(s||'').trim();
+
+    function setTodayIfEmpty(input){
+      if (!input.value){
+        const d=new Date(), y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+        input.value = `${y}-${m}-${day}`;
+      }
+    }
+    function showStatus(msg, type='success'){
+      const box = getEl('form-status');
+      box.textContent = msg;
+      box.className = 'status ' + type + ' show';
+      setTimeout(()=>box.classList.remove('show'), 3500);
+    }
+    function titleCase(s){ return String(s||'').toLowerCase().replace(/\b\w/g,(c)=>c.toUpperCase()); }
+
+    /* ===== Rep tracker ===== */
+    const repTracker = (function(){
+      const els = {
+        s:getEl('successCount'), f:getEl('failCount'),
+        t:getEl('totalReps'), r:getEl('successRate'),
+        sh:getEl('succ-hidden'), fh:getEl('fail-hidden'),
+        th:getEl('total-hidden'), rh:getEl('rate-hidden'),
+        btnS:getEl('btnSuccess'), btnF:getEl('btnFail'), btnR:getEl('btnReset'),
+        wrap:getEl('reps-module')
+      };
+      let success=0, fail=0, onChange = ()=>{};
+      function render(){
+        const total=success+fail, rate= total>0 ? (success/total)*100 : 0;
+        els.s.textContent=success; els.f.textContent=fail; els.t.textContent=total;
+        els.r.textContent=`${rate.toFixed(0)}%`;
+        els.r.style.color = rate>=85 ? '#34D399' : (rate<65 ? '#EF4444' : '#C4B5FD');
+        els.sh.value=success; els.fh.value=fail; els.th.value=total; els.rh.value=rate.toFixed(2);
+        onChange();
+      }
+      function reset(){ success=0; fail=0; render(); }
+      els.btnS.addEventListener('click', ()=>{ success++; render(); });
+      els.btnF.addEventListener('click', ()=>{ fail++; render(); });
+      els.btnR.addEventListener('click', reset);
+      render();
+      return {
+        reset,
+        get:()=>({success, fail}),
+        setOnChange(fn){ onChange = fn || (()=>{}); },
+        show(){ els.wrap.classList.remove('hidden'); },
+        hide(){ reset(); els.wrap.classList.add('hidden'); }
+      };
+    })();
+
+    /* ===== Roster (ST filter) ===== */
+    let roster = [];
+    const byId=new Map(), byJersey=new Map(), byName=new Map();
+    const normId = v => String(v||'').trim().toUpperCase();
+    const normJersey = v => String(v||'').trim().replace(/^0+/, '');
+    const normName = v => String(v||'').trim().toLowerCase();
+
+    const ST_ROLES = new Set(['K','P','LS','KR','PR','ST','GUNNER','VICE','PP','H']);
+    function isSTPosition(pos){
+      const p = String(pos||'').trim().toUpperCase();
+      if (!p) return false;
+      if (ST_ROLES.has(p)) return true;
+      // Some rosters store combined tags like "KR,PR"
+      return p.split(/[\/,\s]+/).some(x=>ST_ROLES.has(x));
+    }
+
+    function indexRoster(){
+      byId.clear(); byJersey.clear(); byName.clear();
+      roster.forEach(r=>{
+        if(r.player_id)     byId.set(normId(r.player_id), r);
+        if(r.jersey_number) byJersey.set(normJersey(r.jersey_number), r);
+        if(r.player_name)   byName.set(normName(r.player_name), r);
+      });
+    }
+
+    function fillRosterDatalists(){
+      const jl = getEl('jersey-list'), il = getEl('playerid-list'), nl = getEl('playername-list');
+      jl.innerHTML=''; il.innerHTML=''; nl.innerHTML='';
+      [...roster].sort((a,b)=>(+a.jersey_number||0)-(+b.jersey_number||0)).forEach(r=>{
+        const o1=document.createElement('option'); o1.value = normJersey(r.jersey_number); o1.label = `${r.player_name} (${r.position||''})`; jl.appendChild(o1);
+        const o2=document.createElement('option'); o2.value = r.player_id; o2.label = `${r.player_name}${r.jersey_number?' #'+r.jersey_number:''}`; il.appendChild(o2);
+        const o3=document.createElement('option'); o3.value = r.player_name; o3.label = `${r.player_id}${r.jersey_number?' • #'+r.jersey_number:''}`; nl.appendChild(o3);
+      });
+    }
+
+    async function fetchRoster(){
+      try{
+        const url = `${APPS_SCRIPT_URL}?action=roster&sheet_id=${encodeURIComponent(ROSTER_SHEET_ID)}&sheet_name=${encodeURIComponent(ROSTER_TAB)}`;
+        const res = await fetch(url, { cache:'no-store' });
+        const json = await res.json();
+        if(json && json.ok && Array.isArray(json.roster)){
+          const raw = json.roster.map(it=>({
+            player_id: String(it.player_id||it.id||'').trim().toUpperCase(),
+            player_name: String(it.player_name||it.name||'').trim(),
+            position: String(it.position||it.pos||'').trim(),
+            jersey_number: String(it.jersey_number||it.jersey||'').trim()
+          }));
+          roster = raw.filter(r => isSTPosition(r.position));
+          indexRoster(); fillRosterDatalists();
+        } else { console.warn('Roster empty', json); }
+      }catch(err){ console.warn('Roster fetch failed', err); }
+    }
+
+    /* ===== Drill library (ST) ===== */
+    let stDrills = [];
+    const drillsByCat = new Map();
+    const drillsByName = new Map();
+    const isSTGroup = (pg) => {
+      const s = String(pg||'').toUpperCase();
+      const parts = s.split(/[\/,\s]+/);
+      return parts.some(p => ST_ROLES.has(p) || p==='ST');
+    };
+    const pick = (obj, ...cands) => {
+      for(const c of cands){
+        if(obj[c] != null && obj[c] !== '') return obj[c];
+        const k = Object.keys(obj).find(k=>k.toLowerCase()===String(c).toLowerCase());
+        if(k && obj[k] != null && obj[k] !== '') return obj[k];
+      } return '';
+    };
+
+    function indexDrills(list){
+      drillsByCat.clear(); drillsByName.clear();
+      list.forEach(d=>{
+        const cat = clean(d.category), nm = clean(d.name);
+        if(!drillsByCat.has(cat)) drillsByCat.set(cat, []);
+        if(!drillsByCat.get(cat).includes(nm)) drillsByCat.get(cat).push(nm);
+        const key = nm.toLowerCase(); if(!drillsByName.has(key)) drillsByName.set(key, d);
+      });
+    }
+
+    function setOptions(select, items, {placeholder="— Select —", getLabel=(x)=>x, getValue=(x)=>x}={}){
+      const cur = select.value;
+      select.innerHTML = '';
+      const ph = document.createElement('option'); ph.value=''; ph.textContent = placeholder; select.appendChild(ph);
+      items.forEach(it=>{
+        const opt = document.createElement('option');
+        opt.value = getValue(it);
+        opt.textContent = getLabel(it);
+        select.appendChild(opt);
+      });
+      const has = [...select.options].some(o=>o.value===cur);
+      if(has) select.value = cur;
+    }
+
+    function fillCategorySelect(){
+      const catSel = getEl('drill-cat');
+      const cats = Array.from(drillsByCat.keys()).sort();
+      setOptions(catSel, cats);
+    }
+
+    function fillNameSelect(forCat){
+      const nameSel = getEl('drill-name');
+      let names = [];
+      if(forCat && drillsByCat.has(forCat)){
+        names = drillsByCat.get(forCat).slice().sort();
+        setOptions(nameSel, names, {
+          placeholder:'— Select Drill —',
+          getLabel:(nm)=>nm,
+          getValue:(nm)=>nm
+        });
+      } else {
+        const all = Array.from(drillsByName.values())
+          .map(d=>({ name:d.name, category:d.category }))
+          .sort((a,b)=> a.name.localeCompare(b.name));
+        setOptions(nameSel, all, {
+          placeholder:'— Select Drill —',
+          getLabel:(o)=> `${o.name} • ${o.category}`,
+          getValue:(o)=> o.name
+        });
+      }
+    }
+
+    async function fetchDrillLibrary(){
+      try{
+        const url = `${APPS_SCRIPT_URL}?action=drill_library&sheet_id=${encodeURIComponent(PRACTICE_SHEET_ID)}&sheet_name=${encodeURIComponent(DRILL_TAB)}&position_group=ST`;
+        const res = await fetch(url, { cache:'no-store' });
+        const json = await res.json();
+        if(json && json.ok && Array.isArray(json.drills)){
+          const cleaned = json.drills.map(r=>({
+            drill_id:               pick(r,'drill_id','id'),
+            name:                   pick(r,'name','drill_name'),
+            category:               pick(r,'category','drill_category'),
+            drill_type:             pick(r,'drill_type'),
+            position_group:         pick(r,'position_group','group'),
+            position_specific:      pick(r,'position_specific'),
+            primary_measurement:    pick(r,'primary_measurement','primary'),
+            measurement_unit:       pick(r,'measurement_unit','primary_unit','primary_measurement_unit'),
+            success_threshold:      pick(r,'success_threshold','success','primary_success_threshold'),
+            failure_threshold:      pick(r,'failure_threshold','failure','primary_failure_threshold'),
+            secondary_measurement:  pick(r,'secondary_measurement','secondary','sec_measurement','secondary_measurment'),
+            secondary_unit:         pick(r,'secondary_unit','secondary_measure_unit','secondary_measurement_unit','sec_unit'),
+            secondary_threshold:    pick(r,'secondary_threshold','secondary_success','secondary_success_threshold','sec_threshold'),
+            coaching_emphasis:      pick(r,'coaching_emphasis','emphasis'),
+            common_errors:          pick(r,'common_errors','errors')
+          })).filter(r => r.name && r.category);
+          stDrills = cleaned.filter(r => isSTGroup(r.position_group));
+          indexDrills(stDrills);
+
+          fillCategorySelect();
+          const catSel = getEl('drill-cat');
+          const nameSel= getEl('drill-name');
+          const savedCat  = localStorage.getItem(LS.cat)  || '';
+          const savedName = localStorage.getItem(LS.name) || '';
+          if(savedCat && [...catSel.options].some(o=>o.value===savedCat)) catSel.value = savedCat;
+          fillNameSelect(catSel.value);
+          if(savedName && [...nameSel.options].some(o=>o.value===savedName)) nameSel.value = savedName;
+          applyDrillMeta();
+        } else { console.warn('Drill library empty', json); }
+      }catch(err){ console.warn('Drill library fetch failed', err); }
+    }
+
+    /* ===== Timer, thresholds, widgets, reps ===== */
+    let timer;
+    function makeTimer(){
+      const wrap = getEl('pm-timer-wrap');
+      const timeEl = getEl('pm-timer-time');
+      const startBtn = getEl('pm-timer-start');
+      const stopBtn  = getEl('pm-timer-stop');
+      const resetBtn = getEl('pm-timer-reset');
+      const saveBtn  = getEl('pm-timer-save');
+      const pmInput  = getEl('pm-value');
+      let running=false, start=0, acc=0, rafId=null;
+      function fmt(ms){ const s=ms/1000; return s.toFixed(2)+' s'; }
+      function tick(){ const now=performance.now(); const elapsed = acc + (running ? (now - start) : 0); timeEl.textContent = fmt(elapsed); if(running) rafId = requestAnimationFrame(tick); }
+      function startTimer(){ if(running) return; running=true; start=performance.now(); tick(); }
+      function stopTimer(){ if(!running) return; running=false; acc += performance.now()-start; cancelAnimationFrame(rafId); tick(); }
+      function resetTimer(){ running=false; acc=0; cancelAnimationFrame(rafId); tick(); }
+      function saveToField(){ const num = parseFloat(timeEl.textContent.replace(' s','')); if(!isNaN(num)) pmInput.value = num; stopTimer(); evaluatePrimary(); }
+      startBtn.addEventListener('click', startTimer); stopBtn.addEventListener('click', stopTimer); resetBtn.addEventListener('click', resetTimer); saveBtn.addEventListener('click', saveToField);
+      tick(); return { show:()=>wrap.classList.remove('hidden'), hide:()=>{ resetTimer(); wrap.classList.add('hidden'); } };
+    }
+
+    function parseNumeric(v){ if(v==null) return null; const n=parseFloat(String(v).replace(/[^\d.\-]/g,'')); return isNaN(n)?null:n; }
+    function checkComparator(value, expr){
+      if(!expr) return null; expr=String(expr).trim();
+      const num = parseNumeric(expr);
+      if(expr.startsWith('≤')||expr.startsWith('<=')) return value<=num;
+      if(expr.startsWith('≥')||expr.startsWith('>=')) return value>=num;
+      if(expr.startsWith('<')) return value<num;
+      if(expr.startsWith('>')) return value>num;
+      if(expr.includes('-')){ const [a,b]=expr.split('-').map(parseNumeric); if(a==null||b==null) return null; return value>=a && value<=b; }
+      if(num!=null) return value===num;
+      return null;
+    }
+    function evalThresholdNumeric(value, successExpr, failureExpr){
+      if(successExpr){ const ok=checkComparator(value, successExpr); if(ok===true) return true; }
+      if(failureExpr){ const bad=checkComparator(value, failureExpr); if(bad===true) return false; }
+      return null;
+    }
+    function evalThresholdString(val, successExpr, failureExpr){
+      if(val==null) return null;
+      const v=String(val).trim().toLowerCase();
+      const sx=(successExpr||'').toString().trim().toLowerCase();
+      const fx=(failureExpr||'').toString().trim().toLowerCase();
+      if(sx && v===sx) return true;
+      if(fx && v===fx) return false;
+      return null;
+    }
+    function isYesish(v){ return /^y(es)?|true|1$/i.test(String(v||'')); }
+    function isNoish(v){ return /^no?|false|0$/i.test(String(v||'')); }
+    function setChip(el, result){
+      if(!el) return;
+      if(result===true){ el.textContent='Result: Success'; el.style.borderColor='#22C55E'; }
+      else if(result===false){ el.textContent='Result: Fail'; el.style.borderColor='#EF4444'; }
+      else { el.textContent='Result: —'; el.style.borderColor='rgba(255,255,255,.18)'; }
+    }
+
+    function unitToMode(unit, measurementName=''){
+      const u = String(unit||'').toLowerCase().trim();
+      const m = String(measurementName||'').toLowerCase().trim();
+      if(u.includes('second') || m.includes('time')) return 'timer';
+      if(u.includes('percentage') || u.includes('%')) return 'percentFromReps';
+      if(u === 'count') return 'countFromReps';
+      if(u === 'boolean') return 'dropdownBool';
+      if(u.includes('grade_1-5') || u.includes('scale_1-5') || u === 'scale 1-5') return 'slider1to5';
+      if(u.includes('/')) return 'dropdownOptions';  // e.g., made/missed
+      return 'number';
+    }
+
+    const kpiModes = { pmMode:null, smMode:null, repOwner:null, repMode:'none' };
+
+    function setRepButtons(mode){
+      const sBtn = getEl('btnSuccess');
+      const fBtn = getEl('btnFail');
+      const failCard = getEl('failCard');
+      const rateCard = getEl('rateCard');
+      const totalCard= getEl('totalCard');
+      const successLabel = getEl('successLabel');
+      const totalLabel = getEl('totalLabel');
+      if(mode==='percent'){
+        repTracker.show();
+        sBtn.style.display=''; fBtn.style.display='';
+        failCard.style.display=''; rateCard.style.display=''; totalCard.style.display='';
+        successLabel.textContent='Success'; totalLabel.textContent='Total Reps';
+      } else if(mode==='count'){
+        repTracker.show();
+        sBtn.style.display=''; fBtn.style.display='none';
+        failCard.style.display='none'; rateCard.style.display='none'; totalCard.style.display='none';
+        successLabel.textContent='Count';
+      } else {
+        repTracker.hide();
+        successLabel.textContent='—';
+      }
+    }
+
+    function buildField(which, mode, unitText) {
+      const row = getEl(`${which}-row`);
+      const input = getEl(`${which}-value`);
+      const unit = getEl(`${which}-unit`);
+      const oldSel = getEl(`${which}-select`); if(oldSel) oldSel.remove();
+      input.classList.remove('hidden'); input.type='text'; input.value=''; input.min=''; input.max=''; input.step='';
+      unit.textContent = unitText || '—';
+      const attachEval = ()=> (which==='pm'? input.addEventListener('input', evaluatePrimary)
+                                        : input.addEventListener('input', evaluateSecondary));
+      if(mode==='number'){ input.type='number'; input.step='0.1'; attachEval(); }
+      else if(mode==='slider1to5'){ input.type='range'; input.min='1'; input.max='5'; input.step='1'; attachEval(); }
+      else if(mode==='dropdownBool'){
+        input.classList.add('hidden'); const sel=document.createElement('select');
+        sel.id=`${which}-select`; sel.className='form-select';
+        sel.innerHTML=`<option value="">—</option><option>Yes</option><option>No</option>`;
+        sel.addEventListener('change', which==='pm'?evaluatePrimary:evaluateSecondary);
+        row.insertBefore(sel, unit);
+      }
+      else if(mode==='dropdownOptions'){
+        input.classList.add('hidden'); const sel=document.createElement('select');
+        sel.id=`${which}-select`; sel.className='form-select';
+        const opts = unitText.split('/').map(titleCase);
+        sel.innerHTML=['<option value="">—</option>', ...opts.map(o=>`<option>${o}</option>`)].join('');
+        sel.addEventListener('change', which==='pm'?evaluatePrimary:evaluateSecondary);
+        row.insertBefore(sel, unit);
+      }
+      else if(mode==='percentFromReps' || mode==='countFromReps'){ input.classList.add('hidden'); }
+      else if(mode==='timer'){ input.type='number'; input.step='0.01'; attachEval(); }
+    }
+
+    function applyDrillMeta(){
+      const nameSel = getEl('drill-name');
+      const meta = drillsByName.get(clean(nameSel.value).toLowerCase());
+      if(!meta) return;
+
+      getEl('pm-title').textContent = `Primary: ${meta.primary_measurement||'—'}`;
+      getEl('pm-unit').textContent  = meta.measurement_unit || '—';
+      getEl('pm-thresh').textContent = [
+        meta.success_threshold ? `Success ${meta.success_threshold}` : '',
+        meta.failure_threshold ? `| Fail ${meta.failure_threshold}` : ''
+      ].filter(Boolean).join(' ');
+
+      getEl('sm-title').textContent = `Secondary: ${meta.secondary_measurement||'—'}`;
+      getEl('sm-unit').textContent  = meta.secondary_unit || '—';
+      getEl('sm-thresh').textContent = meta.secondary_threshold ? `Success ${meta.secondary_threshold}` : '';
+
+      kpiModes.pmMode = unitToMode(meta.measurement_unit, meta.primary_measurement);
+      kpiModes.smMode = unitToMode(meta.secondary_unit,  meta.secondary_measurement);
+      buildField('pm', kpiModes.pmMode, meta.measurement_unit||'');
+      buildField('sm', kpiModes.smMode, meta.secondary_unit||'');
+
+      if(!timer) timer = makeTimer();
+      if(kpiModes.pmMode==='timer') timer.show(); else timer.hide();
+
+      kpiModes.repOwner = null; kpiModes.repMode = 'none';
+      if(kpiModes.pmMode==='percentFromReps' || kpiModes.pmMode==='countFromReps'){ kpiModes.repOwner='pm'; kpiModes.repMode = (kpiModes.pmMode==='countFromReps'?'count':'percent'); }
+      else if(kpiModes.smMode==='percentFromReps' || kpiModes.smMode==='countFromReps'){ kpiModes.repOwner='sm'; kpiModes.repMode = (kpiModes.smMode==='countFromReps'?'count':'percent'); }
+
+      // Reps module
+      setRepButtons(kpiModes.repMode);
+
+      // Reset chips
+      setChip(getEl('pm-success-chip'), null);
+      setChip(getEl('sm-success-chip'), null);
+    }
+
+    function selectedValueFromControl(which, mode){
+      if(mode==='percentFromReps'){
+        const total = Number(getEl('total-hidden').value||0);
+        const succ  = Number(getEl('succ-hidden').value||0);
+        return total>0 ? (succ/total)*100 : 0;
+      }
+      if(mode==='countFromReps'){
+        const succ  = Number(getEl('succ-hidden').value||0);
+        return succ;
+      }
+      const sel = getEl(`${which}-select`);
+      if(sel && !sel.classList.contains('hidden')) return sel.value || '';
+      const input = getEl(`${which}-value`);
+      if(!input || input.classList.contains('hidden')) return '';
+      if(input.type==='range' || input.type==='number') return parseNumeric(input.value);
+      return input.value;
+    }
+
+    function evaluatePrimary(){
+      const nameSel = getEl('drill-name');
+      const meta = drillsByName.get(clean(nameSel.value).toLowerCase());
+      if(!meta) return null;
+      const value = selectedValueFromControl('pm', kpiModes.pmMode);
+      let result = null;
+
+      if(typeof value === 'number' && value!=null){
+        result = evalThresholdNumeric(value, meta.success_threshold, meta.failure_threshold);
+      } else if (typeof value === 'string' && value){
+        if(isYesish(value) || isNoish(value)){
+          const want = (meta.success_threshold||'').toString().toLowerCase();
+          if(want.includes('yes')) result = isYesish(value);
+          else if(want.includes('no')) result = isNoish(value);
+        }
+        if(result===null){ result = evalThresholdString(value, meta.success_threshold, meta.failure_threshold); }
+      }
+      setChip(getEl('pm-success-chip'), result);
+      return { value, success: result };
+    }
+
+    function evaluateSecondary(){
+      const nameSel = getEl('drill-name');
+      const meta = drillsByName.get(clean(nameSel.value).toLowerCase());
+      if(!meta) return null;
+      const value = selectedValueFromControl('sm', kpiModes.smMode);
+      let result = null;
+
+      if(kpiModes.smMode==='percentFromReps'){
+        result = evalThresholdNumeric(value, meta.secondary_threshold, null);
+      } else if (typeof value === 'number' && value!=null){
+        result = evalThresholdNumeric(value, meta.secondary_threshold, null);
+      } else if (typeof value === 'string' && value){
+        if(isYesish(value) || isNoish(value)){
+          const want = (meta.secondary_threshold||'').toString().toLowerCase();
+          if(want.includes('yes')) result = isYesish(value);
+          else if(want.includes('no')) result = isNoish(value);
+        }
+        if(result===null){ result = evalThresholdString(value, meta.secondary_threshold, null); }
+      }
+      setChip(getEl('sm-success-chip'), result);
+      return { value, success: result };
+    }
+
+    /* ===== Player tri-autocomplete ===== */
+    function attachTriAuto(jEl, iEl, nEl){
+      let filling = false;
+      const fill = (rec) => {
+        if (!rec) return;
+        filling = true;
+        if (rec.jersey_number != null) jEl.value = String(rec.jersey_number).replace(/^0+/,'');
+        if (rec.player_id)             iEl.value = rec.player_id;
+        if (rec.player_name)           nEl.value = rec.player_name;
+        filling = false;
+      };
+      jEl.addEventListener('input',  ()=>{ if(!filling){ const rec = byJersey.get(String(jEl.value).replace(/^0+/,'')); if(rec) fill(rec); }});
+      jEl.addEventListener('change', ()=>{ if(!filling){ const rec = byJersey.get(String(jEl.value).replace(/^0+/,'')); if(rec) fill(rec); }});
+      iEl.addEventListener('input',  ()=>{ if(!filling){ const rec = byId.get(String(iEl.value||'').toUpperCase()); if(rec) fill(rec); }});
+      iEl.addEventListener('change', ()=>{ if(!filling){ const rec = byId.get(String(iEl.value||'').toUpperCase()); if(rec) fill(rec); }});
+      nEl.addEventListener('input',  ()=>{
+        if (filling) return;
+        const k = String(nEl.value||'').trim().toLowerCase();
+        if (!k) return;
+        if (byName.has(k)) return fill(byName.get(k));
+        if (k.length >= 2){
+          const hits = roster.filter(r => String(r.player_name||'').trim().toLowerCase().includes(k));
+          if (hits.length === 1) fill(hits[0]);
+        }
+      });
+      nEl.addEventListener('change', ()=>{ const k=String(nEl.value||'').trim().toLowerCase(); if(byName.has(k)) fill(byName.get(k)); });
+    }
+
+    /* ===== UI wiring ===== */
+    function wireUI(){
+      // Target toggle show/hide
+      const tTeam = getEl('t-team');
+      const tPlayer = getEl('t-player');
+      const unitWrap = getEl('unitWrap');
+      const playerWrap = getEl('playerWrap');
+
+      function applyTarget(){
+        const tgt = tPlayer.checked ? 'player' : 'team';
+        if(tgt === 'team'){ unitWrap.classList.remove('hidden'); playerWrap.classList.add('hidden'); }
+        else { unitWrap.classList.add('hidden'); playerWrap.classList.remove('hidden'); }
+        localStorage.setItem(LS.target, tgt);
+      }
+      tTeam.addEventListener('change', applyTarget);
+      tPlayer.addEventListener('change', applyTarget);
+
+      const savedTarget = localStorage.getItem(LS.target);
+      if(savedTarget === 'player'){ tPlayer.checked = true; } else { tTeam.checked = true; }
+      applyTarget();
+
+      // Unit select persistence
+      const unitSel = getEl('unit-select');
+      const savedUnit = localStorage.getItem(LS.unit);
+      if(savedUnit && [...unitSel.options].some(o=>o.value===savedUnit)) unitSel.value = savedUnit;
+      unitSel.addEventListener('change', ()=> localStorage.setItem(LS.unit, unitSel.value));
+
+      // Date persistence
+      const date = getEl('prac-date');
+      const savedDate = localStorage.getItem(LS.date); if (savedDate) date.value = savedDate; setTodayIfEmpty(date);
+      date.addEventListener('change', ()=> localStorage.setItem(LS.date, date.value));
+
+      // Drill selects persistence
+      const catSel  = getEl('drill-cat');
+      const nameSel = getEl('drill-name');
+      catSel.addEventListener('change', ()=>{ localStorage.setItem(LS.cat,  catSel.value ); fillNameSelect(catSel.value); applyDrillMeta(); });
+      nameSel.addEventListener('change',()=>{ localStorage.setItem(LS.name, nameSel.value); applyDrillMeta(); });
+
+      // Recompute chips when reps change
+      repTracker.setOnChange(()=>{
+        if(kpiModes.pmMode==='percentFromReps' || kpiModes.pmMode==='countFromReps') evaluatePrimary();
+        if(kpiModes.smMode==='percentFromReps' || kpiModes.smMode==='countFromReps') evaluateSecondary();
+      });
+
+      // Player tri-auto
+      attachTriAuto(getEl('jersey'), getEl('player-id'), getEl('player-name'));
+    }
+
+    function calcRepBuckets(){
+      const prim  = evaluatePrimary()  || { success:null };
+      const sec   = evaluateSecondary()|| { success:null };
+
+      const totalFromUI = Number(getEl('total-hidden').value || 0);
+      const succFromUI  = Number(getEl('succ-hidden').value  || 0);
+
+      let pm = { total:0, succ:0, fail:0 };
+      if (kpiModes.pmMode === 'percentFromReps') {
+        pm.total = totalFromUI; pm.succ = succFromUI; pm.fail = Math.max(0, pm.total - pm.succ);
+      } else if (kpiModes.pmMode === 'countFromReps') {
+        pm.total = succFromUI; pm.succ = succFromUI; pm.fail = 0;
+      } else {
+        pm.total = 1; pm.succ = prim.success === true ? 1 : 0; pm.fail = prim.success === false ? 1 : 0;
+      }
+
+      let sm = { total:0, succ:0, fail:0 };
+      if (kpiModes.smMode === 'percentFromReps') {
+        sm.total = totalFromUI; sm.succ = succFromUI; sm.fail = Math.max(0, sm.total - sm.succ);
+      } else if (kpiModes.smMode === 'countFromReps') {
+        sm.total = succFromUI; sm.succ = succFromUI; sm.fail = 0;
+      } else if (drillsByName.get(String(getEl('drill-name').value).toLowerCase())?.secondary_measurement) {
+        sm.total = 1; sm.succ = sec.success === true ? 1 : 0; sm.fail = sec.success === false ? 1 : 0;
+      } else { sm.total=0; sm.succ=0; sm.fail=0; }
+
+      return { pm, sm };
+    }
+
+    function resolvePlayerId(){
+      const isPlayer = getEl('t-player').checked;
+      if(isPlayer){
+        const pid = (getEl('player-id').value||'').trim().toUpperCase();
+        const jer = (getEl('jersey').value||'').trim().replace(/^0+/, '');
+        const pnm = (getEl('player-name').value||'').trim().toLowerCase();
+        if (pid && byId.get(pid)) return byId.get(pid).player_id;
+        if (jer && byJersey.get(jer)) return byJersey.get(jer).player_id;
+        if (pnm && byName.get(pnm)) return byName.get(pnm).player_id;
+        return null;
+      } else {
+        const unit = getEl('unit-select').value || 'ST';
+        return `TEAM:${unit}`;
+      }
+    }
+
+    /* ===== Submit ===== */
+    getEl('st-form').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+
+      const pid = resolvePlayerId();
+      if(!pid){
+        showStatus('Pick a valid player (K/P/LS/etc.) or switch to Team Unit.', 'warning');
+        return;
+      }
+
+      const drillCat  = (getEl('drill-cat').value||'').trim();
+      const drillName = (getEl('drill-name').value||'').trim();
+      if(!drillCat || !drillName){
+        showStatus('Choose a drill category and name.', 'warning');
+        return;
+      }
+      const meta = drillsByName.get(drillName.toLowerCase());
+      if(!meta){
+        showStatus('Drill not found in library.', 'warning');
+        return;
+      }
+
+      const primary   = evaluatePrimary()  || { value:null, success:null };
+      const theSecondary = evaluateSecondary() || { value:null, success:null };
+      const buckets = calcRepBuckets();
+      const pm = buckets.pm, sm = buckets.sm;
+
+      // Team vs Player fields
+      const isPlayer = getEl('t-player').checked;
+      const role = (getEl('role-select').value||'').trim();
+
+      const payload = {
+        action:'practice',
+        sheet_id: PRACTICE_SHEET_ID,
+        sheet_name:'61_Fact_Practice',
+
+        date: getEl('prac-date').value,
+        player_id: pid,
+
+        drill: drillName,
+        drill_category: drillCat,
+        position_group: 'ST',
+        position_specific: isPlayer ? 1 : 0,
+
+        practice_intensity: getEl('intensity').value,
+        attendance:        getEl('attendance').value,
+        player_effort:     getEl('effort').value || '',
+
+        // Primary KPI
+        primary_measurement: meta.primary_measurement || '',
+        primary_unit:        meta.measurement_unit    || '',
+        primary_value:       primary.value,
+        primary_success:     primary.success,
+
+        // Secondary KPI
+        secondary_measurement: meta.secondary_measurement || '',
+        secondary_unit:        meta.secondary_unit        || '',
+        secondary_value:       theSecondary.value,
+        secondary_success:     theSecondary.success,
+
+        // Thresholds
+        success_threshold:   meta.success_threshold   || '',
+        failure_threshold:   meta.failure_threshold   || '',
+        secondary_threshold: meta.secondary_threshold || '',
+
+        // Reps buckets
+        pm_reps_total:     pm.total,
+        pm_rep_successes:  pm.succ,
+        pm_rep_failures:   pm.fail,
+
+        sm_reps_total:     sm.total,
+        sm_rep_successes:  sm.succ,
+        sm_rep_failures:   sm.fail,
+
+        // Legacy overall (for dashboards that expect it)
+        reps: kpiModes.repOwner ? Number(getEl('total-hidden').value || 0) : 1,
+        successful_reps: kpiModes.repOwner ? Number(getEl('succ-hidden').value || 0) : (primary.success===true?1:0),
+
+        drill_notes: [
+          getEl('notes').value || '',
+          (!isPlayer ? `unit=${getEl('unit-select').value}` : ''),
+          (isPlayer && role ? `role=${role}` : '')
+        ].filter(Boolean).join(' | ')
+      };
+
+      const fd = new FormData();
+      fd.append('data', JSON.stringify(payload));
+
+      try{
+        const res  = await fetch(APPS_SCRIPT_URL, { method:'POST', body: fd });
+        const text = await res.text();
+        let json=null; try{ json=JSON.parse(text);}catch{}
+        if (res.ok && json && json.ok){
+          showStatus('Special Teams log submitted. ✅','success');
+
+          // Preserve date/cat/name/target/unit; reset inputs
+          const sDate = localStorage.getItem(LS.date);
+          const sCat  = localStorage.getItem(LS.cat);
+          const sName = localStorage.getItem(LS.name);
+          const sTarget = localStorage.getItem(LS.target);
+          const sUnit   = localStorage.getItem(LS.unit);
+
+          e.target.reset();
+          getEl('prac-date').value = sDate || getEl('prac-date').value;
+          if (sCat)  getEl('drill-cat').value  = sCat;
+          fillNameSelect(getEl('drill-cat').value);
+          if (sName) getEl('drill-name').value = sName;
+          if (sTarget==='player'){ getEl('t-player').checked = true; } else { getEl('t-team').checked = true; }
+          getEl('unit-select').value = sUnit || 'KO';
+
+          applyDrillMeta();
+          repTracker.reset();
+          setChip(getEl('pm-success-chip'), null);
+          setChip(getEl('sm-success-chip'), null);
+        } else {
+          showStatus((json && json.error) ? json.error : 'Submit failed. Try again.','error');
+          console.warn('Submit debug:', text);
+        }
+      }catch(err){
+        console.error(err);
+        showStatus('Network error. Data not sent.','error');
+      }
+    });
+
+    /* ===== Boot ===== */
+    (async function init(){
+      wireUI();
+      setTodayIfEmpty(getEl('prac-date'));
+      await Promise.all([fetchRoster(), fetchDrillLibrary()]);
+    })();
+  </script>
+</body>
+</html>

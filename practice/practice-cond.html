@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Conditioning – Practice Logger</title>
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    /* Minimal page-specific layout */
+    .container{ max-width:calc(100vw - 100px)!important; width:100%; padding:0 50px; margin:0 auto; box-sizing:border-box; }
+    @media (max-width:768px){ .container{ padding:0 25px; max-width:calc(100vw - 50px);} }
+    @media (max-width:600px){ .container{ padding:0 16px; max-width:calc(100vw - 32px);} }
+
+    .lane-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+    @media (max-width:900px){ .lane-grid{ grid-template-columns:1fr; } }
+    .lane-card{
+      background:rgba(255,255,255,.05); border:1px solid var(--border);
+      border-radius:14px; padding:14px; box-shadow:var(--shadow-soft);
+    }
+    .lane-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .lane-title{ font-weight:800; color:#E9D5FF; }
+    .lane-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+    .time-box{
+      font-variant-numeric:tabular-nums; font-weight:800; font-size:1.2rem;
+      color:#D6BCFA; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.18);
+      padding:8px 10px; border-radius:10px; min-width:88px; text-align:center;
+    }
+    .row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    @media (max-width:640px){ .row{ grid-template-columns:1fr; } }
+    .hint{ opacity:.75; font-size:.85rem; margin-top:6px; }
+
+    .timer-toolbar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:center; }
+    .big-time{ font-variant-numeric:tabular-nums; font-weight:900; font-size:2rem; color:#D6BCFA; min-width:120px; text-align:center; }
+    .hidden{ display:none !important; }
+  </style>
+</head>
+<body class="practice-page">
+
+  <header class="page-header">
+    <h1>Conditioning</h1>
+    <nav class="menu-actions" aria-label="Header navigation">
+      <a href="../index.html" class="menu-btn">Home</a>
+      <a href="practice.html" class="menu-btn secondary">Practice</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="container">
+      <form id="cond-form" autocomplete="off">
+
+        <!-- ===== Session / Drill ===== -->
+        <div class="form-section">
+          <div class="row">
+            <div>
+              <label class="form-label" for="prac-date">Practice Date</label>
+              <input type="date" id="prac-date" class="form-input" required />
+            </div>
+            <div>
+              <label class="form-label" for="drill">Conditioning Drill</label>
+              <select id="drill" class="form-select" required>
+                <option value="TC001">Gassers</option>
+                <option value="TC002">300-Yard Shuttle</option>
+                <option value="TC003">110s</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:10px;">
+            <div>
+              <label class="form-label" for="lane-count">Lanes</label>
+              <select id="lane-count" class="form-select">
+                <option>2</option><option>3</option><option selected>6</option><option>8</option><option>10</option><option>12</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" for="group">Group (for 110s thresholds)</label>
+              <select id="group" class="form-select">
+                <option value="">—</option>
+                <option value="Skill">Skill</option>
+                <option value="Big">Big</option>
+              </select>
+              <div class="hint">Saved into notes as <code>group=Skill|Big</code>. If empty, just logs time.</div>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:10px;">
+            <div>
+              <label class="form-label" for="unit">Unit (optional)</label>
+              <input id="unit" class="form-input" placeholder="e.g., Team, WRs, OL, etc." />
+            </div>
+            <div>
+              <label class="form-label" for="role">Role (optional)</label>
+              <input id="role" class="form-input" placeholder="e.g., LS, KR, etc." />
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== Batch Timer ===== -->
+        <div class="form-section">
+          <div class="timer-toolbar">
+            <span class="pill">Primary: <b id="kpi-name">completion_time</b> (<span id="kpi-unit">seconds</span>)</span>
+            <span class="big-time" id="master-time">0.00</span>
+            <button type="button" id="start-all" class="btn btn-success">Start All</button>
+            <button type="button" id="stop-all" class="btn btn-danger">Stop</button>
+            <button type="button" id="reset-all" class="btn btn-neutral">Reset</button>
+          </div>
+          <p class="hint" style="text-align:center;">Tap a lane’s <b>Finish</b> when the athlete crosses the line. You can also edit the time manually.</p>
+        </div>
+
+        <!-- ===== Lanes ===== -->
+        <div id="lanes" class="lane-grid"></div>
+
+        <!-- ===== Submit ===== -->
+        <button type="button" id="submitAll" class="submit-btn">Submit Times</button>
+        <div id="form-status" class="status"></div>
+      </form>
+    </div>
+  </main>
+
+  <footer><p>&copy; 2025 Game Speed Data Systems</p></footer>
+
+  <!-- Shared roster datalists -->
+  <div style="display:none">
+    <datalist id="jersey-list"></datalist>
+    <datalist id="playerid-list"></datalist>
+    <datalist id="playername-list"></datalist>
+  </div>
+
+  <script>
+    /* ===== CONFIG ===== */
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
+    const PRACTICE_SHEET_ID = '1pT-7cXhfzJB5mjswsXayvjt_qC2hIp9WflWggIAyh8g';
+
+    // Library map (only what we need to log)
+    const DRILLS = {
+      TC001: { name:'Gassers',            category:'Conditioning', measurement:'completion_time', unit:'seconds' },
+      TC002: { name:'300-Yard Shuttle',   category:'Conditioning', measurement:'completion_time', unit:'seconds' },
+      TC003: { name:'110s',               category:'Conditioning', measurement:'average_time',    unit:'seconds' }
+    };
+
+    // Secondary defaults per drill (used if sheet doesn't provide a secondary_threshold)
+    const SECONDARY_DEFAULTS = {
+      TC001: { measurement:'completion_rate', unit:'percentage', threshold:'100', valueForTime:()=>100, successForTime:()=>true },
+      TC002: { measurement:'finished',        unit:'boolean',    threshold:'Yes', valueForTime:()=> 'Yes', successForTime:()=>true },
+      TC003: { measurement:'completion_rate', unit:'percentage', threshold:'100', valueForTime:()=>100, successForTime:()=>true }
+    };
+
+    const LS = { date:'cond_date', drill:'cond_drill', lanes:'cond_lanes', group:'cond_group' };
+
+    /* ===== Per-position thresholds (sheet-first) ===== */
+    const COND_THRESHOLDS_TAB = 'Conditioning_Thresholds';
+
+    // Canonical buckets
+    const POS_BUCKET = {
+      QB:'Skill', RB:'Skill', WR:'Skill', TE:'Skill', DB:'Skill',
+      K:'Skill',  P:'Skill',  LS:'Skill',
+      OL:'Big', DL:'Big', LB:'Big'
+    };
+
+    // Position aliases -> canonical
+    const POS_ALIASES = {
+      // Linebacker family
+      ILB:'LB', OLB:'LB', MLB:'LB', WLB:'LB', SLB:'LB', SAM:'LB', WILL:'LB', MIKE:'LB', LINEBACKER:'LB',
+      // Defensive backs
+      CB:'DB', S:'DB', SS:'DB', FS:'DB', NB:'DB', STAR:'DB', DB:'DB', CORNER:'DB', SAFETY:'DB',
+      // Defensive line
+      DE:'DL', DT:'DL', NT:'DL', EDGE:'DL', DL:'DL', NOSE:'DL',
+      // Offensive line
+      LT:'OL', RT:'OL', LG:'OL', RG:'OL', C:'OL', OL:'OL', CENTER:'OL', GUARD:'OL', TACKLE:'OL',
+      // Backs/receivers
+      HB:'RB', TB:'RB', FB:'RB', RB:'RB',
+      WR:'WR', SE:'WR', FL:'WR', X:'WR', Z:'WR', Y:'TE', TE:'TE',
+      // Specialists
+      PK:'K', KO:'K', K:'K', P:'P', LS:'LS',
+      // QBs
+      QB:'QB'
+    };
+
+    function normalizePosKey(raw){
+      if (!raw) return '';
+      const token = String(raw).toUpperCase().match(/[A-Z]+/g);
+      const first = token ? token[0] : String(raw).toUpperCase();
+      return POS_ALIASES[first] || first;
+    }
+
+    // `${DRILL}::${POS}` -> { success, failure, secondary }
+    const thresholdsFromSheet = new Map();
+
+    // Comparators
+    function parseNumeric(v){ if(v==null) return null; const n=parseFloat(String(v).replace(/[^\d.\-]/g,'')); return isNaN(n)?null:n; }
+    function checkComparator(value, expr){
+      if(expr==null || expr==='') return null;
+      const s = String(expr).trim();
+      // boolean-like thresholds
+      if (/^(yes|no|true|false)$/i.test(s)) {
+        const want = /^yes|true$/i.test(s);
+        if (typeof value === 'string') return /^yes|true$/i.test(value);
+        if (typeof value === 'boolean') return value === want;
+        if (typeof value === 'number') return !!value === want;
+        return null;
+      }
+      const num = parseNumeric(s);
+      if(s.startsWith('≤')||s.startsWith('<=')) return value<=num;
+      if(s.startsWith('≥')||s.startsWith('>=')) return value>=num;
+      if(s.startsWith('<')) return value<num;
+      if(s.startsWith('>')) return value>num;
+      if(s.includes('-')){ const [a,b]=s.split('-').map(parseNumeric); if(a==null||b==null) return null; return value>=a && value<=b; }
+      if(num!=null) return Number(value)===num;
+      return null;
+    }
+
+    function getPositionKey(entry){
+      const posRaw = String(entry?.position || '').trim();
+      if (posRaw) return normalizePosKey(posRaw);
+      const m = String(entry?.player_id || '').toUpperCase().match(/^[A-Z]+/);
+      return normalizePosKey(m ? m[0] : 'ALL');
+    }
+
+    async function fetchConditioningThresholds(){
+      try{
+        const url = `${APPS_SCRIPT_URL}?action=table&sheet_id=${encodeURIComponent(PRACTICE_SHEET_ID)}&sheet_name=${encodeURIComponent(COND_THRESHOLDS_TAB)}`;
+        const res = await fetch(url, { cache:'no-store' });
+        const json = await res.json();
+        if (!json || !json.ok || !Array.isArray(json.rows)) return;
+        thresholdsFromSheet.clear();
+        json.rows.forEach(r=>{
+          const drillId = String(r.drill_id||'').trim().toUpperCase();
+          const posKey  = String(r.position_key||'').trim().toUpperCase();
+          if(!drillId || !posKey) return;
+          const mapKey = `${drillId}::${posKey}`;
+          thresholdsFromSheet.set(mapKey, {
+            success:   (r.success_threshold||'').toString().trim(),
+            failure:   (r.failure_threshold||'').toString().trim(),
+            secondary: (r.secondary_threshold||'').toString().trim()
+          });
+        });
+      }catch(e){ console.warn('Thresholds fetch failed; proceeding without.', e); }
+    }
+
+    function resolveThresholds(drillId, posKey){
+      const d = String(drillId||'').toUpperCase();
+      const pos = normalizePosKey(posKey || 'ALL').toUpperCase();
+      const bucket = (POS_BUCKET[pos] || 'ALL').toUpperCase();
+
+      const candidates = [
+        `${d}::${pos}`,     // e.g., TC001::LB
+        `${d}::${bucket}`,  // e.g., TC001::BIG
+        `${d}::ALL`
+      ];
+      for (const k of candidates) {
+        if (thresholdsFromSheet.has(k)) return thresholdsFromSheet.get(k);
+      }
+      console.warn('No thresholds found', { drillId:d, pos, bucket, tried:candidates });
+      return { success:'', failure:'', secondary:'' };
+    }
+
+    /* ===== Roster (ALL) ===== */
+    let roster = [];
+    const byId=new Map(), byJersey=new Map(), byName=new Map();
+    const normId = v => String(v||'').trim().toUpperCase();
+    const normJersey = v => String(v||'').trim().replace(/^0+/, '');
+    const normName = v => String(v||'').trim().toLowerCase();
+
+    function indexRoster(){
+      byId.clear(); byJersey.clear(); byName.clear();
+      roster.forEach(r=>{
+        if(r.player_id)     byId.set(normId(r.player_id), r);
+        if(r.jersey_number) byJersey.set(normJersey(r.jersey_number), r);
+        if(r.player_name)   byName.set(normName(r.player_name), r);
+      });
+    }
+    function fillRosterDatalists(){
+      const jl = document.getElementById('jersey-list');
+      const il = document.getElementById('playerid-list');
+      const nl = document.getElementById('playername-list');
+      jl.innerHTML=''; il.innerHTML=''; nl.innerHTML='';
+      [...roster].sort((a,b)=>(+a.jersey_number||0)-(+b.jersey_number||0)).forEach(r=>{
+        const o1=document.createElement('option'); o1.value = normJersey(r.jersey_number); o1.label = `${r.player_name} (${r.position||''})`; jl.appendChild(o1);
+        const o2=document.createElement('option'); o2.value = r.player_id; o2.label = `${r.player_name}${r.jersey_number?' #'+r.jersey_number:''}`; il.appendChild(o2);
+        const o3=document.createElement('option'); o3.value = r.player_name; o3.label = `${r.player_id}${r.jersey_number?' • #'+r.jersey_number:''}`; nl.appendChild(o3);
+      });
+    }
+
+    async function fetchRoster(){
+      try{
+        const url = `${APPS_SCRIPT_URL}?action=roster&sheet_id=${encodeURIComponent('1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI')}&sheet_name=${encodeURIComponent('00_Dim_Roster')}`;
+        const res = await fetch(url, { cache:'no-store' });
+        const json = await res.json();
+        if(json && json.ok && Array.isArray(json.roster)){
+          roster = json.roster.map(it=>({
+            player_id: String(it.player_id||it.id||'').trim().toUpperCase(),
+            player_name: String(it.player_name||it.name||'').trim(),
+            position: String(it.position||it.pos||'').trim().toUpperCase(),
+            jersey_number: String(it.jersey_number||it.jersey||'').trim()
+          }));
+          indexRoster(); fillRosterDatalists();
+        }
+      }catch(err){ console.warn('Roster fetch failed', err); }
+    }
+
+    /* ===== Lane builder ===== */
+    const lanesEl = document.getElementById('lanes');
+
+    function laneTemplate(i){
+      const n = i+1;
+      const id = (s)=>`${s}-${n}`;
+      return `
+      <div class="lane-card" id="lane-${n}">
+        <div class="lane-head">
+          <div class="lane-title">Lane ${n}</div>
+          <div class="lane-actions">
+            <span class="time-box" id="${id('time-box')}">0.00</span>
+            <button type="button" class="btn btn-success" id="${id('finish')}">Finish</button>
+            <button type="button" class="btn btn-neutral" id="${id('clear')}">Clear</button>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label class="form-label" for="${id('jersey')}">Jersey #</label>
+            <input id="${id('jersey')}" class="form-input" placeholder="##" list="jersey-list" inputmode="numeric"/>
+          </div>
+          <div>
+            <label class="form-label" for="${id('player-id')}">Player ID</label>
+            <input id="${id('player-id')}" class="form-input" placeholder="e.g., WR101" list="playerid-list"/>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <div>
+            <label class="form-label" for="${id('player-name')}">Player Name</label>
+            <input id="${id('player-name')}" class="form-input" placeholder="Type a few letters…" list="playername-list"/>
+          </div>
+          <div>
+            <label class="form-label" for="${id('time')}">Time (s)</label>
+            <input id="${id('time')}" class="form-input" type="number" step="0.01" min="0" placeholder="0.00"/>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    function buildLanes(count){
+      lanesEl.innerHTML = Array.from({length:count}, (_,i)=>laneTemplate(i)).join('');
+      // Wire tri-autocomplete + buttons
+      for(let i=1;i<=count;i++){
+        attachTriAuto(`jersey-${i}`, `player-id-${i}`, `player-name-${i}`);
+        document.getElementById(`finish-${i}`).addEventListener('click', ()=> finishLane(i));
+        document.getElementById(`clear-${i}`).addEventListener('click',  ()=> clearLane(i));
+      }
+    }
+
+    /* ===== Tri-auto ===== */
+    function attachTriAuto(jId, pId, nId){
+      const jEl = document.getElementById(jId);
+      const iEl = document.getElementById(pId);
+      const nEl = document.getElementById(nId);
+      let filling=false;
+      const fill = (rec)=>{
+        if(!rec) return; filling=true;
+        if(rec.jersey_number!=null) jEl.value = String(rec.jersey_number).replace(/^0+/, '');
+        if(rec.player_id) iEl.value = rec.player_id;
+        if(rec.player_name) nEl.value = rec.player_name;
+        filling=false;
+      };
+      jEl.addEventListener('input', ()=>{ if(!filling){ const rec=byJersey.get(normJersey(jEl.value)); if(rec) fill(rec);} });
+      jEl.addEventListener('change',()=>{ if(!filling){ const rec=byJersey.get(normJersey(jEl.value)); if(rec) fill(rec);} });
+      iEl.addEventListener('input', ()=>{ if(!filling){ const rec=byId.get(normId(iEl.value)); if(rec) fill(rec);} });
+      iEl.addEventListener('change',()=>{ if(!filling){ const rec=byId.get(normId(iEl.value)); if(rec) fill(rec);} });
+      nEl.addEventListener('input', ()=>{
+        if(filling) return;
+        const k=normName(nEl.value);
+        if(!k) return;
+        if(byName.has(k)) return fill(byName.get(k));
+        if(k.length>=2){
+          const hits=roster.filter(r=>normName(r.player_name).includes(k));
+          if(hits.length===1) fill(hits[0]);
+        }
+      });
+      nEl.addEventListener('change', ()=>{ const k=normName(nEl.value); if(byName.has(k)) fill(byName.get(k)); });
+    }
+
+    /* ===== Master timer ===== */
+    let running=false, start=0, acc=0, raf=null;
+
+    function fmt(ms){ return (ms/1000).toFixed(2); }
+    function tick(){
+      const now=performance.now();
+      const elapsed = acc + (running ? (now - start) : 0);
+      document.getElementById('master-time').textContent = fmt(elapsed);
+      if(running) raf=requestAnimationFrame(tick);
+    }
+    function startAll(){ if(running) return; running=true; start=performance.now(); tick(); }
+    function stopAll(){ if(!running) return; running=false; acc += performance.now()-start; cancelAnimationFrame(raf); tick(); }
+    function resetAll(){ running=false; acc=0; cancelAnimationFrame(raf); tick();
+      // clear lane times (not roster)
+      const lanes = document.querySelectorAll('input[id^="time-"]');
+      lanes.forEach(el=> el.value='');
+      document.querySelectorAll('[id^="time-box-"]').forEach(el=> el.textContent='0.00');
+    }
+
+    function finishLane(i){
+      // lock current time into lane
+      const ms = (acc + (running ? (performance.now()-start):0));
+      const val = Number(fmt(ms));
+      const field = document.getElementById(`time-${i}`);
+      field.value = val;
+      document.getElementById(`time-box-${i}`).textContent = val.toFixed(2);
+    }
+    function clearLane(i){
+      document.getElementById(`time-${i}`).value='';
+      document.getElementById(`time-box-${i}`).textContent='0.00';
+    }
+
+    /* ===== Persist simple prefs ===== */
+    function setTodayIfEmpty(input){
+      if(!input.value){
+        const d=new Date(), y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+        input.value = `${y}-${m}-${day}`;
+      }
+    }
+    function loadPrefs(){
+      const d=localStorage.getItem(LS.date); if(d) document.getElementById('prac-date').value=d; setTodayIfEmpty(document.getElementById('prac-date'));
+      const drill=localStorage.getItem(LS.drill); if(drill && DRILLS[drill]) document.getElementById('drill').value=drill;
+      const lanes=Number(localStorage.getItem(LS.lanes)||6); document.getElementById('lane-count').value = lanes;
+      const g=localStorage.getItem(LS.group)||''; document.getElementById('group').value=g;
+      applyDrillMeta(); buildLanes(lanes);
+    }
+    function savePrefs(){
+      localStorage.setItem(LS.date,  document.getElementById('prac-date').value);
+      localStorage.setItem(LS.drill, document.getElementById('drill').value);
+      localStorage.setItem(LS.lanes, document.getElementById('lane-count').value);
+      localStorage.setItem(LS.group, document.getElementById('group').value);
+    }
+
+    function applyDrillMeta(){
+      const meta = DRILLS[document.getElementById('drill').value];
+      document.getElementById('kpi-name').textContent = meta.measurement;
+      document.getElementById('kpi-unit').textContent = meta.unit;
+    }
+
+    /* ===== Submit rows ===== */
+    function buildNotes(){
+      const unit = String(document.getElementById('unit').value||'').trim();
+      const role = String(document.getElementById('role').value||'').trim();
+      const group= String(document.getElementById('group').value||'').trim();
+      const parts=[];
+      if(unit) parts.push(`unit=${unit}`);
+      if(role) parts.push(`role=${role}`);
+      if(group) parts.push(`group=${group}`);
+      return parts.join(' | ');
+    }
+
+    function resolveEntry(j, pid, name){
+      let entry=null;
+      const pidU = normId(pid);
+      const jn   = normJersey(j);
+      const nm   = normName(name);
+      if(pidU && byId.get(pidU)) entry = byId.get(pidU);
+      else if(jn && byJersey.get(jn)) entry = byJersey.get(jn);
+      else if(nm && byName.get(nm)) entry = byName.get(nm);
+      return entry;
+    }
+
+    function getSecondaryPayload(drillId, timeHasValue, sheetSecondaryThreshold){
+      const def = SECONDARY_DEFAULTS[drillId] || {measurement:'', unit:'', threshold:'', valueForTime:()=>'', successForTime:()=>null};
+      const threshold = sheetSecondaryThreshold && String(sheetSecondaryThreshold).trim() ? String(sheetSecondaryThreshold).trim() : def.threshold;
+
+      if (!timeHasValue) {
+        return { measurement:def.measurement, unit:def.unit, value:'', success:null, threshold };
+      }
+
+      // time present -> rep finished
+      const value = def.valueForTime();
+      let success = def.successForTime();
+
+      // If sheet supplied a different threshold, try to evaluate it.
+      if (threshold && threshold !== def.threshold) {
+        const cmp = checkComparator(value, threshold);
+        if (cmp !== null) success = cmp === true;
+      }
+
+      return {
+        measurement: def.measurement,
+        unit: def.unit,
+        value,
+        success,
+        threshold
+      };
+    }
+
+    async function submitAll(){
+      const date = document.getElementById('prac-date').value;
+      if(!date){ flash('Pick a date.','warning'); return; }
+      const key  = document.getElementById('drill').value;   // drillId (TC001/2/3)
+      const meta = DRILLS[key];
+      const notes = buildNotes();
+
+      const lanes = Number(document.getElementById('lane-count').value||6);
+      const rows = [];
+
+      for(let i=1;i<=lanes;i++){
+        const j  = document.getElementById(`jersey-${i}`).value;
+        const id = document.getElementById(`player-id-${i}`).value;
+        const nm = document.getElementById(`player-name-${i}`).value;
+        const t  = parseFloat(document.getElementById(`time-${i}`).value);
+
+        if((j||id||nm) && !isNaN(t)){
+          const entry = resolveEntry(j,id,nm);
+          if(!entry){ continue; }
+
+          const posKey = getPositionKey(entry);          // e.g., RB, LB, OL, WR…
+          const thr    = resolveThresholds(key, posKey); // primary + optional secondary
+
+          // evaluate primary_success
+          let primary_success = null;
+          if (thr.success){
+            const ok = checkComparator(t, thr.success);
+            if (ok === true) { primary_success = true; }
+            else if (thr.failure){
+              const bad = checkComparator(t, thr.failure);
+              primary_success = (bad === true) ? false : null;
+            } else {
+              primary_success = ok; // can be null if incomparable
+            }
+          }
+
+          // Secondary based on "finished/completion"
+          const sec = getSecondaryPayload(key, true, thr.secondary);
+
+          rows.push({
+            date,
+            player_id: entry.player_id,
+
+            drill: meta.name,
+            drill_category: meta.category,
+            position_group: 'ALL',
+            position_specific: 1,
+
+            practice_intensity:'',
+            attendance:'',
+            player_effort:'',
+
+            primary_measurement: meta.measurement,
+            primary_unit: meta.unit,
+            primary_value: t,
+            primary_success,
+
+            // Secondary fields
+            secondary_measurement: sec.measurement,
+            secondary_unit: sec.unit,
+            secondary_value: sec.value,
+            secondary_success: sec.success,
+            secondary_threshold: sec.threshold,
+
+            // record primary thresholds used
+            success_threshold: thr.success,
+            failure_threshold: thr.failure,
+
+            // rep buckets
+            pm_reps_total: 1,
+            pm_rep_successes: (primary_success === true ? 1 : 0),
+            pm_rep_failures: (primary_success === false ? 1 : 0),
+
+            sm_reps_total: sec.measurement ? 1 : 0,
+            sm_rep_successes: (sec.success === true ? 1 : 0),
+            sm_rep_failures: (sec.success === false ? 1 : 0),
+
+            // legacy overall (compat)
+            reps: 1 + (sec.measurement ? 1 : 0),
+            successful_reps: (primary_success === true ? 1 : 0) + (sec.success === true ? 1 : 0),
+
+            drill_notes: notes
+          });
+        }
+      }
+
+      if(rows.length===0){ flash('No valid lane times to submit.','warning'); return; }
+
+      // Send sequentially to Apps Script
+      let ok=0, fail=0;
+      for(const r of rows){
+        const fd = new FormData();
+        fd.append('data', JSON.stringify({ action:'practice', sheet_id:PRACTICE_SHEET_ID, sheet_name:'61_Fact_Practice', ...r }));
+        try{
+          const res = await fetch(APPS_SCRIPT_URL, { method:'POST', body: fd });
+          const text = await res.text();
+          let json=null; try{ json=JSON.parse(text);}catch{}
+          if(res.ok && json && json.ok){ ok++; } else { fail++; console.warn('Submit error:', text); }
+        }catch(err){ fail++; console.error(err); }
+      }
+
+      flash(`Submitted ${ok} row(s). ${fail? fail+' failed.':''}`, fail? 'warning':'success');
+    }
+
+    function flash(msg,type='success'){
+      const box=document.getElementById('form-status');
+      box.textContent=msg; box.className='status '+type+' show';
+      setTimeout(()=>box.classList.remove('show'), 3500);
+    }
+
+    /* ===== Wire UI ===== */
+    document.getElementById('lane-count').addEventListener('change', (e)=>{
+      const n = Number(e.target.value||6);
+      savePrefs(); buildLanes(n);
+    });
+    document.getElementById('drill').addEventListener('change', ()=>{ applyDrillMeta(); savePrefs(); });
+    document.getElementById('group').addEventListener('change', savePrefs);
+    document.getElementById('prac-date').addEventListener('change', savePrefs);
+
+    document.getElementById('start-all').addEventListener('click', startAll);
+    document.getElementById('stop-all').addEventListener('click', stopAll);
+    document.getElementById('reset-all').addEventListener('click', resetAll);
+
+    document.getElementById('submitAll').addEventListener('click', submitAll);
+
+    /* ===== Init ===== */
+    (async function init(){
+      loadPrefs();
+      await Promise.all([fetchRoster(), fetchConditioningThresholds()]);
+      document.getElementById('master-time').textContent='0.00';
+    })();
+  </script>
+</body>
+</html>

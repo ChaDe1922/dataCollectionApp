@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>O-Line Tracking – Football Data Tracker</title>
+  <link rel="stylesheet" href="../style.css"/>
+  <script src="../js/game-context.js"></script>
+  <style>
+    .container{max-width:1200px;margin:0 auto;padding:1rem}
+    .grid{display:grid;gap:1rem}
+    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .card{background:var(--panel-bg,rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:1rem}
+    .card h2{margin:0 0 .5rem 0;font-size:1.1rem}
+    .row{display:flex;gap:.75rem;flex-wrap:wrap}
+    .row>*{flex:1 1 180px}
+    label{display:block;font-size:.85rem;opacity:.9;margin-bottom:.25rem}
+    input,select{width:100%;padding:.6rem .7rem;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.2);color:#fff}
+    .btnbar{display:flex;gap:.5rem;flex-wrap:wrap}
+    .btn{padding:.6rem .9rem;border-radius:999px;border:1px solid transparent;cursor:pointer}
+    .btn.primary{background:#43b581;color:#071a12}
+    .btn.subtle{background:transparent;border-color:rgba(255,255,255,.25);color:#fff}
+    .btn.warn{background:#ffa142;color:#2a1800}
+    .chip{display:inline-block;padding:.25rem .6rem;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);font-size:.8rem}
+    .tiny{font-size:.8rem;opacity:.85}
+    .success{color:#7CFC98}.error{color:#ff6b6b}
+    .meta{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.5rem;margin-top:.5rem}
+    .meta .chip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+    /* --- Fieldsets & 3-col cluster --- */
+    .tripgrid{display:grid;gap:1rem;grid-template-columns:repeat(3,minmax(0,1fr))}
+    .fieldset{border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:1rem}
+    .fieldset h3{margin:0 0 .6rem 0;font-size:.95rem;opacity:.9}
+
+    /* --- Segmented pills --- */
+    .seg{display:flex;flex-wrap:wrap;gap:.4rem}
+    .seg-btn{padding:.38rem .75rem;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.06);color:rgba(255,255,255,.92);font-weight:600;cursor:pointer}
+    .seg-btn[aria-pressed="true"]{background:#43b581;border-color:#43b581;color:#071a12}
+    .seg-btn:focus-visible{outline:2px solid #7CE5A5;outline-offset:2px;border-color:transparent}
+
+    /* --- Toggle (Yes/No) --- */
+    .tgl{--h:30px;position:relative;display:inline-flex;align-items:center;width:54px;height:var(--h);border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);cursor:pointer}
+    .tgl::after{content:'';width:24px;height:24px;border-radius:50%;background:#bbb;transform:translateX(4px);transition:transform .18s ease,background .18s ease}
+    .tgl[aria-checked="true"]{background:#43b581;border-color:#43b581}
+    .tgl[aria-checked="true"]::after{background:#071a12;transform:translateX(26px)}
+    .tgl-label{display:flex;align-items:center;gap:.5rem}
+
+    .numpad{display:flex;flex-wrap:wrap;gap:.45rem}
+    .numpad .btn{padding:.45rem .65rem}
+
+    /* Recent players hotbar */
+    .hotbar{display:flex;flex-wrap:wrap;gap:.4rem}
+    .hotbar button{padding:.35rem .6rem;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;cursor:pointer}
+    .hotbar button:hover{background:rgba(255,255,255,.12)}
+  </style>
+</head>
+
+<body class="practice-page">
+  <header class="page-header">
+    <h1>O-Line Tracking</h1>
+    <nav class="menu-actions">
+      <a href="game-day.html" class="menu-btn">Game Day</a>
+      <a href="game-primary.html" class="menu-btn">Primary / Drives</a>
+      <a href="../index.html" class="menu-btn">Home</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="container grid grid-2">
+      <!-- ===== Game Context ===== -->
+      <section class="card">
+        <div class="section-title">
+          <h2>Game Context</h2>
+          <span id="status" class="tiny">Ready</span>
+        </div>
+        <div class="row">
+          <div>
+            <label>Game ID</label>
+            <input id="game_id" list="list_game_ids" placeholder="Pick game…"/>
+            <datalist id="list_game_ids"></datalist>
+          </div>
+          <div>
+            <label>Play ID</label>
+            <input id="play_id" placeholder="e.g. PLAY_000345"/>
+          </div>
+          <div>
+            <label>Lookup Play</label>
+            <div class="btnbar">
+              <button class="btn subtle" id="lookupPlayBtn">Fetch from Plays</button>
+              <button class="btn subtle" id="newPlayIdBtn">New Play ID</button>
+            </div>
+          </div>
+        </div>
+        <div id="game_meta" class="meta" style="display:none">
+          <span class="chip" id="meta_date"></span>
+          <span class="chip" id="meta_week"></span>
+          <span class="chip" id="meta_opp"></span>
+          <span class="chip" id="meta_ha"></span>
+          <span class="chip" id="meta_weather"></span>
+        </div>
+      </section>
+
+      <!-- ===== Lineman picker ===== -->
+      <section class="card">
+        <div class="section-title">
+          <h2>Lineman</h2>
+          <span class="tiny">Filtered to OL (type to search)</span>
+        </div>
+        <div class="row">
+          <div>
+            <label>Lineman (name)</label>
+            <input id="ol_name" list="list_ol_names" placeholder="OL name…"/>
+            <datalist id="list_ol_names"></datalist>
+          </div>
+          <div>
+            <label>Lineman ID</label>
+            <input id="ol_id" placeholder="auto from name/roster"/>
+          </div>
+        </div>
+        <div class="tiny" style="margin:.4rem 0 .25rem">Recent</div>
+        <div id="hotbar" class="hotbar" aria-label="Recent linemen"></div>
+        <div class="btnbar" style="margin-top:.6rem">
+          <button class="btn subtle" id="loadRosterBtn">Reload Roster</button>
+          <span class="chip tiny">Roster from 00_Dim_Roster</span>
+        </div>
+      </section>
+
+      <!-- ===== Pass Pro / Run / Penalty ===== -->
+      <section class="card">
+        <div class="section-title">
+          <h2>Line Play Detail</h2>
+          <span class="tiny">Pass-pro, run-block, or penalty — per snap</span>
+        </div>
+
+        <div class="tripgrid">
+          <!-- Pass Protection -->
+          <div class="fieldset">
+            <h3>Pass Protection</h3>
+
+            <div class="row">
+              <div class="tgl-label"><span>Pressure Allowed</span>
+                <button class="tgl" data-target="pp_pressure" role="switch" aria-checked="false"></button>
+              </div>
+              <input id="pp_pressure" hidden>
+            </div>
+
+            <div class="row">
+              <div class="tgl-label"><span>Sack Responsibility</span>
+                <button class="tgl" data-target="pp_sackresp" role="switch" aria-checked="false"></button>
+              </div>
+              <input id="pp_sackresp" hidden>
+            </div>
+
+            <div class="row">
+              <div>
+                <label>Time to Pressure (sec)</label>
+                <input id="pp_ttp" type="number" step="0.01" placeholder="e.g. 2.45"/>
+              </div>
+            </div>
+            <div class="numpad" style="margin-top:.5rem">
+              <button class="btn subtle" data-quick="pp_ttp:2.0">2.0</button>
+              <button class="btn subtle" data-quick="pp_ttp:2.5">2.5</button>
+              <button class="btn subtle" data-quick="pp_ttp:3.0">3.0</button>
+            </div>
+
+            <div style="margin-top:.8rem">
+              <label style="margin-bottom:.4rem">Assignment</label>
+              <div class="seg" data-target="pp_assign">
+                <button class="seg-btn" data-val="Base" aria-pressed="true">Base</button>
+                <button class="seg-btn" data-val="Slide L" aria-pressed="false">Slide L</button>
+                <button class="seg-btn" data-val="Slide R" aria-pressed="false">Slide R</button>
+                <button class="seg-btn" data-val="Man" aria-pressed="false">Man</button>
+                <button class="seg-btn" data-val="BOB" aria-pressed="false">B.O.B.</button>
+                <button class="seg-btn" data-val="PA/Screen" aria-pressed="false">PA/Screen</button>
+              </div>
+              <input id="pp_assign" value="Base" hidden>
+            </div>
+
+            <div class="btnbar" style="margin-top:.9rem">
+              <button class="btn primary" id="savePassProBtn">Save Pass-Pro Snap</button>
+            </div>
+          </div>
+
+          <!-- Run Block -->
+          <div class="fieldset">
+            <h3>Run Block</h3>
+
+            <div class="row">
+              <div class="tgl-label"><span>Pull</span>
+                <button class="tgl" data-target="rb_pull" role="switch" aria-checked="false"></button>
+              </div>
+              <input id="rb_pull" hidden>
+
+              <div class="tgl-label"><span>Pull Success</span>
+                <button class="tgl" data-target="rb_pull_succ" role="switch" aria-checked="false"></button>
+              </div>
+              <input id="rb_pull_succ" hidden>
+            </div>
+
+            <div class="row">
+              <div class="tgl-label"><span>Pancake</span>
+                <button class="tgl" data-target="rb_pancake" role="switch" aria-checked="false"></button>
+              </div>
+              <input id="rb_pancake" hidden>
+            </div>
+
+            <div style="margin-top:.6rem">
+              <label style="margin-bottom:.4rem">Gap</label>
+              <div class="seg" data-target="rb_gap">
+                <button class="seg-btn" data-val="A" aria-pressed="false">A</button>
+                <button class="seg-btn" data-val="B" aria-pressed="true">B</button>
+                <button class="seg-btn" data-val="C" aria-pressed="false">C</button>
+                <button class="seg-btn" data-val="D" aria-pressed="false">D</button>
+              </div>
+              <input id="rb_gap" value="B" hidden>
+            </div>
+
+            <div class="btnbar" style="margin-top:.9rem">
+              <button class="btn primary" id="saveRunBtn">Save Run-Block Snap</button>
+            </div>
+          </div>
+
+          <!-- Penalty -->
+          <div class="fieldset">
+            <h3>Penalty (if committed)</h3>
+
+            <div class="row">
+              <div>
+                <label>Penalty</label>
+                <select id="pen_type">
+                  <option value="">—</option>
+                  <option>Holding</option>
+                  <option>False Start</option>
+                  <option>Illegal Formation</option>
+                  <option>Hands to the Face</option>
+                  <option>Chop Block</option>
+                  <option>Tripping</option>
+                  <option>Personal Foul</option>
+                </select>
+              </div>
+              <div>
+                <label>Penalty Yards</label>
+                <input id="pen_yards" type="number" step="1" placeholder="e.g. 10"/>
+              </div>
+            </div>
+            <div class="row">
+              <div class="tgl-label"><span>Accepted</span>
+                <button class="tgl" data-target="pen_accepted" role="switch" aria-checked="false"></button>
+              </div>
+              <input id="pen_accepted" hidden>
+            </div>
+
+            <div class="btnbar" style="margin-top:.9rem">
+              <button class="btn warn" id="savePenBtn">Save Penalty</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="btnbar" style="margin-top:.8rem">
+          <button class="btn subtle" id="clearBtn">Clear Fields</button>
+        </div>
+      </section>
+
+      <!-- ===== Log ===== -->
+      <section class="card">
+        <div class="section-title">
+          <h2>Log</h2><span class="tiny">Most recent first</span>
+        </div>
+        <div id="log" class="tiny" style="max-height:260px;overflow:auto"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer><p>&copy; 2025 Game Speed Data Systems</p></footer>
+
+  <script>
+    /* =======================
+     * CONFIG
+     * ======================= */
+    const API_BASE = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
+
+    // Schedule
+    const SCHEDULE_SHEET_ID = '1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI';
+    const SCHEDULE_TAB = '01_Dim_Schedule';
+
+    // Roster (OL-only)
+    const ROSTER_SHEET_ID = '1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI';
+    const ROSTER_TAB = '00_Dim_Roster';
+    const OL_POS = ['OL','T','OT','LT','RT','G','OG','LG','RG','C','CENTER','GUARD','TACKLE','OLINE'];
+
+    // Write routes (Apps Script should map these to 24/25/26 tabs)
+    const ROUTE_OL_PP = 'ol_passpro';
+    const ROUTE_OL_RUN = 'ol_run';
+    const ROUTE_PEN    = 'penalties';
+
+    /* =======================
+     * STATE + LOG
+     * ======================= */
+    const el = id => document.getElementById(id);
+    const logBox = el('log');
+    const log = (msg, type='')=>{
+      const row=document.createElement('div');
+      if(type==='success') row.className='success';
+      if(type==='error') row.className='error';
+      row.textContent='['+new Date().toLocaleTimeString()+'] '+msg;
+      logBox.prepend(row);
+      el('status').textContent=(type==='error'?'Error':'Ready');
+    };
+
+    let schedule=[], scheduleMap={};
+    let roster=[];
+    const playersById=new Map();
+    const playersByName=new Map();
+    const playersByNum=new Map();
+    const olinemen=[];
+
+    /* =======================
+     * API helpers
+     * ======================= */
+    async function apiGet(params){
+      const url = new URL(API_BASE);
+      Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,v));
+      const r = await fetch(url);
+      return r.json();
+    }
+    async function apiPost(payload){
+      const r = await fetch(API_BASE,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      return r.json();
+    }
+    async function appendRow(route,row,ensure=[]){
+      const res = await apiPost({ action:'append', route, row, ensure_headers: ensure });
+      if(!res.ok) throw new Error(res.error||'Append failed');
+      return res;
+    }
+    async function nextId(prefix){
+      const res = await apiGet({ action:'next_id', prefix });
+      if(!res.ok) throw new Error(res.error||'ID failed');
+      return res.id;
+    }
+
+    /* =======================
+     * SCHEDULE
+     * ======================= */
+    function fillDatalist(id,arr){ const dl=el(id); dl.innerHTML=''; arr.forEach(v=>{const o=document.createElement('option'); o.value=v; dl.appendChild(o)}); }
+    async function loadSchedule(){
+      try{
+        const res = await apiGet({ action:'table', sheet_id:SCHEDULE_SHEET_ID, sheet_name:SCHEDULE_TAB });
+        if(!res.ok) throw new Error(res.error||'Schedule fetch failed');
+        schedule=(res.rows||[]).filter(r=>r.game_id);
+        scheduleMap={};
+        const ids=[];
+        schedule.forEach(r=>{ const gid=String(r.game_id||'').trim(); if(!gid) return; scheduleMap[gid]=r; ids.push(gid); });
+        ids.sort((a,b)=>{
+          const ra=scheduleMap[a], rb=scheduleMap[b];
+          const da=(ra.date||''), db=(rb.date||'');
+          if(da && db && da!==db) return da<db?-1:1;
+          return (Number(ra.week||0) - Number(rb.week||0));
+        });
+        fillDatalist('list_game_ids', ids);
+        log(`Schedule loaded (${ids.length} games).`, 'success');
+      }catch(err){ log(err.message,'error'); }
+    }
+    function renderGameMeta(gid){
+      const box=el('game_meta'); const r=scheduleMap[gid];
+      if(!r){ box.style.display='none'; return; }
+      el('meta_date').textContent = r.date ? `Date: ${r.date}` : 'Date: —';
+      el('meta_week').textContent = r.week ? `Week: ${r.week}` : 'Week: —';
+      el('meta_opp').textContent  = r.opponent ? `Opponent: ${r.opponent}` : 'Opponent: —';
+      el('meta_ha').textContent   = r.home_away ? `Venue: ${r.home_away}` : 'Venue: —';
+      el('meta_weather').textContent = r.weather_conditions ? `Weather: ${r.weather_conditions}` : 'Weather: —';
+      box.style.display='grid';
+    }
+    el('game_id').addEventListener('change',()=>{
+      const gid=el('game_id').value.trim();
+      if(!gid){ renderGameMeta(''); return; }
+      if(!scheduleMap[gid]){ log(`Game ID "${gid}" not found in schedule.`,'error'); renderGameMeta(''); return; }
+      renderGameMeta(gid);
+    });
+
+    /* =======================
+     * ROSTER (OL filter) + recent hotbar
+     * ======================= */
+    function pushOption(dlId, text){ const o=document.createElement('option'); o.value=text; el(dlId).appendChild(o); }
+    function buildRosterIndexes(rows){
+      playersById.clear(); playersByName.clear(); playersByNum.clear(); olinemen.length=0;
+      el('list_ol_names').innerHTML='';
+      rows.forEach(r=>{
+        const id=(r.player_id||r.id||'').toString().trim();
+        const name=(r.player_name||r.name||'').toString().trim();
+        const pos=(r.position||r.pos||'').toString().trim().toUpperCase();
+        const num=(r.jersey_number||r.jersey||'').toString().trim();
+        if(!id || !name) return;
+        playersById.set(id.toUpperCase(),{id,name,pos,num});
+        playersByName.set(name.toUpperCase(), id);
+        if(num) playersByNum.set(String(num), id);
+        if(OL_POS.includes(pos)) olinemen.push(name);
+      });
+      olinemen.sort((a,b)=>a.localeCompare(b));
+      olinemen.forEach(n=>pushOption('list_ol_names', n));
+    }
+    async function loadRoster(){
+      try{
+        const res = await apiGet({ action:'roster', sheet_id:ROSTER_SHEET_ID, sheet_name:ROSTER_TAB });
+        if(!res.ok) throw new Error(res.error||'Roster fetch failed');
+        roster = res.roster||[];
+        buildRosterIndexes(roster);
+        log(`Roster loaded (${roster.length} players).`, 'success');
+      }catch(err){ log(err.message,'error'); }
+    }
+    function resolvePlayerId(s){
+      const t=(s||'').toString().trim();
+      if(!t) return '';
+      if(playersById.has(t.toUpperCase())) return t;
+      if(playersByName.has(t.toUpperCase())) return playersByName.get(t.toUpperCase());
+      const num=t.replace(/[^0-9]/g,'');
+      if(num && playersByNum.has(num)) return playersByNum.get(num);
+      return '';
+    }
+    function syncOL(){
+      const id = resolvePlayerId(el('ol_name').value) || resolvePlayerId(el('ol_id').value);
+      if(id) el('ol_id').value = id;
+    }
+    el('ol_name').addEventListener('change', syncOL);
+    el('loadRosterBtn').addEventListener('click', loadRoster);
+
+    const HOTKEY='gsds_ol_recent';
+    let recent=[];
+    function loadRecent(){
+      try{ recent = JSON.parse(localStorage.getItem(HOTKEY)||'[]'); }catch{ recent=[]; }
+      renderHotbar();
+    }
+    function pushRecent(pid){
+      if(!pid) return;
+      recent = [pid, ...recent.filter(x=>x!==pid)].slice(0,8);
+      localStorage.setItem(HOTKEY, JSON.stringify(recent));
+      renderHotbar();
+    }
+    function renderHotbar(){
+      const hb=el('hotbar'); hb.innerHTML='';
+      recent.forEach(pid=>{
+        const p = playersById.get(pid.toUpperCase());
+        if(!p) return;
+        const b=document.createElement('button');
+        b.textContent = p.num ? `#${p.num} ${p.name}` : p.name;
+        b.addEventListener('click', ()=>{
+          el('ol_name').value=p.name; el('ol_id').value=p.id;
+        });
+        hb.appendChild(b);
+      });
+    }
+
+    /* =======================
+     * UI: toggles / seg / quick
+     * ======================= */
+    function setToggle(id,on){
+      const btn=document.querySelector(`.tgl[data-target="${id}"]`);
+      const hidden=el(id);
+      if(!btn||!hidden) return;
+      btn.setAttribute('aria-checked', String(!!on));
+      hidden.value = on ? 'Yes' : 'No';
+    }
+    function mountToggles(){
+      document.querySelectorAll('.tgl[data-target]').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          const id = btn.dataset.target;
+          const next = btn.getAttribute('aria-checked')!=='true';
+          setToggle(id,next);
+        });
+      });
+      ['pp_pressure','pp_sackresp','rb_pull','rb_pull_succ','rb_pancake','pen_accepted'].forEach(id=>setToggle(id,false));
+    }
+
+    function setSegValue(id,val){
+      const hidden=el(id); hidden.value=val||'';
+      const group=document.querySelector(`.seg[data-target="${id}"]`);
+      if(!group) return;
+      group.querySelectorAll('.seg-btn').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.val===val)));
+    }
+    function initSegGroups(){
+      document.querySelectorAll('.seg[data-target]').forEach(group=>{
+        group.addEventListener('click',ev=>{
+          const b=ev.target.closest('.seg-btn'); if(!b) return;
+          const id=group.dataset.target;
+          setSegValue(id, b.dataset.val);
+        });
+      });
+    }
+
+    // quick-fill buttons
+    document.addEventListener('click', e=>{
+      const q=e.target.closest('[data-quick]');
+      if(!q) return;
+      const [field,val] = q.dataset.quick.split(':');
+      el(field).value = val;
+    });
+
+    /* =======================
+     * Plays lookup
+     * ======================= */
+    async function lookupPlay(){
+      try{
+        const pid=el('play_id').value.trim();
+        if(!pid) throw new Error('Enter a Play ID first.');
+        const res=await apiGet({ action:'table', sheet_id:SCHEDULE_SHEET_ID, sheet_name:'20_Fact_Plays' });
+        if(!res.ok) throw new Error(res.error||'Fetch plays failed');
+        const row=(res.rows||[]).find(r=>String(r.play_id||'').trim()===pid);
+        if(!row){ log(`Play ${pid} not found in 20_Fact_Plays`,'error'); return; }
+        log(`Play ${pid} found (Q${row.quarter||'?'} @ ${row.clock||'??:??'})`,'success');
+      }catch(err){ log(err.message,'error'); }
+    }
+    el('lookupPlayBtn').addEventListener('click', lookupPlay);
+    el('newPlayIdBtn').addEventListener('click', async ()=>{
+      try{ const id=await nextId('PLAY'); el('play_id').value=id; log(`New Play ID: ${id}`,'success'); }
+      catch(err){ log(err.message,'error'); }
+    });
+
+    /* =======================
+     * SAVE
+     * ======================= */
+    const numVal = v => (v===''||v==null ? '' : Number(v));
+    const ynTo01 = v => v==='Yes'?1 : (v==='No'?0 : '');
+
+    function ensureContext(){
+      const game_id = el('game_id').value.trim();
+      if(!game_id) throw new Error('Pick a Game ID from schedule.');
+      if(!scheduleMap[game_id]) throw new Error('Game ID not found in schedule.');
+      const play_id = el('play_id').value.trim();
+      if(!play_id) throw new Error('Enter a Play ID.');
+      const ol_id = (syncOL(), el('ol_id').value.trim());
+      if(!ol_id) throw new Error('Select a Lineman (name or ID).');
+      return { game_id, play_id, ol_id };
+    }
+
+    // Pass-Pro
+    el('savePassProBtn').addEventListener('click', async ()=>{
+      try{
+        const { play_id, ol_id } = ensureContext();
+        const row = {
+          play_id,
+          ol_id,
+          'Assignment': el('pp_assign').value || '',
+          'Pressure Allowed': ynTo01(el('pp_pressure').value),
+          'Time to Pressure (sec)': numVal(el('pp_ttp').value),
+          'Sack Responsibility': ynTo01(el('pp_sackresp').value),
+          'PassPro Snap': 1
+        };
+        await appendRow(ROUTE_OL_PP, row, Object.keys(row));
+        log(`Pass-Pro saved for ${play_id} (OL ${ol_id}).`,'success');
+        // light reset
+        setToggle('pp_pressure', false); setToggle('pp_sackresp', false); el('pp_ttp').value='';
+      }catch(err){ log(err.message,'error'); }
+    });
+
+    // Run-Block
+    el('saveRunBtn').addEventListener('click', async ()=>{
+      try{
+        const { play_id, ol_id } = ensureContext();
+        const row = {
+          play_id,
+          ol_id,
+          'Run Block Snap': 1,
+          'Gap': el('rb_gap').value || '',
+          'Pull': ynTo01(el('rb_pull').value),
+          'Pull Success': ynTo01(el('rb_pull_succ').value),
+          'Pancake': ynTo01(el('rb_pancake').value)
+        };
+        await appendRow(ROUTE_OL_RUN, row, Object.keys(row));
+        log(`Run-Block saved for ${play_id} (OL ${ol_id}).`,'success');
+        setToggle('rb_pull', false); setToggle('rb_pull_succ', false); setToggle('rb_pancake', false);
+      }catch(err){ log(err.message,'error'); }
+    });
+
+    // Penalty
+    el('savePenBtn').addEventListener('click', async ()=>{
+      try{
+        const { play_id, ol_id } = ensureContext();
+        const row = {
+          play_id,
+          ol_id,
+          'Penalty': el('pen_type').value || '',
+          'Penalty Yards': numVal(el('pen_yards').value),
+          'Accepted': ynTo01(el('pen_accepted').value)
+        };
+        if(!row['Penalty']) throw new Error('Pick a penalty type.');
+        await appendRow(ROUTE_PEN, row, Object.keys(row));
+        log(`Penalty saved for ${play_id} (OL ${ol_id}).`,'success');
+        el('pen_type').value=''; el('pen_yards').value=''; setToggle('pen_accepted', false);
+      }catch(err){ log(err.message,'error'); }
+    });
+
+    // Clear
+    el('clearBtn').addEventListener('click', ()=>{
+      document.querySelectorAll('input').forEach(n=>{
+        if(['game_id','play_id','ol_name','ol_id','pp_assign','rb_gap'].includes(n.id)) return;
+        n.value='';
+      });
+      ['pp_pressure','pp_sackresp','rb_pull','rb_pull_succ','rb_pancake','pen_accepted'].forEach(id=>setToggle(id,false));
+      setSegValue('pp_assign','Base'); setSegValue('rb_gap','B');
+    });
+
+    /* =======================
+     * INIT
+     * ======================= */
+    initSegGroups();
+    mountToggles();
+    loadSchedule();
+    loadRoster();
+    loadRecent();
+
+    // GameContext follower (same-device)
+    if (window.GameContext){
+      GameContext.subscribe(ctx=>{
+        if(ctx.game_id && el('game_id').value!==ctx.game_id){ el('game_id').value=ctx.game_id; el('game_id').dispatchEvent(new Event('change')); }
+        if(ctx.play_id && !el('play_id').value){ el('play_id').value = ctx.play_id; }
+        if(ctx.drive_id){ /* not used here, but available if needed */ }
+      });
+    }
+  </script>
+</body>
+</html>
