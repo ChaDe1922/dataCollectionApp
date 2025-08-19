@@ -3,6 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script>
+  (function(){
+    const ok = localStorage.getItem('auth_ok')==='1' &&
+              Number(localStorage.getItem('auth_until')||0) > Date.now();
+    const landing = (localStorage.getItem('auth_landing')||'').toLowerCase();
+    const wellnessOK = ok && (/wellness\.html$/.test(landing) || landing==='wellness');
+    if(!wellnessOK){ window.location.href = '../index.html#login'; }
+  })();
+  </script>
   <title>Wellness - Football Data Tracker</title>
   <link rel="stylesheet" href="../style.css" />
 </head>

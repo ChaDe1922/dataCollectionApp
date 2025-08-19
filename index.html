@@ -1,25 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Football Data Tracker</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Football Data Tracker</title>
+  <link rel="stylesheet" href="style.css"/>
+
+  <!-- Login overlay styles -->
+  <style>
+    /* === Login overlay === */
+    #loginOverlay {
+      position: fixed; inset: 0; z-index: 9999;
+      display: none; /* shown by JS if not authenticated */
+      align-items: center; justify-content: center;
+      background: rgba(0,0,0,.55); backdrop-filter: blur(4px) saturate(120%);
+    }
+    #loginCard {
+      width: min(420px, 92vw);
+      background: #15161a; color: #fff;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px; padding: 1.1rem;
+      box-shadow: 0 18px 40px rgba(0,0,0,.45);
+    }
+    #loginCard h2 { margin: 0 0 .75rem 0; font-size: 1.2rem; }
+    #loginCard label { font-size: .9rem; opacity: .9; display:block; margin:.4rem 0 .25rem; }
+    #loginCard input {
+      width:100%; padding:.65rem .75rem; border-radius:10px;
+      border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.06); color:#fff;
+    }
+    #loginActions { display:flex; gap:.5rem; margin-top:.8rem; }
+    #loginBtn {
+      padding:.6rem .9rem; border-radius:999px; border:1px solid transparent;
+      background:#43b581; color:#061b12; cursor:pointer; flex:1;
+    }
+    #loginMsg { margin-top:.6rem; font-size:.9rem; min-height:1.2em; }
+    #loginMsg.error { color:#ff6b6b; }
+    #loginMsg.ok { color:#7CFC98; }
+  </style>
 </head>
+
 <body>
-    <header>
-        <h1>Football Data Tracker</h1>
-        <p>Select a data collection form</p>
-    </header>
-    <main>
-        <nav class="main-menu">
-            <a href="game/game-day.html" class="main-menu-btn">Game Day</a>
-            <a href="practice/practice.html" class="main-menu-btn">Practice</a>
-            <a href="wellness/wellness.html" class="main-menu-btn">Wellness</a>
-        </nav>
-    </main>
-    <footer>
-        <p>&copy; 2025 Game Speed Data Systems</p>
-    </footer>
+  <header>
+    <h1>Football Data Tracker</h1>
+    <p>Select a data collection form</p>
+  </header>
+
+  <main>
+    <nav class="main-menu">
+      <a href="game/game-day.html" class="main-menu-btn">Game Day</a>
+      <a href="practice/practice.html" class="main-menu-btn">Practice</a>
+      <a href="wellness/wellness.html" class="main-menu-btn">Wellness</a>
+    </nav>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Game Speed Data Systems</p>
+  </footer>
+
+  <!-- Full-page login overlay -->
+  <div id="loginOverlay" aria-modal="true" role="dialog">
+    <div id="loginCard">
+      <h2>Sign in</h2>
+      <form id="loginForm" autocomplete="off">
+        <label for="loginUser">Username</label>
+        <input id="loginUser" name="username" required>
+
+        <label for="loginPass">Password</label>
+        <input id="loginPass" name="password" type="password" required>
+
+        <div id="loginActions">
+          <button id="loginBtn" type="submit">Continue</button>
+        </div>
+        <div id="loginMsg" aria-live="polite"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Auth script -->
+  <script>
+    // ===== Your Apps Script Web App endpoint (same one you use elsewhere) =====
+    const API_BASE = 'https://script.google.com/macros/s/AKfycbydQzY7V9QUGdU9UvJiaJXjvvtyUEUH-5MhYQsRz-_1QWZKEpLl_xFyk_fyjIkUKeMt1Q/exec';
+
+    // ===== Auth sheet location =====
+    const AUTH_SHEET_ID = '1PcHHdLAJMSV2R_5-uwax172FM7RMnMgA1p9n4VW24lk';
+    const AUTH_TAB      = 'Auth_Users'; // rename if your tab is different
+
+    // --- tiny helpers ---
+    const $ = id => document.getElementById(id);
+    function authIsValid(){
+      const ok = localStorage.getItem('auth_ok') === '1';
+      const exp = Number(localStorage.getItem('auth_until') || 0);
+      return ok && Date.now() < exp;
+    }
+    function setAuth(landing, username){
+      // 12h session window
+      localStorage.setItem('auth_ok','1');
+      localStorage.setItem('auth_user', username || '');
+      localStorage.setItem('auth_landing', landing || 'index.html');
+      localStorage.setItem('auth_until', String(Date.now() + 12*60*60*1000));
+    }
+    function clearAuth(){
+      ['auth_ok','auth_user','auth_landing','auth_until'].forEach(k=>localStorage.removeItem(k));
+    }
+
+    async function loginRequest(username, password){
+      const url = new URL(API_BASE);
+      url.searchParams.set('action', 'auth_login');
+      url.searchParams.set('sheet_id', AUTH_SHEET_ID);
+      url.searchParams.set('sheet_name', AUTH_TAB);
+      url.searchParams.set('username', username);
+      url.searchParams.set('password', password);
+      const r = await fetch(url.toString());
+      return r.json();
+    }
+
+    // Mount login overlay on index
+    (function initLoginOverlay(){
+      const ov = $('loginOverlay');
+      const frm = $('loginForm');
+      const msg = $('loginMsg');
+      const user = $('loginUser');
+
+      async function handleSubmit(e){
+        e.preventDefault();
+        msg.className=''; msg.textContent='Checking…';
+        try{
+          const u = $('loginUser').value.trim();
+          const p = $('loginPass').value.trim();
+          if(!u || !p){ msg.className='error'; msg.textContent='Enter username & password.'; return; }
+
+          const res = await loginRequest(u, p);
+          if(!res.ok){ msg.className='error'; msg.textContent = res.error || 'Login failed.'; return; }
+
+          setAuth(res.landing, u);
+
+          // landing rules:
+          // - 'index' creds: hide overlay & stay here
+          // - 'wellness' creds: push to wellness page
+          if (/wellness\.html$/i.test(res.landing)) {
+            window.location.href = 'wellness/wellness.html';
+          } else {
+            ov.style.display = 'none';
+            msg.className='ok'; msg.textContent='Signed in.';
+          }
+        } catch(err){
+          msg.className='error'; msg.textContent = String(err);
+        }
+      }
+
+      frm.addEventListener('submit', handleSubmit);
+
+      // Show overlay if not authed
+      if(window.location.hash === '#logout'){ clearAuth(); }
+      if(!authIsValid()){
+        clearAuth();
+        ov.style.display = 'flex';
+        setTimeout(()=>user && user.focus(), 0);
+      } else {
+        ov.style.display = 'none';
+      }
+    })();
+  </script>
 </body>
 </html>
