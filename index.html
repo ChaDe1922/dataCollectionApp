@@ -4,34 +4,49 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Football Data Tracker</title>
+
+  <!-- Fonts + theme stylesheet -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css"/>
 
-  <!-- Login overlay styles -->
+  <!-- Login overlay styles (updated to match the new theme) -->
   <style>
     /* === Login overlay === */
     #loginOverlay {
       position: fixed; inset: 0; z-index: 9999;
       display: none; /* shown by JS if not authenticated */
       align-items: center; justify-content: center;
-      background: rgba(0,0,0,.55); backdrop-filter: blur(4px) saturate(120%);
+      background: rgba(0,0,0,.55); backdrop-filter: blur(6px) saturate(120%);
     }
     #loginCard {
       width: min(420px, 92vw);
-      background: #15161a; color: #fff;
+      background: rgba(255,255,255,.06);
+      color: #fff;
       border: 1px solid rgba(255,255,255,.12);
-      border-radius: 16px; padding: 1.1rem;
-      box-shadow: 0 18px 40px rgba(0,0,0,.45);
+      border-radius: 22px; padding: 1.25rem;
+      box-shadow: 0 14px 34px rgba(0,0,0,.35);
+      font-family: "Manrope", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
-    #loginCard h2 { margin: 0 0 .75rem 0; font-size: 1.2rem; }
-    #loginCard label { font-size: .9rem; opacity: .9; display:block; margin:.4rem 0 .25rem; }
+    #loginCard h2 { margin: 0 0 .85rem 0; font-size: 1.25rem; font-weight:800; }
+    #loginCard label { font-size: .9rem; opacity: .9; display:block; margin:.5rem 0 .35rem; }
     #loginCard input {
-      width:100%; padding:.65rem .75rem; border-radius:10px;
-      border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.06); color:#fff;
+      width:100%; padding:.7rem .8rem; border-radius:12px;
+      border:1px solid rgba(255,255,255,.20);
+      background:rgba(255,255,255,.10); color:#fff;
     }
-    #loginActions { display:flex; gap:.5rem; margin-top:.8rem; }
+    #loginActions { display:flex; gap:.6rem; margin-top:.9rem; }
     #loginBtn {
-      padding:.6rem .9rem; border-radius:999px; border:1px solid transparent;
-      background:#43b581; color:#061b12; cursor:pointer; flex:1;
+      padding:.7rem 1rem; border-radius:30px; border:2px solid #3a1660; /* dark purple */
+      background:#fff; color:#3a1660; cursor:pointer; flex:1; font-weight:800;
+      transition: all .25s ease; letter-spacing:.2px;
+    }
+    #loginBtn:hover{
+      background:linear-gradient(90deg, #a36bff, #c58dff); /* lighter purples on hover */
+      color:#fff; border-color:transparent;
+      transform: translateY(-2px);
+      box-shadow:0 8px 20px rgba(163,107,255,.45);
     }
     #loginMsg { margin-top:.6rem; font-size:.9rem; min-height:1.2em; }
     #loginMsg.error { color:#ff6b6b; }
@@ -39,21 +54,26 @@
   </style>
 </head>
 
-<body>
-  <header>
-    <h1>Football Data Tracker</h1>
-    <p>Select a data collection form</p>
+<body class="theme-atl">
+  <!-- Hero with centered logo + title (styled in style.css) -->
+  <header class="hero">
+    <div class="hero-inner">
+      <img class="hero-logo" src="assets/images/owl-logo.png" alt="ATL Truth Owl Logo">
+      <h1 class="hero-title">Football Data Tracker</h1>
+      <p class="hero-sub">Select a data collection form</p>
+    </div>
   </header>
 
   <main>
     <nav class="main-menu">
+      <!-- White pill buttons w/ purple text; light‑purple gradient on hover -->
       <a href="game/game-day.html" class="main-menu-btn">Game Day</a>
       <a href="practice/practice.html" class="main-menu-btn">Practice</a>
       <a href="wellness/wellness.html" class="main-menu-btn">Wellness</a>
     </nav>
   </main>
 
-  <footer>
+  <footer class="site-footer">
     <p>&copy; 2025 Game Speed Data Systems</p>
   </footer>
 

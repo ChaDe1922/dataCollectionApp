@@ -11,62 +11,176 @@
   })();
   </script>
   <title>QB Drills – Practice Logger</title>
+
+  <!-- Fonts + shared theme -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../style.css" />
+
+  <!-- Dark ATL skin (matches Practice Attendance + Primary/Drives) -->
   <style>
-      .container{ max-width:calc(100vw - 100px)!important; width:100%; padding:0 50px; margin:0 auto; box-sizing:border-box; }
-      .panels{ display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; }
-      .panel-card{ container-type:inline-size; min-width:0; width:100%; }
-      .panel-card form{ width:100%; }
-      @media (max-width:768px){ .container{ padding:0 25px; max-width:calc(100vw - 50px);} }
-      @media (max-width:600px){ .panels{ grid-template-columns:1fr; } .container{ padding:0 16px; max-width:calc(100vw - 32px); } }
+    :root{
+      /* panel + chrome */
+      --panel-bg: rgba(255,255,255,.06);
+      --bd: rgba(139,92,246,.35);
+      --subtle: rgba(255,255,255,.18);
+      --chip-bg: rgba(255,255,255,.08);
+      --chip-bd: rgba(255,255,255,.22);
+      --accent: #7C4DFF;
+      --accent2:#8B5CF6;
+      --ink:#ECECF3;
 
-      .page-header{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 0; margin-bottom:16px; }
-      .menu-actions{ display:flex; gap:10px; }
-      .menu-btn{ display:inline-flex; align-items:center; justify-content:center; padding:8px 14px; border-radius:10px; text-decoration:none; font-weight:600; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.08); color:inherit; transition:.15s transform ease,.15s filter ease; }
-      .menu-btn.secondary{ background:transparent; }
-      .menu-btn:hover{ transform:translateY(-1px); filter:saturate(1.08); }
-      .btn-neutral{ background:rgba(255,255,255,.92); color:#111827; }
-      .btn-neutral:hover{ transform:translateY(-2px); filter:saturate(1.03); }
+      /* statuses */
+      --ok:#34D399; --warn:#F59E0B; --err:#F87171;
 
-      .reps-stats{ display:grid; gap:12px; margin:12px 0 4px; grid-template-columns:repeat(2,1fr); }
-      .stat-card{ min-width:0; text-align:center; }
-      .stat-card .stat-value{ font-size:clamp(0.9rem,2vw,1.2rem); font-weight:700; }
-      .stat-card .stat-label{ font-size:clamp(0.65rem,1.5vw,0.8rem); letter-spacing:.06em; opacity:.8; }
-      @container (max-width:280px){ .reps-stats{ grid-template-columns:1fr; gap:8px; } }
+      /* shadows / focus */
+      --focus-ring: 0 0 0 3px rgba(139,92,246,.35);
+      --shadow-soft:0 10px 30px rgba(17,12,28,.35);
+    }
 
-      .kpi-wrap{ border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:12px; margin-top:10px; }
-      .kpi-grid{ display:grid; gap:14px; grid-template-columns:1fr; }
-      .kpi-label{ margin-bottom:6px; font-weight:600; opacity:.9; font-size:0.9rem; }
-      .coaching-note{ font-size:.9rem; opacity:.85; margin-bottom:8px; }
-      .kpi-row{ display:grid; grid-template-columns:1fr auto; gap:10px; align-items:end; }
-      .unit-badge{ font-size:.85rem; padding:6px 10px; border-radius:8px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); height:38px; display:flex; align-items:center; white-space:nowrap; }
-      .kpi-inline{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:6px; }
-      .chip{ display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; font-size:.8rem; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); }
+    body.practice-page{ color:var(--ink); }
 
-      .timer-bar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0 4px; }
-      .timer-time{ font-variant-numeric:tabular-nums; font-weight:700; min-width:60px; }
-      @container (max-width:350px){ .timer-bar{ flex-direction:column; align-items:stretch; gap:6px; } .timer-bar>*{ text-align:center; } }
+    /* ------- layout ------- */
+    .container{
+      max-width:1100px; margin:0 auto; padding:16px;
+    }
+    .panels{
+      display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start;
+    }
+    @media (max-width:980px){ .panels{ grid-template-columns:1fr; } }
 
-      .dial-wrap{ display:flex; align-items:center; gap:10px; margin-top:6px; }
-      .dial-svg{ width:64px; height:64px; }
-      .dial-needle{ transform-origin:32px 50px; transition:transform .08s linear; }
+    /* ------- header / nav ------- */
+    .page-header{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; margin-bottom:16px; }
+    .menu-actions{ display:flex; gap:10px; flex-wrap:wrap }
+    .menu-btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:8px 14px; border-radius:10px; text-decoration:none; font-weight:700;
+      border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.08); color:inherit;
+      transition:transform .15s ease, filter .15s ease;
+    }
+    .menu-btn.secondary{ background:transparent; }
+    .menu-btn:hover{ transform:translateY(-1px); filter:saturate(1.08); }
 
-      .reps-module{ margin-top:10px; padding-top:10px; border-top:1px dashed rgba(255,255,255,.12); }
-      .reps-title{ font-weight:700; margin-bottom:8px; opacity:.9; }
-      .btn-grid{ display:grid; grid-template-columns:1fr 1fr auto; gap:8px; }
+    /* ------- cards ------- */
+    .panel-card{
+      background:var(--panel-bg);
+      border:1px solid var(--bd);
+      border-radius:16px;
+      padding:16px;
+      color:var(--ink);
+      box-shadow:var(--shadow-soft);
+      min-width:0;
+    }
+    .panel-card h3{
+      margin:0 0 12px 0; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,.1);
+      font-size:1.05rem;
+    }
 
-      .hidden{ display:none !important; }
-      .panel-card h3{ margin-bottom:16px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,.1); }
-      footer{ margin-top:32px; padding:16px 0; text-align:center; opacity:.7; font-size:.9rem; }
+    /* ------- fields ------- */
+    .form-section{ margin:10px 0; }
+    .form-label{ display:block; font-weight:700; opacity:.92; font-size:.95rem; }
+    .hint{ font-size:.85rem; opacity:.78; }
+
+    .form-input, .form-select, textarea.form-input{
+      width:100%; padding:.72rem .85rem; border-radius:12px;
+      border:2px solid rgba(255,255,255,.28);
+      background:rgba(255,255,255,.08); color:#fff; font-size:1rem;
+      transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    .form-input::placeholder, textarea.form-input::placeholder{color:rgba(236,236,243,.65)}
+    .form-input:focus, .form-select:focus, textarea.form-input:focus{
+      outline:none; border-color:#C4B5FD; box-shadow:var(--focus-ring); background:rgba(255,255,255,.12);
+    }
+    input[type="number"]{-moz-appearance:textfield}
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+
+    /* ------- chips, units, KPI box ------- */
+    .chip{
+      display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px;
+      font-size:.8rem; border:1px solid var(--chip-bd); background:var(--chip-bg);
+    }
+    .unit-badge{
+      font-size:.85rem; padding:6px 10px; border-radius:8px; border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06); height:38px; display:flex; align-items:center; white-space:nowrap;
+    }
+    .kpi-wrap{ border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:12px; margin-top:10px; }
+    .kpi-grid{ display:grid; gap:14px; grid-template-columns:1fr; }
+    .kpi-label{ margin-bottom:6px; font-weight:700; opacity:.92; font-size:.95rem; }
+    .coaching-note{ font-size:.9rem; opacity:.88; margin-bottom:8px; }
+
+    .kpi-row{ display:grid; grid-template-columns:1fr auto; gap:10px; align-items:end; }
+    .kpi-inline{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:6px; }
+
+    /* ------- timer ------- */
+    .timer-bar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0 6px; }
+    .timer-time{ font-variant-numeric:tabular-nums; font-weight:800; min-width:66px; }
+
+    /* ------- dial ------- */
+    .dial-wrap{ display:flex; align-items:center; gap:10px; margin-top:6px; }
+    .dial-svg{ width:64px; height:64px; }
+    .dial-needle{ transform-origin:32px 50px; transition:transform .08s linear; }
+
+    /* ------- reps ------- */
+    .reps-module{ margin-top:10px; padding-top:10px; border-top:1px dashed rgba(255,255,255,.12); }
+    .reps-title{ font-weight:800; margin-bottom:8px; opacity:.95; }
+    .btn-grid{ display:grid; grid-template-columns:1fr 1fr auto; gap:8px; }
+    .reps-stats{ display:grid; gap:12px; margin:10px 0 4px; grid-template-columns:repeat(2,1fr); }
+    @container (max-width:280px){ .reps-stats{ grid-template-columns:1fr; gap:8px; } }
+
+    .stat-card{ min-width:0; text-align:center; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); border-radius:10px; padding:8px; }
+    .stat-card .stat-value{ font-size:clamp(0.9rem,2vw,1.15rem); font-weight:800; }
+    .stat-card .stat-label{ font-size:clamp(0.65rem,1.5vw,0.8rem); letter-spacing:.06em; opacity:.8; }
+
+    /* ------- buttons ------- */
+    .btn{
+      appearance:none; border:1px solid transparent; cursor:pointer;
+      padding:.6rem .95rem; border-radius:999px; font-weight:800;
+      transition:transform .15s ease, filter .15s ease, box-shadow .15s ease;
+    }
+    .btn:hover{ transform:translateY(-2px); filter:saturate(1.05); }
+    .btn:focus-visible{ outline:2px solid #93C5FD; outline-offset:2px; }
+
+    .btn-neutral{ background:transparent; border-color:rgba(255,255,255,.32); color:#fff; }
+    .btn-success{ background:linear-gradient(135deg,#16A34A,#10B981); color:#071a12; box-shadow:0 10px 24px rgba(16,185,129,.25); }
+    .btn-danger{  background:linear-gradient(135deg,#EF4444,#F43F5E); color:#2a070b;  box-shadow:0 10px 24px rgba(244,63,94,.25); }
+
+    .submit-btn{
+      width:100%; margin-top:8px;
+      background:linear-gradient(135deg,var(--accent) 0%, var(--accent2) 100%);
+      color:#081018; border:1px solid transparent; border-radius:12px; font-weight:900;
+      padding:.75rem 1rem; box-shadow:0 10px 24px rgba(139,92,246,.28);
+      transition:transform .15s ease, filter .15s ease;
+    }
+    .submit-btn:hover{ transform:translateY(-2px); filter:saturate(1.05); }
+
+    /* ------- form status toasts ------- */
+    .status{ margin-top:8px; font-size:.92rem; opacity:.95; }
+    .status.success{ color:var(--ok); }
+    .status.warning{ color:var(--warn); }
+    .status.error{   color:var(--err); }
+    .status.show{ opacity:1; }
+
+    /* misc */
+    .hidden{ display:none !important; }
+    footer{ margin-top:24px; padding:16px 0; text-align:center; opacity:.8; font-size:.9rem; }
+
+    /* responsive */
+    @media (max-width:700px){
+      .container{ padding:12px; }
+    }
   </style>
 </head>
-<body class="practice-page">
+
+<!-- same animated dark background as other pages -->
+<body class="theme-atl practice-page">
 
   <header class="page-header">
     <h1>QB Drills</h1>
     <div class="menu-actions">
       <a href="../index.html" class="menu-btn">Home</a>
-      <a href="practice.html" class="menu-btn secondary">Practice</a>
+      <a href="practice.html" class="menu-btn">Practice</a>
     </div>
   </header>
 
@@ -92,16 +206,14 @@
               <input type="text" id="player-id-p1" class="form-input" placeholder="QB101" list="playerid-list" pattern="QB[0-9]{3}" title="Use format QB###" />
               <label for="player-name-p1" class="form-label" style="margin-top:10px;">Player Name</label>
               <input type="text" id="player-name-p1" class="form-input" placeholder="Type a few letters…" list="playername-list" />
-              <small class="hint" style="opacity:.8">Autocomplete lists are QB-only. Player ID format: <b>QB###</b></small>
+              <small class="hint">Autocomplete lists are QB-only. Player ID format: <b>QB###</b></small>
             </div>
 
             <div class="form-section">
               <label for="drill-cat-p1" class="form-label">Drill Type (Category)</label>
-              <!-- CHANGED: select (no datalist) -->
               <select id="drill-cat-p1" class="form-select"></select>
 
               <label for="drill-name-p1" class="form-label" style="margin-top:10px;">Drill Name</label>
-              <!-- CHANGED: select (no datalist) -->
               <select id="drill-name-p1" class="form-select"></select>
 
               <div style="display:flex;align-items:center;gap:10px;margin-top:12px;">
@@ -116,13 +228,14 @@
                   <!-- Primary KPI -->
                   <div>
                     <div class="kpi-label" id="pm-title-p1">Primary Measurement</div>
+
                     <div class="timer-bar hidden" id="pm-timer-wrap-p1">
                       <span class="chip">Timer</span>
                       <span class="timer-time" id="pm-timer-time-p1">0.00 s</span>
                       <button type="button" id="pm-timer-start-p1" class="btn btn-neutral">Start</button>
-                      <button type="button" id="pm-timer-stop-p1" class="btn btn-neutral">Stop</button>
+                      <button type="button" id="pm-timer-stop-p1"  class="btn btn-neutral">Stop</button>
                       <button type="button" id="pm-timer-reset-p1" class="btn btn-neutral">Reset</button>
-                      <button type="button" id="pm-timer-save-p1" class="btn btn-success">Save to Field</button>
+                      <button type="button" id="pm-timer-save-p1"  class="btn btn-success">Save to Field</button>
                     </div>
 
                     <div class="kpi-row" id="pm-row-p1">
@@ -155,13 +268,13 @@
               </div>
             </div>
 
-            <!-- Reps module (movable & hidden by default) -->
+            <!-- Reps module -->
             <div id="reps-module-p1" class="reps-module hidden">
               <div class="reps-title" id="reps-title-p1">Reps</div>
               <div class="btn-grid">
                 <button type="button" id="btnSuccess-p1" class="btn btn-success">✓ Success</button>
-                <button type="button" id="btnFail-p1" class="btn btn-danger">✕ Unsuccessful</button>
-                <button type="button" id="btnReset-p1" class="btn btn-neutral">Reset</button>
+                <button type="button" id="btnFail-p1"    class="btn btn-danger">✕ Unsuccessful</button>
+                <button type="button" id="btnReset-p1"   class="btn btn-neutral">Reset</button>
               </div>
               <div class="reps-stats" id="reps-stats-p1">
                 <div class="stat-card"><div class="stat-value" id="successCount-p1">0</div><div class="stat-label" id="successLabel-p1">Success</div></div>
@@ -224,7 +337,7 @@
               <input type="text" id="player-id-p2" class="form-input" placeholder="QB101" list="playerid-list" pattern="QB[0-9]{3}" title="Use format QB###" />
               <label for="player-name-p2" class="form-label" style="margin-top:10px;">Player Name</label>
               <input type="text" id="player-name-p2" class="form-input" placeholder="Type a few letters…" list="playername-list" />
-              <small class="hint" style="opacity:.8">Autocomplete lists are QB-only. Player ID format: <b>QB###</b></small>
+              <small class="hint">Autocomplete lists are QB-only. Player ID format: <b>QB###</b></small>
             </div>
 
             <div class="form-section">
@@ -250,9 +363,9 @@
                       <span class="chip">Timer</span>
                       <span class="timer-time" id="pm-timer-time-p2">0.00 s</span>
                       <button type="button" id="pm-timer-start-p2" class="btn btn-neutral">Start</button>
-                      <button type="button" id="pm-timer-stop-p2" class="btn btn-neutral">Stop</button>
+                      <button type="button" id="pm-timer-stop-p2"  class="btn btn-neutral">Stop</button>
                       <button type="button" id="pm-timer-reset-p2" class="btn btn-neutral">Reset</button>
-                      <button type="button" id="pm-timer-save-p2" class="btn btn-success">Save to Field</button>
+                      <button type="button" id="pm-timer-save-p2"  class="btn btn-success">Save to Field</button>
                     </div>
                     <div class="kpi-row" id="pm-row-p2">
                       <input id="pm-value-p2" class="form-input" placeholder="Enter value…" />
@@ -282,13 +395,13 @@
               </div>
             </div>
 
-            <!-- Reps module (movable & hidden by default) -->
+            <!-- Reps module -->
             <div id="reps-module-p2" class="reps-module hidden">
               <div class="reps-title" id="reps-title-p2">Reps</div>
               <div class="btn-grid">
                 <button type="button" id="btnSuccess-p2" class="btn btn-success">✓ Success</button>
-                <button type="button" id="btnFail-p2" class="btn btn-danger">✕ Unsuccessful</button>
-                <button type="button" id="btnReset-p2" class="btn btn-neutral">Reset</button>
+                <button type="button" id="btnFail-p2"    class="btn btn-danger">✕ Unsuccessful</button>
+                <button type="button" id="btnReset-p2"   class="btn btn-neutral">Reset</button>
               </div>
               <div class="reps-stats" id="reps-stats-p2">
                 <div class="stat-card"><div class="stat-value" id="successCount-p2">0</div><div class="stat-label" id="successLabel-p2">Success</div></div>
@@ -346,6 +459,7 @@
     <datalist id="playername-list"></datalist>
   </div>
 
+  <!-- Your original JS (unchanged) -->
   <script>
     /* ===== CONFIG ===== */
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
@@ -463,7 +577,6 @@
       });
     }
 
-    /* NEW: Select option populators */
     function setOptions(select, items, {placeholder="— Select —", getLabel=(x)=>x, getValue=(x)=>x}={}){
       const cur = select.value;
       select.innerHTML = '';
@@ -474,7 +587,6 @@
         opt.textContent = getLabel(it);
         select.appendChild(opt);
       });
-      // keep selection if still present
       const has = [...select.options].some(o=>o.value===cur);
       if(has) select.value = cur;
     }
@@ -489,15 +601,9 @@
       const nameSel = getEl(`drill-name-${panel}`);
       let names = [];
       if(forCat && drillsByCat.has(forCat)){
-        // show drills for the chosen category
         names = drillsByCat.get(forCat).slice().sort();
-        setOptions(nameSel, names, {
-          placeholder:'— Select Drill —',
-          getLabel:(nm)=>nm,
-          getValue:(nm)=>nm
-        });
+        setOptions(nameSel, names, { placeholder:'— Select Drill —' });
       } else {
-        // no category yet: show all drills labeled with category
         const all = Array.from(drillsByName.values())
           .map(d=>({ name:d.name, category:d.category }))
           .sort((a,b)=> a.name.localeCompare(b.name));
@@ -535,10 +641,8 @@
           qbDrills = cleaned.filter(r => isQBGroup(r.position_group));
           indexDrills(qbDrills);
 
-          // populate both panels
           ['p1','p2'].forEach(panel=>{
             fillCategorySelect(panel);
-            // restore saved cat/name if present
             const catSel = getEl(`drill-cat-${panel}`);
             const nameSel= getEl(`drill-name-${panel}`);
             const savedCat  = localStorage.getItem(LS.cat)  || '';
@@ -546,14 +650,13 @@
             if(savedCat && [...catSel.options].some(o=>o.value===savedCat)) catSel.value = savedCat;
             fillNameSelect(panel, catSel.value);
             if(savedName && [...nameSel.options].some(o=>o.value===savedName)) nameSel.value = savedName;
-            // apply UI based on current selection
             applyDrillMeta(panel);
           });
         } else { console.warn('Drill library empty', json); }
       }catch(err){ console.warn('Drill library fetch failed', err); }
     }
 
-    /* ===== Timer, thresholds, widgets, reps (unchanged core) ===== */
+    /* ===== Timer, thresholds, widgets, reps ===== */
     const timers = new Map();
     function makeTimer(panel){
       const wrap = getEl(`pm-timer-wrap-${panel}`);
@@ -729,8 +832,7 @@
       if(chk){
         const flag = String(meta.position_specific||'').toLowerCase();
         chk.checked = (flag==='1'||flag==='true'||flag==='yes') ? true
-                  : (flag==='0'||flag==='false'||flag==='no') ? false : true;
-
+                  : (flag==='0'||flag==='false'||'no') ? false : true;
       }
 
       const coachEl = getEl(`coachEmphasis-${panel}`); if (coachEl) coachEl.textContent = meta.coaching_emphasis || '';
@@ -772,8 +874,7 @@
       if (meta){
         if (!clean(catSel.value) || clean(catSel.value) !== meta.category) {
           catSel.value = meta.category || '';
-          fillNameSelect(panel, catSel.value); // refresh list to the category’s drills
-          // ensure the selected drill remains selected if present
+          fillNameSelect(panel, catSel.value);
           if([...getEl(`drill-name-${panel}`).options].some(o=>o.value===meta.name)) nameSel.value = meta.name;
         }
       }
@@ -786,7 +887,6 @@
       const cat = clean(catSel.value);
       const prev = nameSel.value;
       fillNameSelect(panel, cat);
-      // keep current selection if still valid; else clear
       if(![...nameSel.options].some(o=>o.value===prev)) nameSel.value = '';
       applyDrillMeta(panel);
     }
@@ -921,7 +1021,6 @@
       const catSel  = getEl(`drill-cat-${panel}`);
       const nameSel = getEl(`drill-name-${panel}`);
 
-      // Select events
       catSel.addEventListener('change', ()=>{ localStorage.setItem(LS.cat,  catSel.value ); syncFromCat(panel); });
       nameSel.addEventListener('change',()=>{ localStorage.setItem(LS.name, nameSel.value); syncFromName(panel); });
 
@@ -940,11 +1039,9 @@
       const nEl = getEl(`player-name-${panel}`);
       attachTriAuto(panel, jEl, iEl, nEl);
 
-      // SUBMIT
       form.addEventListener('submit', async (e)=>{
         e.preventDefault();
 
-        // Resolve player
         const jEl = getEl(`jersey-${panel}`);
         const iEl = getEl(`player-id-${panel}`);
         const nEl = getEl(`player-name-${panel}`);
@@ -960,7 +1057,6 @@
           return;
         }
 
-        // Validate drill selections
         const catSel  = getEl(`drill-cat-${panel}`);
         const nameSel = getEl(`drill-name-${panel}`);
         const drillCat  = (catSel.value||'').trim();
@@ -975,16 +1071,14 @@
           return;
         }
 
-        // Evaluate KPIs + rep buckets
         const primary   = evaluatePrimary(panel)  || { value:null, success:null };
         const secondary = evaluateSecondary(panel)|| { value:null, success:null };
         const modes = kpiModes.get(panel) || {};
         const buckets = calcRepBuckets(panel);
         const pm = buckets.pm, sm = buckets.sm;
 
-        // Legacy overall fields (kept for compatibility)
         let reps, successful_reps;
-        if (modes.repOwner){ // reps UI in use
+        if (modes.repOwner){
           reps = Number(getEl(`total-hidden-${panel}`).value || 0);
           successful_reps = Number(getEl(`succ-hidden-${panel}`).value || 0);
         } else {
@@ -1009,24 +1103,20 @@
           attendance:        getEl(`attendance-${panel}`).value,
           player_effort:     getEl(`player-effort-${panel}`).value,
 
-          // Primary KPI
           primary_measurement: meta.primary_measurement || '',
           primary_unit:        meta.measurement_unit    || '',
           primary_value:       primary.value,
           primary_success:     primary.success,
 
-          // Secondary KPI
           secondary_measurement: meta.secondary_measurement || '',
           secondary_unit:        meta.secondary_unit        || '',
           secondary_value:       secondary.value,
           secondary_success:     secondary.success,
 
-          // Thresholds (for reference)
           success_threshold:   meta.success_threshold   || '',
           failure_threshold:   meta.failure_threshold   || '',
           secondary_threshold: meta.secondary_threshold || '',
 
-          // Reps buckets (per your spec)
           pm_reps_total:     pm.total,
           pm_rep_successes:  pm.succ,
           pm_rep_failures:   pm.fail,
@@ -1035,7 +1125,6 @@
           sm_rep_successes:  sm.succ,
           sm_rep_failures:   sm.fail,
 
-          // Legacy overall fields
           reps,
           successful_reps,
 
@@ -1052,7 +1141,6 @@
           if (res.ok && json && json.ok){
             showStatus(panel,'Practice log submitted. ✅','success');
 
-            // preserve date / saved selects
             const sDate = localStorage.getItem(LS.date);
             const sCat  = localStorage.getItem(LS.cat);
             const sName = localStorage.getItem(LS.name);
@@ -1062,7 +1150,6 @@
             if (sCat)  getEl(`drill-cat-${panel}`).value  = sCat;
             if (sName) getEl(`drill-name-${panel}`).value = sName;
 
-            // Re-apply UI & reset reps/chips
             applyDrillMeta(panel);
             repTrackers.get(panel)?.reset();
             setChip(getEl(`pm-success-chip-${panel}`), null);
@@ -1085,7 +1172,6 @@
       setTodayIfEmpty(getEl('prac-date-p1'));
       setTodayIfEmpty(getEl('prac-date-p2'));
       await Promise.all([fetchRoster(), fetchDrillLibrary()]);
-      // After drills load, selects are filled & applyDrillMeta was called inside fetchDrillLibrary.
     })();
   </script>
 </body>

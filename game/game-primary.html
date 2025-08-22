@@ -12,35 +12,158 @@
   </script>
   <title>Primary / Drives – Football Data Tracker</title>
   <link rel="stylesheet" href="../style.css"/>
+
+  <!-- Page-local light UI styles + layout -->
   <style>
-    .container{max-width:1200px;margin:0 auto;padding:1rem}
-    .grid{display:grid;gap:1rem}
-    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .card{background:var(--panel-bg,rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:1rem}
-    .card h2{margin:0 0 .5rem 0;font-size:1.1rem}
-    .row{display:flex;gap:.75rem;flex-wrap:wrap}
-    .row > *{flex:1 1 160px}
-    label{display:block;font-size:.85rem;opacity:.9;margin-bottom:.25rem}
-    input,select,textarea{width:100%;padding:.6rem .7rem;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.2);color:#fff}
-    .btnbar{display:flex;gap:.5rem;flex-wrap:wrap}
-    .btn{padding:.6rem .9rem;border-radius:999px;border:1px solid transparent;cursor:pointer}
-    .btn.primary{background:#43b581;color:#071a12}
-    .btn.subtle{background:transparent;border-color:rgba(255,255,255,.25);color:#fff}
-    .btn.warn{background:#ffa142;color:#2a1800}
-    .chip{display:inline-block;padding:.25rem .6rem;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);font-size:.8rem}
-    .tiny{font-size:.8rem;opacity:.85}
-    .success{color:#7CFC98}.error{color:#ff6b6b}
-    .section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:.35rem}
-    .kpi{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.6rem}
-    .togglebar{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.5rem}
-    .clock-face{font-variant-numeric:tabular-nums;font-size:2rem;letter-spacing:.5px}
-    .clock-wrap{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
-    .clock-keys{display:flex;gap:.35rem;flex-wrap:wrap}
-    .clock-keys .btn{padding:.45rem .7rem}
-    /* schedule meta */
-    .meta{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.5rem;margin-top:.5rem}
-    .meta .chip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    :root{
+      --card-bg:#fff;
+      --card-br:#E7E9F2;
+      --ink:#0f172a;
+      --ink-2:#334155;
+      --muted:#64748b;
+      --pill:#3a1660;      /* ATL dark plum */
+      --pill-2:#a36bff;    /* ATL lavender */
+      --focus:#a36bff33;   /* focus halo */
+    }
+
+    body.practice-page{ background:linear-gradient(180deg,#0f0b1a 0%, #130e22 55%, #0e0b18 100%); }
+
+    /* ---------- layout (unchanged) ---------- */
+    .container{
+      max-width:1100px; margin:0 auto; padding:16px;
+      display:grid; gap:16px;
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "ctx" "clock" "drive" "play" "summary" "log";
+    }
+    @media (min-width: 980px){
+      .container{
+        gap:18px;
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+          "ctx    clock"
+          "drive  play"
+          "summary summary"
+          "log     log";
+      }
+    }
+
+    .card{
+      background:var(--card-bg);
+      border:1px solid var(--card-br);
+      border-radius:18px;
+      padding:18px;
+      box-shadow:0 10px 24px rgba(2,8,23,.06);
+      color:var(--ink);
+    }
+    .area-ctx{ grid-area:ctx; } .area-clock{ grid-area:clock; }
+    .area-drive{ grid-area:drive; } .area-play{ grid-area:play; }
+    .area-summary{ grid-area:summary; } .area-log{ grid-area:log; }
+
+    .section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+    .section-title h2{margin:0;font-size:1.25rem;line-height:1.15}
+    .tiny{font-size:.9rem;color:var(--muted)}
+    .chip{display:inline-block;padding:.35rem .7rem;border-radius:999px;background:#f3f4f7;border:1px solid #e5e7ef;font-weight:600;color:#4b5563}
+
+    /* ---------- FIELDS (stronger outline + clear focus) ---------- */
+    label{display:block;font-size:.95rem;color:var(--ink-2);margin:0 0 .35rem}
+    input,select,textarea{
+      width:100%; padding:.72rem .85rem; border-radius:12px;
+      border:2px solid #cfd6ea; background:#fff; color:var(--ink);
+      box-shadow:0 1px 0 rgba(0,0,0,.02) inset;
+      transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+      font-size:1rem;
+    }
+    input::placeholder, textarea::placeholder{ color:#9aa3b2 }
+    input:focus,select:focus,textarea:focus{
+      outline:none; border-color:#a36bff;
+      box-shadow:0 0 0 4px var(--focus);
+      background:#fff;
+    }
+    /* numeric fields – always show crisp outline + hide spinners */
+    input[type="number"]{
+      -moz-appearance:textfield;
+      border-color:#c0c9e3;
+      background:#fff;
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button{
+      -webkit-appearance:none; margin:0;
+    }
+    /* disabled fields still look like fields */
+    input[disabled], select[disabled], textarea[disabled]{
+      background:#f6f7fb; color:#94a3b8; border-color:#e2e8f0;
+    }
+
+    /* ---------- rows / grids ---------- */
+    .row{display:grid; gap:12px}
+    .row.cols-2{ grid-template-columns: 1fr 1fr; }
+    .row.cols-3{ grid-template-columns: repeat(3, 1fr); }
+    .row.cols-4{ grid-template-columns: repeat(4, 1fr); }
+    .row.cols-5{ grid-template-columns: repeat(5, 1fr); }
+    @media (max-width: 680px){
+      .row.cols-2,.row.cols-3,.row.cols-4,.row.cols-5{ grid-template-columns: 1fr; }
+    }
+
+    /* ---------- buttons ---------- */
+    .btnbar{display:flex;flex-wrap:wrap;gap:.5rem}
+    .btn{
+      appearance:none; border:1px solid var(--pill);
+      background:var(--pill); color:#fff; cursor:pointer;
+      padding:.65rem 1rem; border-radius:999px; font-weight:700;
+      transition:transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+    }
+    .btn:hover{ transform:translateY(-1px); box-shadow:0 8px 18px rgba(163,107,255,.22) }
+    .btn.subtle{ background:#fff; color:var(--pill); border-color:#e2d6ff }
+    .btn.warn{ background:#fde9d6; color:#7a3b01; border-color:#f5c899 }
+    .btn.ghost{ background:#fff; color:#111827; border-color:#e5e7ef }
+    .btn.small{ padding:.45rem .7rem; font-weight:700 }
+
+    /* ---------- clock ---------- */
+    .clock-wrap{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center}
+    .clock-face{font-variant-numeric:tabular-nums;font-size:2.2rem;letter-spacing:.6px}
+    .clock-keys{display:flex;flex-wrap:wrap;gap:.5rem}
+    .btn.pill-dark{ background:var(--pill); border-color:var(--pill); color:#fff }
+
+    /* ---------- pill toggles with clear ON state ---------- */
+    .toggle{ display:flex; flex-wrap:wrap; gap:.6rem; }
+    .toggle-input{ position:absolute; opacity:0; pointer-events:none; }
+    .toggle-btn{
+      position:relative;
+      padding:.55rem .9rem .55rem 2.2rem;  /* room for check */
+      border-radius:999px; border:2px solid #e2e8f0;
+      background:#fff; color:#111827; font-weight:800; cursor:pointer;
+      transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease, color .15s ease;
+    }
+    /* small circle when OFF */
+    .toggle-btn::before{
+      content:""; position:absolute; left:.8rem; top:50%; transform:translateY(-50%);
+      width:14px; height:14px; border-radius:50%;
+      border:2px solid #cbd5e1; background:#fff; transition:all .15s ease;
+    }
+    /* checkmark + filled pill when ON */
+    .toggle-input:checked + .toggle-btn{
+      background:linear-gradient(90deg, var(--pill), var(--pill-2));
+      color:#fff; border-color:transparent; box-shadow:0 8px 18px rgba(163,107,255,.24);
+    }
+    .toggle-input:checked + .toggle-btn::before{
+      content:"✓";
+      width:18px; height:18px;
+      display:grid; place-items:center;
+      border:none; background:#ffffff; color:#3a1660; font-size:.8rem; font-weight:900;
+    }
+    .toggle-btn:focus-visible{ outline:2px solid #a36bff; outline-offset:2px; }
+
+    /* KPI grid */
+    .kpi{ display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+
+    /* log */
+    #log{ max-height:260px; overflow:auto; background:#fbfbfe; border:1px solid #eef1f8; border-radius:12px; padding:10px; color:#1f2937 }
+
+    /* meta chips */
+    .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.4rem;margin-top:.6rem}
   </style>
+
 </head>
 
 <body class="practice-page">
@@ -53,22 +176,24 @@
   </header>
 
   <main>
-    <div class="container grid grid-2">
+    <div class="container">
       <!-- ===== Game Context ===== -->
-      <section class="card">
+      <section class="card area-ctx">
         <div class="section-title">
           <h2>Game Context</h2>
           <span id="status" class="tiny">Ready</span>
         </div>
-        <div class="row">
+
+        <div class="row cols-3">
           <div>
-            <label>Game ID <span class="tiny">(from schedule)</span></label>
+            <label>Game ID <span class="tiny" style="color:var(--muted)">(from schedule)</span></label>
             <input id="game_id" list="list_game_ids" placeholder="e.g. G2025-01"/>
             <datalist id="list_game_ids"></datalist>
           </div>
           <div><label>Our Team Label</label><input id="our_team" placeholder="Us" value="Us"/></div>
           <div><label>Opponent Label</label><input id="opp_team" placeholder="Opponent" value="Opponent"/></div>
         </div>
+
         <div id="game_meta" class="meta" aria-live="polite" style="display:none">
           <span class="chip" id="meta_date"></span>
           <span class="chip" id="meta_week"></span>
@@ -76,19 +201,21 @@
           <span class="chip" id="meta_ha"></span>
           <span class="chip" id="meta_weather"></span>
         </div>
-        <div class="btnbar" style="margin-top:.5rem">
+
+        <div class="btnbar" style="margin-top:.6rem">
           <button class="btn subtle" id="setDefaultsBtn">Set Defaults</button>
           <button class="btn subtle" id="pickNextBtn">Pick Next on Schedule</button>
           <span class="chip">Schedule drives the Game ID</span>
         </div>
       </section>
 
-      <!-- ===== In-screen Game Clock ===== -->
-      <section class="card">
+      <!-- ===== Game Clock ===== -->
+      <section class="card area-clock">
         <div class="section-title">
           <h2>Game Clock</h2>
           <span class="tiny">Snap stamps Quarter + Clock into the Play form</span>
         </div>
+
         <div class="clock-wrap">
           <div>
             <label>Quarter</label>
@@ -103,44 +230,55 @@
             <div class="clock-face" id="clk_display">15:00</div>
           </div>
         </div>
-        <div class="clock-keys" style="margin-top:.5rem">
-          <button class="btn primary" id="clk_start">Start</button>
-          <button class="btn subtle" id="clk_pause">Pause</button>
-          <button class="btn warn" id="clk_reset">Reset Q</button>
-          <button class="btn subtle" data-dt="-10">-10s</button>
-          <button class="btn subtle" data-dt="-5">-5s</button>
-          <button class="btn subtle" data-dt="+5">+5s</button>
-          <button class="btn subtle" data-dt="+10">+10s</button>
-          <button class="btn primary" id="clk_snap">Snap → Play</button>
+
+        <div class="clock-keys" style="margin-top:.8rem">
+          <button class="btn pill-dark small" id="clk_start">Start</button>
+          <button class="btn subtle small" id="clk_pause">Pause</button>
+          <button class="btn warn small" id="clk_reset">Reset Q</button>
+
+          <!-- nudge: ±1s and ±5s -->
+          <button class="btn ghost small" data-dt="-5">-5s</button>
+          <button class="btn ghost small" data-dt="-1">-1s</button>
+          <button class="btn ghost small" data-dt="+1">+1s</button>
+          <button class="btn ghost small" data-dt="+5">+5s</button>
+
+          <button class="btn pill-dark small" id="clk_snap">Snap → Play</button>
         </div>
-        <div class="togglebar">
-          <label class="tiny"><input type="checkbox" id="auto_accum" checked/> Auto-accumulate possession time for active drive</label>
+
+        <!-- toggle -->
+        <div class="toggle" style="margin-top:.7rem">
+          <input type="checkbox" id="auto_accum" class="toggle-input" checked>
+          <button type="button" class="toggle-btn" data-for="auto_accum">Auto-accumulate possession time for active drive</button>
         </div>
       </section>
 
       <!-- ===== Drive Controls ===== -->
-      <section class="card">
+      <section class="card area-drive">
         <div class="section-title">
           <h2>Drive</h2>
           <span class="chip" id="driveBadge">No active drive</span>
         </div>
-        <div class="btnbar" style="margin-bottom:.5rem">
-          <button class="btn primary" id="newDriveBtn">Start New Drive</button>
+
+        <div class="btnbar" style="margin-bottom:.6rem">
+          <button class="btn pill-dark" id="newDriveBtn">Start New Drive</button>
           <button class="btn warn" id="endDriveBtn" disabled>End / Save Drive</button>
         </div>
 
-        <div class="row">
+        <div class="row cols-2">
           <div><label>Active Drive ID</label><input id="drive_id" placeholder="auto" disabled/></div>
           <div><label>Team In Possession</label>
             <select id="drive_poss"><option>Us</option><option>Opponent</option></select>
           </div>
-          <div><label>Start Yardline (+/-)</label><input id="drive_start" type="number" step="1" placeholder="-25 = our 25, +40 = opp 40"/></div>
-          <div><label>End Yardline (+/-)</label><input id="drive_end" type="number" step="1"/></div>
         </div>
 
-        <div class="row">
+        <div class="row cols-4">
+          <div><label>Start Yardline (+/-)</label><input id="drive_start" type="number" step="1" placeholder="-25 = our 25, +40 = opp 40"/></div>
+          <div><label>End Yardline (+/-)</label><input id="drive_end" type="number" step="1"/></div>
           <div><label>Plays in Drive</label><input id="drive_plays" type="number" step="1"/></div>
           <div><label>Yards Gained</label><input id="drive_yards" type="number" step="1" placeholder="auto from start/end"/></div>
+        </div>
+
+        <div class="row cols-3">
           <div><label>Possession Time (sec)</label><input id="drive_posstime" type="number" step="1" placeholder="auto from snaps"/></div>
           <div><label>Result</label>
             <select id="drive_result">
@@ -156,25 +294,30 @@
             </select>
           </div>
         </div>
-        <div class="togglebar">
-          <label class="tiny"><input type="checkbox" id="auto_drive_yards" checked/> Auto-calc Yards (end − start)</label>
-          <label class="tiny"><input type="checkbox" id="auto_drive_plays" checked/> Auto-count Plays in Drive</label>
+
+        <div class="toggle" style="margin-top:.6rem">
+          <input type="checkbox" id="auto_drive_yards" class="toggle-input" checked>
+          <button type="button" class="toggle-btn" data-for="auto_drive_yards">Auto-calc Yards (end − start)</button>
+
+          <input type="checkbox" id="auto_drive_plays" class="toggle-input" checked>
+          <button type="button" class="toggle-btn" data-for="auto_drive_plays">Auto-count Plays in Drive</button>
         </div>
       </section>
 
       <!-- ===== Play Entry ===== -->
-      <section class="card">
+      <section class="card area-play">
         <div class="section-title">
           <h2>Play</h2>
           <span class="chip" id="playBadge">No play ID yet</span>
         </div>
 
-        <div class="btnbar" style="margin-bottom:.5rem">
+        <div class="btnbar" style="margin-bottom:.6rem">
           <button class="btn subtle" id="newPlayIdBtn">New Play ID</button>
-          <button class="btn primary" id="addPlayBtn">Add Play to Table</button>
+          <button class="btn pill-dark" id="addPlayBtn">Add Play to Table</button>
         </div>
 
-        <div class="row">
+        <!-- identifiers -->
+        <div class="row cols-5">
           <div><label>Play ID</label><input id="play_id" placeholder="auto or click 'New Play ID'"/></div>
           <div><label>Drive ID</label><input id="play_drive_id" placeholder="auto from active drive" disabled/></div>
           <div><label>Offense Team</label>
@@ -186,7 +329,8 @@
           <div><label>Clock (mm:ss)</label><input id="play_clock" placeholder="12:34"/></div>
         </div>
 
-        <div class="row">
+        <!-- situational -->
+        <div class="row cols-5">
           <div><label>Down</label><select id="play_down"><option>1</option><option>2</option><option>3</option><option>4</option></select></div>
           <div><label>Distance (yds)</label><input id="play_dist" type="number" step="1"/></div>
           <div><label>Yard Line (+/-)</label><input id="play_yardline" type="number" step="1"/></div>
@@ -194,32 +338,52 @@
           <div><label>Result Yards</label><input id="play_yards" type="number" step="1"/></div>
         </div>
 
-        <div class="row">
+        <!-- descriptive -->
+        <div class="row cols-4">
           <div><label>Formation</label><input id="play_form" list="list_formations" placeholder="e.g. Gun Trips"/></div>
           <div><label>Personnel</label><input id="play_pers" list="list_personnel" placeholder="e.g. 11, 12, 21"/></div>
           <div><label>Motion</label><input id="play_motion" list="list_motions" placeholder="Jet, Orbit, None"/></div>
           <div><label>Play Name (Playbook)</label><input id="play_name" list="list_playnames" placeholder="Type to autocomplete…"/></div>
         </div>
 
-        <div class="row">
-          <div><label><input type="checkbox" id="flag_explosive"/> Explosive</label></div>
-          <div><label><input type="checkbox" id="flag_rz"/> Red Zone</label></div>
-          <div><label><input type="checkbox" id="flag_g2g"/> Goal-to-Go</label></div>
-          <div><label><input type="checkbox" id="flag_2min"/> Two-Minute</label></div>
-          <div><label><input type="checkbox" id="flag_success"/> Success (EPA+)</label></div>
+        <!-- flags as toggles -->
+        <div class="toggle" style="margin-top:.4rem">
+          <input type="checkbox" id="flag_explosive" class="toggle-input">
+          <button type="button" class="toggle-btn" data-for="flag_explosive">Explosive</button>
+
+          <input type="checkbox" id="flag_rz" class="toggle-input">
+          <button type="button" class="toggle-btn" data-for="flag_rz">Red Zone</button>
+
+          <input type="checkbox" id="flag_g2g" class="toggle-input">
+          <button type="button" class="toggle-btn" data-for="flag_g2g">Goal-to-Go</button>
+
+          <input type="checkbox" id="flag_2min" class="toggle-input">
+          <button type="button" class="toggle-btn" data-for="flag_2min">Two-Minute</button>
+
+          <input type="checkbox" id="flag_success" class="toggle-input">
+          <button type="button" class="toggle-btn" data-for="flag_success">Success (EPA+)</button>
         </div>
 
-        <div class="row">
+        <!-- EP math -->
+        <div class="row cols-3" style="margin-top:.4rem">
           <div><label>EP Before</label><input id="ep_before" type="number" step="0.01"/></div>
           <div><label>EP After</label><input id="ep_after" type="number" step="0.01"/></div>
           <div><label>EPA</label><input id="epa" type="number" step="0.01" placeholder="auto if EP fields set"/></div>
         </div>
 
-        <div class="togglebar">
-          <label class="tiny"><input type="checkbox" id="auto_offense_from_drive" checked/> Auto: Offense = Drive Possession</label>
-          <label class="tiny"><input type="checkbox" id="auto_epa" checked/> Auto: EPA = EP After − EP Before</label>
-          <label class="tiny"><input type="checkbox" id="auto_next_yardline" checked/> Auto: Next Yard Line = current + result yds</label>
-          <label class="tiny"><input type="checkbox" id="auto_playbook_fill" checked/> Auto: Fill from Playbook selection</label>
+        <!-- auto helpers as toggles -->
+        <div class="toggle" style="margin-top:.6rem">
+          <input type="checkbox" id="auto_offense_from_drive" class="toggle-input" checked>
+          <button type="button" class="toggle-btn" data-for="auto_offense_from_drive">Auto: Offense = Drive Possession</button>
+
+          <input type="checkbox" id="auto_epa" class="toggle-input" checked>
+          <button type="button" class="toggle-btn" data-for="auto_epa">Auto: EPA = EP After − EP Before</button>
+
+          <input type="checkbox" id="auto_next_yardline" class="toggle-input" checked>
+          <button type="button" class="toggle-btn" data-for="auto_next_yardline">Auto: Next Yard Line = current + result yds</button>
+
+          <input type="checkbox" id="auto_playbook_fill" class="toggle-input" checked>
+          <button type="button" class="toggle-btn" data-for="auto_playbook_fill">Auto: Fill from Playbook selection</button>
         </div>
 
         <!-- datalists populated at runtime -->
@@ -229,8 +393,8 @@
         <datalist id="list_playnames"></datalist>
       </section>
 
-      <!-- ===== Game Summary Quick Helpers (optional) ===== -->
-      <section class="card">
+      <!-- ===== Game Summary ===== -->
+      <section class="card area-summary">
         <div class="section-title">
           <h2>Game Summary — Helpers</h2>
           <span class="tiny">Writes to <strong>05_Fact_GameSummary</strong></span>
@@ -248,23 +412,24 @@
           <div><label>Game Control (min)</label><input id="sum_gcmin" type="number" step="1"/></div>
           <div><label>Snap Count Total</label><input id="sum_snaps" type="number" step="1"/></div>
         </div>
-        <div class="btnbar" style="margin-top:.5rem">
-          <button class="btn primary" id="saveSummaryBtn">Update Game Summary</button>
+        <div class="btnbar" style="margin-top:.6rem">
+          <button class="btn pill-dark" id="saveSummaryBtn">Update Game Summary</button>
         </div>
       </section>
 
       <!-- ===== Log ===== -->
-      <section class="card">
+      <section class="card area-log">
         <div class="section-title">
           <h2>Log</h2><span class="tiny">Most recent first</span>
         </div>
-        <div id="log" class="tiny" style="max-height:260px;overflow:auto"></div>
+        <div id="log"></div>
       </section>
     </div>
   </main>
 
   <footer><p>&copy; 2025 Game Speed Data Systems</p></footer>
 
+  <!-- ==== Page logic (unchanged except for nudge keys + toggle wiring) ==== -->
   <script>
   /* =======================
   * SHARED GAME CONTEXT (master publisher)
@@ -296,22 +461,14 @@
   * CONFIG
   * ======================= */
   const API_BASE = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
-
-  // Playbook dictionary (optional but recommended)
   const DICT_SHEET_ID = '1oHO-5gM9l3PTSjUxwQlYzFaAMTtlco2VZj8l315Uk1c';
   const PLAYBOOK_TAB  = 'Playbook_Dictionary';
-
-  // 🔗 SCHEDULE: set this to your MASTER_DATA_2025 file ID
   const SCHEDULE_SHEET_ID = '1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI';
   const SCHEDULE_TAB = '01_Dim_Schedule';
-
-  // Route names (must match Apps Script)
   const ROUTE_DRIVES = 'drives';
   const ROUTE_PLAYS  = 'plays';
   const ROUTE_SUM    = 'game_summary';
   const ROUTE_GC     = 'game_control';
-
-  // Clock constants
   const QUARTER_LEN = 15 * 60;
   const OT_LEN = 10 * 60;
 
@@ -334,11 +491,10 @@
   let driveElapsedSec = 0;
   let lastSnap = null;
 
-  // playbook + schedule
   let playbook = [];
   let playMap = {};
   let schedule = [];
-  let scheduleMap = {}; // game_id -> row
+  let scheduleMap = {};
 
   const options = {
     playTypes: ['Run','Pass','Sack','Kneel','Spike','Penalty only'],
@@ -397,7 +553,7 @@
   function resetQuarter(){ pauseClock(); secLeft = getQSeconds(); displayClock(); }
   function nudgeSeconds(delta){ secLeft = Math.max(0, Math.min(getQSeconds(), secLeft + delta)); displayClock(); }
 
-  // Snap: stamp to Play form + accumulate drive time
+  // Snap to Play + accumulate drive time
   function snapToPlay(){
     const q = el('clk_quarter').value;
     const m = Math.floor(secLeft/60).toString().padStart(2,'0');
@@ -444,7 +600,7 @@
   displayClock();
 
   /* =======================
-  * PLAYBOOK: load & wire
+  * PLAYBOOK
   * ======================= */
   async function loadPlaybook(){
     if(!DICT_SHEET_ID) return;
@@ -486,7 +642,6 @@
       o.textContent = v; s.appendChild(o);
     });
   }
-  // seed play type options immediately
   fillSelect('play_type', options.playTypes);
 
   el('play_name').addEventListener('change', ()=>{
@@ -502,7 +657,7 @@
   });
 
   /* =======================
-  * SCHEDULE: load & bind
+  * SCHEDULE
   * ======================= */
   async function loadSchedule(){
     if(!SCHEDULE_SHEET_ID) return;
@@ -518,7 +673,6 @@
         scheduleMap[gid] = r;
         ids.push(gid);
       });
-      // sort by date then week if available
       ids.sort((a,b)=>{
         const ra=scheduleMap[a], rb=scheduleMap[b];
         const da=(ra.date||''), db=(rb.date||'');
@@ -529,7 +683,6 @@
       fillDatalist('list_game_ids', ids);
       log(`Schedule loaded (${ids.length} games).`, 'success');
 
-      // If context already has a game (from a previous session), snap UI to it
       const ctx = GameContext.get();
       if (ctx.game_id && scheduleMap[ctx.game_id]) {
         el('game_id').value = ctx.game_id;
@@ -558,12 +711,9 @@
     const opp = scheduleMap[gid].opponent || 'Opponent';
     el('opp_team').placeholder = opp;
     log(`Game selected: ${gid} vs ${opp}`, 'success');
-
-    // PUBLISH master game_id
     GameContext.setGame(gid);
   });
 
-  // One-click: pick next upcoming by date (>= today) else first
   el('pickNextBtn').addEventListener('click', ()=>{
     if(!schedule.length) return;
     const today = new Date().toISOString().slice(0,10);
@@ -583,13 +733,12 @@
     log('Defaults applied.', 'success');
   });
 
-  // Keep Play Offense synced to drive possession if enabled
   el('drive_poss').addEventListener('change', ()=>{
     if(el('auto_offense_from_drive').checked) el('play_offense').value = el('drive_poss').value;
   });
 
   /* =======================
-  * DRIVES (publish drive_id)
+  * DRIVES
   * ======================= */
   el('newDriveBtn').addEventListener('click', async ()=>{
     try{
@@ -605,9 +754,7 @@
       if(el('auto_offense_from_drive').checked){
         el('play_offense').value = el('drive_poss').value;
       }
-      // PUBLISH master drive_id
       GameContext.setDrive(activeDriveId);
-
       log(`Started drive ${activeDriveId}`, 'success');
     } catch(err){ log(err.message, 'error'); }
   });
@@ -641,7 +788,6 @@
       await appendRow(ROUTE_DRIVES, row, Object.keys(row));
       log(`Drive saved: ${activeDriveId}`, 'success');
 
-      // clear active drive + PUBLISH clear
       el('driveBadge').textContent = 'No active drive';
       el('endDriveBtn').disabled = true;
       activeDriveId = '';
@@ -652,14 +798,13 @@
   });
 
   /* =======================
-  * PLAYS (publish play_id)
+  * PLAYS
   * ======================= */
   el('newPlayIdBtn').addEventListener('click', async ()=>{
     try{
       const id = await nextId('PLAY');
       el('play_id').value = id;
       el('playBadge').textContent = `Editing: ${id}`;
-      // PUBLISH master play_id
       GameContext.setPlay(id);
     } catch(err){ log(err.message, 'error'); }
   });
@@ -719,19 +864,18 @@
         el('play_yardline').value = String(next);
       }
 
-      // PUBLISH last saved play_id so follower pages stay pinned to it
       GameContext.setPlay(play_id);
 
-      // Prep UI for next entry, but keep context on last saved
       el('play_id').value = '';
       el('playBadge').textContent = 'No play ID yet';
       ['play_yards','play_dist','ep_before','ep_after','epa'].forEach(i=>el(i).value='');
       ['flag_explosive','flag_rz','flag_g2g','flag_2min','flag_success'].forEach(i=>el(i).checked=false);
+      refreshToggleStates();
     } catch(err){ log(err.message, 'error'); }
   });
 
   /* =======================
-  * SUMMARY HELPERS
+  * SUMMARY
   * ======================= */
   el('saveSummaryBtn').addEventListener('click', async ()=>{
     try{
@@ -761,15 +905,34 @@
   const numVal = v => (v===''||v==null ? '' : Number(v));
   const boolVal = v => (v ? 1 : 0);
 
+  // Toggle helpers: click the visual pill to flip the hidden checkbox
+  function wireToggles(){
+    document.querySelectorAll('.toggle-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id = btn.getAttribute('data-for');
+        const box = document.getElementById(id);
+        if(!box) return;
+        box.checked = !box.checked;
+        btn.setAttribute('aria-pressed', box.checked ? 'true' : 'false');
+      });
+    });
+    refreshToggleStates();
+  }
+  function refreshToggleStates(){
+    document.querySelectorAll('.toggle-btn').forEach(btn=>{
+      const id = btn.getAttribute('data-for');
+      const box = document.getElementById(id);
+      btn.setAttribute('aria-pressed', box && box.checked ? 'true' : 'false');
+    });
+  }
+
   // init
+  wireToggles();
   loadPlaybook();
   loadSchedule();
-
-  // publish any pre-filled Game ID on load (manual paste case)
   if (el('game_id').value.trim()) {
     GameContext.setGame(el('game_id').value.trim());
   }
   </script>
-
 </body>
 </html>

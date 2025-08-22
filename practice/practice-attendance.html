@@ -11,182 +11,236 @@
   })();
   </script>
   <title>Practice Attendance – Football Data Tracker</title>
+
+  <!-- Fonts + shared theme -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../style.css"/>
+
+  <!-- Dark ATL skin (matches Primary/Drives) -->
   <style>
     :root{
-      --panel-bg: rgba(255,255,255,.04);
-      --bd: rgba(255,255,255,.12);
+      --panel-bg: rgba(255,255,255,.06);
+      --bd: rgba(139,92,246,.35);
       --subtle: rgba(255,255,255,.18);
       --chip-bg: rgba(255,255,255,.08);
-      --chip-bd: rgba(255,255,255,.18);
-      --accent: #43b581;
-      --late: #ffa142;
-      --present: #3ddc97;
-      --excused: #6aa9ff;
-      --text-on-dark: #eaeaea;
-    }
-    .container{max-width:1200px;margin:0 auto;padding:1rem}
-    .grid{display:grid;gap:1rem}
-    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .card{background:var(--panel-bg);border:1px solid var(--bd);border-radius:14px;padding:1rem}
-    .card h2{margin:0 0 .5rem 0;font-size:1.1rem}
-    .card h3{ margin:0; font-size:1rem; font-weight:600; }
-    .row{display:flex;gap:.75rem;flex-wrap:wrap}
-    .row > *{flex:1 1 160px}
-    label{display:block;font-size:.85rem;opacity:.9;margin-bottom:.25rem}
-    input,select,textarea{width:100%;padding:.6rem .7rem;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.2);color:#fff}
-    .btnbar{display:flex;gap:.5rem;flex-wrap:wrap}
-    .btn{padding:.6rem .9rem;border-radius:999px;border:1px solid transparent;cursor:pointer}
-    .btn.primary{background:var(--accent);color:#071a12}
-    .btn.subtle{background:transparent;border-color:rgba(255,255,255,.25);color:#fff}
-    .btn.warn{background:#ffa142;color:#2a1800}
-    .chip{display:inline-block;padding:.25rem .6rem;border-radius:999px;background:var(--chip-bg);border:1px solid var(--chip-bd);font-size:.8rem}
-    .tiny{font-size:.8rem;opacity:.85}
-    .success{color:#7CFC98}.error{color:#ff6b6b}
-    .section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:.35rem}
+      --chip-bd: rgba(255,255,255,.22);
+      --accent: #7C4DFF;
+      --accent2:#8B5CF6;
+      --text-on-dark: #ECECF3;
 
-    /* roster buttons */
+      --late:   #F59E0B;
+      --present:#22C55E;
+      --excused:#60A5FA;
+      --exlate: #A78BFA;
+
+      --focus-ring: 0 0 0 3px rgba(139,92,246,.35);
+      --shadow-soft:0 10px 30px rgba(17,12,28,.35);
+    }
+
+    /* Layout grid (same structure you had) */
+    .container{
+      max-width:1100px;margin:0 auto;padding:16px;
+      display:grid;gap:16px;
+      grid-template-columns:1fr;
+      grid-template-areas:
+        "setup"
+        "tools"
+        "roster"
+        "log";
+    }
+    @media (min-width:980px){
+      .container{
+        grid-template-columns:1fr 1fr;
+        grid-template-areas:
+          "setup tools"
+          "roster roster"
+          "log    log";
+      }
+    }
+
+    /* Cards */
+    .card{
+      background:var(--panel-bg);
+      border:1px solid var(--bd);
+      border-radius:16px;
+      padding:16px;
+      color:var(--text-on-dark);
+      box-shadow:var(--shadow-soft);
+    }
+    .section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+    .section-title h2{margin:0;font-size:1.15rem}
+    .tiny{font-size:.9rem;opacity:.9}
+
+    /* Inputs – strong outline + clear focus on dark */
+    label{display:block;font-size:.9rem;opacity:.92;margin:0 0 .35rem}
+    input,select,textarea{
+      width:100%;padding:.7rem .85rem;border-radius:12px;
+      border:2px solid rgba(255,255,255,.28);
+      background:rgba(255,255,255,.08);color:#fff;font-size:1rem;
+      transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    input::placeholder,textarea::placeholder{color:rgba(236,236,243,.65)}
+    input:focus,select:focus,textarea:focus{
+      outline:none;border-color:#C4B5FD;box-shadow:var(--focus-ring);background:rgba(255,255,255,.12);
+    }
+    input[type="number"]{
+      -moz-appearance:textfield;
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+
+    /* Rows */
+    .row{display:grid;gap:12px}
+    .row.cols-2{grid-template-columns:1fr 1fr}
+    .row.cols-3{grid-template-columns:repeat(3,1fr)}
+    @media (max-width:680px){
+      .row.cols-2,.row.cols-3{grid-template-columns:1fr}
+    }
+
+    /* Buttons */
+    .btnbar{display:flex;gap:.5rem;flex-wrap:wrap}
+    .btn{
+      padding:.65rem 1rem;border-radius:999px;border:1px solid transparent;cursor:pointer;
+      background:linear-gradient(135deg,var(--accent) 0%, var(--accent2) 100%);color:#071a12;font-weight:800;
+      box-shadow:0 10px 24px rgba(139,92,246,.25);
+      transition:transform .15s ease,filter .15s ease;
+    }
+    .btn:hover{transform:translateY(-2px);filter:saturate(1.05)}
+    .btn.subtle{
+      background:transparent;border-color:rgba(255,255,255,.3);color:#fff;box-shadow:none
+    }
+    .btn.warn{background:#F59E0B;color:#1f1300;border-color:#a66b07}
+
+    /* Toggle pill (Autosave) – clearly on/off */
+    .toggle{display:flex;align-items:center}
+    .toggle-input{position:absolute;opacity:0;pointer-events:none}
+    .toggle-btn{
+      position:relative;cursor:pointer;
+      padding:.55rem .9rem .55rem 2.2rem;border-radius:999px;
+      background:rgba(255,255,255,.06);color:#fff;border:2px solid rgba(255,255,255,.28);
+      font-weight:800;transition:all .15s ease;
+    }
+    .toggle-btn::before{
+      content:"";position:absolute;left:.7rem;top:50%;transform:translateY(-50%);
+      width:16px;height:16px;border-radius:50%;background:#fff;opacity:.85;
+      box-shadow:0 0 0 2px rgba(0,0,0,.35) inset;
+    }
+    .toggle-input:checked + .toggle-btn{
+      background:linear-gradient(90deg,#16A34A,#10B981);border-color:transparent;color:#071a12;
+      box-shadow:0 8px 18px rgba(16,185,129,.28);
+    }
+    .toggle-input:checked + .toggle-btn::before{
+      content:"✓";display:grid;place-items:center;color:#0c2b1e;font-weight:900;box-shadow:none
+    }
+    .toggle-btn:focus-visible{outline:2px solid #93C5FD;outline-offset:2px}
+
+    /* Roster grid */
     .toolbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:.6rem}
     .search{flex:1 1 240px}
-    .player-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:.6rem}
+    .player-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.6rem}
+
     .plyr{
-      position:relative; border:1px solid var(--subtle); border-radius:12px; padding:.7rem .8rem;
-      background:rgba(255,255,255,.04); cursor:pointer; display:flex; gap:.6rem; align-items:center; min-height:56px;
-      transition:transform .06s ease, border-color .06s ease, background .06s ease;
-      user-select:none;
+      position:relative;border:1px solid var(--subtle);border-radius:12px;padding:.72rem .8rem;
+      background:rgba(255,255,255,.05);cursor:pointer;display:flex;gap:.65rem;align-items:center;min-height:58px;
+      transition:transform .06s ease, border-color .06s ease, background .06s ease, box-shadow .06s ease;user-select:none;color:#fff;
     }
-    .plyr:hover{transform:translateY(-1px); border-color:rgba(255,255,255,.34)}
-    .num{width:36px;height:36px;border-radius:9px;background:rgba(255,255,255,.08);display:grid;place-items:center;font-weight:700}
-    .plyr .name > div:first-child{ color: var(--text-on-dark); font-weight:600; letter-spacing:.2px; }
-    .plyr .pos{ color:#cfd3d8; opacity:.9; }
-    .stamp{font-variant-numeric:tabular-nums;font-size:.78rem;opacity:.85}
-    .status{position:absolute;right:8px;top:8px;font-size:.7rem;padding:.15rem .45rem;border-radius:999px;border:1px solid var(--chip-bd)}
-    .on{background:rgba(61,220,151,.16);color:#c8ffe7;border-color:#3ddc97}
-    .late{background:rgba(255,161,66,.13);color:#ffe1c3;border-color:#ffa142}
-    .exc{background:rgba(106,169,255,.16);color:#e4eaff;border-color:#6aa9ff}
+    .plyr:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.35);box-shadow:0 10px 24px rgba(0,0,0,.25)}
+    .num{width:36px;height:36px;border-radius:9px;background:rgba(255,255,255,.10);display:grid;place-items:center;font-weight:800}
+
+    .plyr .name{min-width:0}
+    .plyr .name > div:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700;letter-spacing:.2px}
+    .plyr .pos{color:#cfd3d8;opacity:.9}
+
+    .stamp{font-variant-numeric:tabular-nums;font-size:.82rem;color:#E8F3FF;opacity:1;margin-left:auto}
+
+    .status{
+      position:absolute;right:8px;top:8px;font-size:.72rem;padding:.16rem .48rem;border-radius:999px;
+      border:1px solid var(--chip-bd);background:var(--chip-bg);color:#fff
+    }
+    .status.excl{background:rgba(167,139,250,.18);border-color:#a78bfa;color:#EDE9FE}
+
     .saved::after{
-      content:'✓'; position:absolute; left:-6px; top:-6px; width:18px; height:18px; border-radius:50%;
-      background:#35c48a;color:#061d14;font-size:.75rem;display:grid;place-items:center; border:1px solid #0b6546;
+      content:'✓';position:absolute;left:-6px;top:-6px;width:18px;height:18px;border-radius:50%;
+      background:#22c55e;color:#052e1a;font-size:.75rem;display:grid;place-items:center;border:1px solid #0a7a3a;
     }
 
-    /* Card color by status */
-    .plyr.state-on  { background: rgba(61,220,151,.12); border-color: rgba(61,220,151,.55); }
-    .plyr.state-late{ background: rgba(255,161,66,.12); border-color: rgba(255,161,66,.55); }
-    .plyr.state-exc { background: rgba(106,169,255,.12); border-color: rgba(106,169,255,.55); }
+    /* State tints (dark) */
+    .plyr.state-on  { background: rgba(34,197,94,.14);  border-color: rgba(34,197,94,.6); }
+    .plyr.state-late{ background: rgba(245,158,11,.14); border-color: rgba(245,158,11,.6); }
+    .plyr.state-exc { background: rgba(96,165,250,.14); border-color: rgba(96,165,250,.6); }
+    .plyr.state-excl{ background: rgba(167,139,250,.16); border-color: rgba(167,139,250,.65); }
 
-    .plyr.state-on  .num{ background: rgba(61,220,151,.20); }
-    .plyr.state-late .num{ background: rgba(255,161,66,.20); }
-    .plyr.state-exc  .num{ background: rgba(106,169,255,.20); }
-
+    /* Legend chips */
+    .chip{display:inline-block;padding:.3rem .6rem;border-radius:999px;background:var(--chip-bg);border:1px solid var(--chip-bd);font-size:.85rem}
     .legend{display:flex;gap:.5rem;align-items:center}
     .legend .dot{width:12px;height:12px;border-radius:50%}
-    .dot.on{background:var(--present)} .dot.late{background:var(--late)} .dot.exc{background:var(--excused)}
+    .dot.on{background:var(--present)}
+    .dot.late{background:var(--late)}
+    .dot.exc{background:var(--excused)}
+    .dot.excl{background:var(--exlate)}
 
-    .logbox{max-height:240px;overflow:auto}
+    /* Log */
+    #log{max-height:260px;overflow:auto;background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:12px;padding:10px;color:#fff}
 
-    /* Popover menu for status */
-    .popover{position:fixed; z-index:50; background:#121316; border:1px solid var(--bd); border-radius:12px; padding:.4rem; box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    /* Popover (dark) */
+    .popover{
+      position:fixed;z-index:50;background:#121316;border:1px solid var(--bd);border-radius:12px;padding:.4rem;box-shadow:0 12px 34px rgba(0,0,0,.35)
+    }
     .popover button{display:block;width:100%;text-align:left;padding:.5rem .7rem;border-radius:8px;border:1px solid transparent;background:transparent;color:#fff}
     .popover button:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15)}
     .hidden{display:none}
 
-    /* Modal add player (hidden by default) */
-
-    .modal-backdrop{
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,.5);
-      backdrop-filter:saturate(120%) blur(4px);
-      display:none;                 /* <-- hidden by default */
-      align-items:center;
-      justify-content:center;
-      z-index:60;
-    }
-
-    .modal-backdrop.open{           /* <-- shown when .open is added */
-      display:flex;
-
-    }
-
-    .modal{
-      background:#15161a;
-      border:1px solid var(--bd);
-      border-radius:14px;
-      padding:1rem;
-      max-width:520px;
-      width:92%;
-    }
-
+    /* Modal (dark) */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:saturate(120%) blur(4px);display:none;align-items:center;justify-content:center;z-index:60}
+    .modal-backdrop.open{display:flex}
+    .modal{background:#15161a;color:#e7e7f1;border:1px solid var(--bd);border-radius:14px;padding:16px;max-width:520px;width:92%;box-shadow:0 20px 40px rgba(0,0,0,.45)}
     .modal h3{margin:.2rem 0 .6rem 0}
     .row-tight{display:flex;gap:.6rem;flex-wrap:wrap}
     .row-tight > *{flex:1 1 160px}
+    .modal-backdrop.hidden{display:none !important}
 
-    .modal-backdrop.hidden{ display:none !important; }
-
-    /* ===== Mobile-friendly roster cards ===== */
-
-    /* Let text truncate instead of spilling */
-    .plyr .name { min-width: 0; }
-    .plyr .name > div:first-child{
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    /* Quick Filters (chips) */
+    .filters{display:flex;flex-direction:column;gap:.35rem;margin:4px 0 10px}
+    .chipbar{display:flex;gap:.4rem;overflow:auto;padding:.2rem 0;-webkit-overflow-scrolling:touch}
+    .filter-chip{
+      cursor:pointer;user-select:none;white-space:nowrap;
+      background:var(--chip-bg);border:1px solid var(--chip-bd);color:#fff;
+      font-weight:800;border-radius:999px;padding:.42rem .8rem;
+      transition:background .15s ease,border-color .15s ease,box-shadow .15s ease,transform .15s ease;
     }
-
-    /* Slightly roomier default grid; scales down with breakpoints */
-    .player-grid{
-      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-      gap: .6rem;
+    .filter-chip[aria-pressed="true"]{
+      background:linear-gradient(90deg,var(--accent),var(--accent2));
+      color:#081018;border-color:transparent;box-shadow:0 8px 18px rgba(139,92,246,.28)
     }
+    .filter-chip:focus-visible{outline:2px solid #93C5FD;outline-offset:2px}
 
-    /* Make the two top cards stack on tablets/phones */
-    @media (max-width: 900px){
-      .grid-2{ grid-template-columns: 1fr; }
+    /* Responsive tweaks */
+    @media (max-width:700px){
+      .container{padding:12px}
+      .player-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.5rem}
+      .plyr{padding:.6rem .65rem;min-height:56px;border-radius:10px}
+      .num{width:32px;height:32px;border-radius:8px;font-size:.9rem}
+      .status{right:6px;top:6px;font-size:.68rem;padding:.1rem .4rem}
+      .stamp{display:none}
     }
-
-    /* Tablet-ish: tighten spacing, hide timestamp to avoid overlap */
-    @media (max-width: 700px){
-      .container{ padding: .75rem; }
-      .player-grid{
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: .5rem;
-      }
-      .plyr{ padding: .65rem .7rem; min-height: 58px; border-radius: 10px; }
-      .num{ width: 32px; height: 32px; border-radius: 8px; font-size: .9rem; }
-      .status{ right: 6px; top: 6px; font-size: .68rem; padding: .1rem .4rem; }
-      .stamp{ display: none; } /* hide time to keep cards clean */
+    @media (max-width:420px){
+      .player-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem}
+      .plyr{padding:.55rem .6rem;gap:.5rem}
+      .num{width:30px;height:30px;border-radius:8px}
+      .plyr .name > div:first-child{font-size:.92rem}
+      .plyr .pos{font-size:.74rem}
+      .chip.tiny{font-size:.78rem;padding:.16rem .5rem}
+      .btnbar,.toolbar{gap:.4rem}
+      .modal{max-width:96%}
+      .row-tight > *{flex:1 1 100%}
     }
-
-    /* Small phones: force two columns and scale typography */
-    @media (max-width: 420px){
-      .player-grid{
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: .45rem;
-      }
-      .plyr{ padding: .55rem .6rem; gap: .5rem; }
-      .num{ width: 30px; height: 30px; border-radius: 8px; }
-      .plyr .name > div:first-child{ font-size: .92rem; }
-      .plyr .pos{ font-size: .72rem; }
-      .chip.tiny{ font-size: .75rem; padding: .15rem .5rem; }
-      .btnbar, .toolbar{ gap: .4rem; }
-      .modal{ max-width: 96%; }
-      .row-tight > *{ flex: 1 1 100%; } /* modal fields stack */
-    }
-
-    /* Ensure PV grid inherits the same responsive rules */
-    #pvGroup .player-grid{ grid-template-columns: inherit; gap: inherit; }
-
-    /* Timestamp color */
-    :root { --stamp-color: #E8F3FF; } /* pick any light color */
-    .stamp{
-      color: var(--stamp-color);
-      opacity: 1;              /* was .85 – make fully opaque */
-    }
-
   </style>
 </head>
 
-<body class="practice-page">
+<!-- Important: same dark animated background class as Primary/Drives -->
+<body class="theme-atl practice-page">
   <header class="page-header">
     <h1>Practice Attendance</h1>
     <nav class="menu-actions">
@@ -196,52 +250,57 @@
   </header>
 
   <main>
-    <div class="container grid grid-2">
+    <div class="container">
       <!-- Setup -->
-      <section class="card">
+      <section class="card" style="grid-area:setup">
         <div class="section-title">
           <h2>Practice Setup</h2>
           <span id="status" class="tiny">Ready</span>
         </div>
-        <div class="row">
+
+        <div class="row cols-3">
           <div><label>Date</label><input id="prac_date" type="date"/></div>
           <div><label>Start Time</label><input id="prac_time" type="time" step="60"/></div>
           <div><label>Grace (min)</label><input id="prac_grace" type="number" step="1" value="0"/></div>
         </div>
-        <div class="btnbar" style="margin-top:.4rem">
+
+        <div class="btnbar" style="margin-top:.6rem">
           <button class="btn subtle" id="setNowBtn">Set start = now</button>
-          <label class="tiny" style="display:flex;align-items:center;gap:.4rem">
-            <input type="checkbox" id="autosave" checked/> Autosave on click
-          </label>
-          <span class="chip tiny legend">
+
+          <!-- Autosave toggle -->
+          <div class="toggle" aria-live="polite">
+            <input type="checkbox" id="autosave" class="toggle-input" checked>
+            <label for="autosave" class="toggle-btn">Autosave on click</label>
+          </div>
+
+          <span class="chip tiny legend" style="margin-left:auto">
             <span class="dot on"></span> On time
             <span class="dot late" style="margin-left:.5rem"></span> Late
             <span class="dot exc" style="margin-left:.5rem"></span> Excused
+            <span class="dot excl" style="margin-left:.5rem"></span> Excused Late
           </span>
         </div>
       </section>
 
       <!-- Tools -->
-      <section class="card">
+      <section class="card" style="grid-area:tools">
         <div class="section-title">
           <h2>Controls</h2>
           <span class="tiny">Save & finalize</span>
         </div>
         <div class="btnbar">
-          <button class="btn primary" id="saveAllBtn">Save all unsaved</button>
+          <button class="btn" id="saveAllBtn">Save all unsaved</button>
           <button class="btn warn" id="finalizeBtn">Finalize: mark remaining Absent</button>
           <button class="btn subtle" id="reloadRosterBtn">Reload Roster</button>
           <button class="btn subtle" id="addPlayerBtn">Add to Roster</button>
         </div>
-        <div class="tiny" style="margin-top:.5rem;opacity:.8">
-          Tip: tap = On time/Late (auto). Long-press or right-click a card for <strong>Excused</strong> or to switch status.
+        <div class="tiny" style="margin-top:.5rem;opacity:.9">
+          Tip: tap = On time/Late (auto). Long-press or right-click a card for <strong>Excused</strong>, <strong>Excused Late</strong>, or to switch status.
         </div>
       </section>
-    </div>
 
-    <!-- Roster -->
-    <div class="container">
-      <section class="card">
+      <!-- Roster -->
+      <section class="card" style="grid-area:roster">
         <div class="section-title">
           <h2>Roster</h2>
           <div class="toolbar">
@@ -249,27 +308,38 @@
             <span class="chip tiny" id="countBadge">0 players</span>
           </div>
         </div>
+
+        <!-- Quick Filters -->
+        <div class="filters">
+          <div class="chipbar" id="groupChips" role="tablist" aria-label="Groups">
+            <button class="chip filter-chip" data-group="ALL" aria-pressed="true">All</button>
+            <button class="chip filter-chip" data-group="OFF">Offense</button>
+            <button class="chip filter-chip" data-group="DEF">Defense</button>
+            <button class="chip filter-chip" data-group="ST">Special Teams</button>
+            <button class="chip filter-chip" data-group="PV">PV</button>
+            <button class="chip filter-chip" data-group="COACH">Coaches</button>
+          </div>
+          <div class="chipbar" id="posChips" aria-label="Positions"></div>
+        </div>
+
         <div id="grid" class="player-grid" aria-live="polite"></div>
-      </section>
-    </div>
 
-    <!-- Log -->
-    <div class="container">
-      <section class="card">
+        <!-- PV subgroup -->
+        <div id="pvGroup" style="margin-top:1rem; display:none">
+          <div class="section-title" style="margin-top:.2rem">
+            <h2 style="font-size:1.05rem">PV / Special</h2>
+            <span class="chip tiny" id="countBadgePV">0 PV</span>
+          </div>
+          <div id="grid_pv" class="player-grid" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <!-- Log -->
+      <section class="card" style="grid-area:log">
         <div class="section-title"><h2>Log</h2><span class="tiny">Most recent first</span></div>
-        <div id="log" class="tiny logbox"></div>
+        <div id="log" class="tiny"></div>
       </section>
     </div>
-
-    <!-- PV subgroup (hidden when empty) -->
-    <div id="pvGroup" class="subgroup" style="margin-top:1rem; display:none">
-      <div class="section-title">
-        <h3>PV / Special</h3>
-        <span class="chip tiny" id="countBadgePV">0 PV</span>
-      </div>
-      <div id="grid_pv" class="player-grid" aria-live="polite"></div>
-    </div>
-
   </main>
 
   <!-- Status popover -->
@@ -277,56 +347,62 @@
     <button data-action="on">On time</button>
     <button data-action="late">Late</button>
     <button data-action="excused">Excused</button>
+    <button data-action="excused_late">Excused Late</button>
     <hr style="border:none;border-top:1px solid var(--bd);margin:.3rem 0"/>
     <button data-action="clear">Clear</button>
   </div>
 
-  <!-- Add Player modal (hidden until opened) -->
+  <!-- Add Player modal -->
   <div id="modalBackdrop" class="modal-backdrop hidden" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="newPlayerTitle" tabindex="-1">
       <h3 id="newPlayerTitle">Add to Roster</h3>
       <div class="row-tight">
         <div><label>Player Name</label><input id="np_name" placeholder="Full name"/></div>
-        <div><label>Position</label><input id="np_pos" placeholder="e.g., WR, RB, OL"/></div>
+        <div><label>Position</label><input id="np_pos" placeholder="e.g., WR, RB, OL or OFF/DEF/ST for coaches"/></div>
       </div>
+
+      <!-- Coach toggle -->
       <div class="row-tight" style="margin-top:.6rem">
+        <label class="toggle" style="gap:.5rem; align-items:center">
+          <input type="checkbox" id="np_isCoach" class="toggle-input" style="position:static; opacity:1; pointer-events:auto; width:auto; height:auto">
+          <span class="toggle-btn" style="padding:.4rem .75rem">This is a Coach</span>
+        </label>
+      </div>
+
+      <div class="row-tight" id="np_jersey_row" style="margin-top:.6rem">
         <div><label>Jersey #</label><input id="np_num" placeholder="e.g., 12"/></div>
         <div><label>Player ID (optional)</label><input id="np_pid" placeholder="auto if blank"/></div>
       </div>
       <div class="btnbar" style="margin-top:.8rem">
-        <button class="btn primary" id="np_save">Save to Roster</button>
+        <button class="btn" id="np_save">Save to Roster</button>
         <button class="btn subtle" id="np_cancel">Cancel</button>
       </div>
-      <div class="tiny" style="opacity:.8;margin-top:.4rem">
+      <div class="tiny" style="opacity:.85;margin-top:.4rem">
         Writes to your roster sheet (adds headers if needed): <code>player_id, player_name, position, jersey_number</code>.
       </div>
     </div>
   </div>
 
-  <footer><p>&copy; 2025 Game Speed Data Systems</p></footer>
+  <footer class="site-footer"><p>&copy; 2025 Game Speed Data Systems</p></footer>
 
+  <!-- JS -->
   <script>
     /* =======================
      * CONFIG
      * ======================= */
     const API_BASE = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
 
-    // Roster source (pulls from this sheet)
     const ROSTER_SHEET_ID = '1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI';
     const ROSTER_TAB = '00_Dim_Roster';
 
-    // Attendance destination
-    const ATTEND_SHEET_ID = '1pT-7cXhfzJB5mjswsXayvjt_qC2hIp9WflWggIAyh8g'; // PLAYER_DEVELOPMENT_2025
+    const ATTEND_SHEET_ID = '1pT-7cXhfzJB5mjswsXayvjt_qC2hIp9WflWggIAyh8g';
     const ATTEND_TAB = '60_Fact_PracticeAttendance';
 
-    // Headers to ensure on first write
     const ATTEND_HEADERS = [
       'timestamp','date','practice_start','grace_minutes',
       'player_id','player_name','position','jersey_number',
       'status','arrived_at','minutes_late'
     ];
-
-    // Roster fields for Add Player
     const ROSTER_HEADERS = ['player_id','player_name','position','jersey_number'];
 
     /* =======================
@@ -336,19 +412,22 @@
     const logBox = el('log');
     const log = (msg, type='')=>{
       const row = document.createElement('div');
-      if(type==='success') row.className='success';
-      if(type==='error') row.className='error';
+      if(type==='success') row.style.color='#7CFC98';
+      if(type==='error') row.style.color='#ff6b6b';
       row.textContent = '['+new Date().toLocaleTimeString()+'] '+msg;
       logBox.prepend(row);
-      el('status').textContent = (type==='error'?'Error':'Ready');
+      const st = document.getElementById('status'); if(st) st.textContent = (type==='error'?'Error':'Ready');
     };
 
-    let roster = [];            // [{id,name,pos,num}]
+    let roster = [];
     const playersById = new Map();
-    const attendance = new Map(); // id -> {arrivedAt, status:'On time'|'Late'|'Excused', minutesLate, saved}
+    const attendance = new Map();
 
-    // popover state
-    const menu = el('statusMenu');
+    // Filters
+    const filterState = { group: 'ALL', positions: new Set() };
+    let groupChipsWired = false;
+
+    const menu = document.getElementById('statusMenu');
     let menuTargetId = null;
 
     /* =======================
@@ -363,13 +442,12 @@
     async function apiPost(payload){
       const r = await fetch(API_BASE, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // no preflight
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload)
       });
       if(!r.ok) throw new Error(`HTTP ${r.status}`);
       return r.json();
     }
-
     async function appendRowTable(sheet_id, sheet_name, row, ensure=[]){
       const res = await apiPost({ action:'append', sheet_id, sheet_name, row, ensure_headers: ensure });
       if(!res.ok) throw new Error(res.error||'Append failed');
@@ -389,14 +467,16 @@
     /* =======================
      * ROSTER
      * ======================= */
+    function isCoachId(id){ return /^CO/i.test(String(id||'')); }
+
     function normalizeRoster(rows){
       return rows.map(r=>{
-        return {
-          id: (r.player_id||r.id||'').toString().trim(),
-          name: (r.player_name||r.name||'').toString().trim(),
-          pos: (r.position||r.pos||'').toString().trim().toUpperCase(),
-          num: (r.jersey_number||r.jersey||'').toString().trim()
-        }
+        const id  = (r.player_id||r.id||'').toString().trim();
+        const pos = (r.position||r.pos||'').toString().trim().toUpperCase();
+        const name= (r.player_name||r.name||'').toString().trim();
+        const num = (r.jersey_number||r.jersey||'').toString().trim(); // blank OK for coaches
+        const role = isCoachId(id) ? 'Coach' : 'Player';
+        return { id, name, pos, num, role };
       }).filter(p=>p.id && p.name);
     }
     async function loadRoster(){
@@ -404,11 +484,80 @@
         const res = await apiGet({ action:'roster', sheet_id: ROSTER_SHEET_ID, sheet_name: ROSTER_TAB });
         if(!res.ok) throw new Error(res.error||'Roster fetch failed');
         roster = normalizeRoster(res.roster||[]);
-        playersById.clear();
-        roster.forEach(p=>playersById.set(p.id,p));
+        playersById.clear(); roster.forEach(p=>playersById.set(p.id,p));
+        buildPosChips();
         renderGrid();
-        log(`Roster loaded (${roster.length} players).`, 'success');
+        log(`Roster loaded (${roster.length} people).`, 'success');
       }catch(err){ log(err.message,'error'); }
+    }
+
+    /* =======================
+     * FILTER HELPERS
+     * ======================= */
+    function inGroup(pos, group, role){
+      const p = (pos||'').toUpperCase();
+      if(group==='ALL') return true;
+      if(group==='PV')  return p==='PV';
+      if(group==='COACH') return role === 'Coach';
+
+      const OFF = ['QB','RB','WR','TE','OL','FB','HB','TB','OT','OG','OC','C','LT','RT','LG','RG','OFF'];
+      const DEF = ['DL','DE','DT','NT','LB','ILB','OLB','MLB','CB','DB','S','FS','SS','NB','DEF'];
+      const ST  = ['K','P','LS','KR','PR','PK','K/P','ST'];
+
+      const hasPrefix = arr => arr.some(k => p===k || p.startsWith(k));
+      if(group==='OFF') return hasPrefix(OFF);
+      if(group==='DEF') return hasPrefix(DEF);
+      if(group==='ST')  return hasPrefix(ST);
+      return true;
+    }
+
+    function wireGroupChips(){
+      if(groupChipsWired) return;
+      const wrap = document.getElementById('groupChips');
+      if(!wrap) return;
+      wrap.querySelectorAll('.filter-chip').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          wrap.querySelectorAll('.filter-chip').forEach(b=>b.setAttribute('aria-pressed','false'));
+          btn.setAttribute('aria-pressed','true');
+          filterState.group = btn.dataset.group;
+          renderGrid();
+        });
+      });
+      groupChipsWired = true;
+    }
+
+    function buildPosChips(){
+      const holder = document.getElementById('posChips');
+      if(!holder) return;
+
+      const all = Array.from(new Set(roster.map(r=>(r.pos||'').toUpperCase())))
+        .filter(x => x && x!=='PV')
+        .sort((a,b)=>a.localeCompare(b));
+
+      holder.innerHTML = [
+        `<button class="chip filter-chip" data-clear="1" aria-pressed="false">Clear</button>`,
+        ...all.map(p => `<button class="chip filter-chip" data-pos="${p}" aria-pressed="${filterState.positions.has(p) ? 'true' : 'false'}">${p}</button>`)
+      ].join('');
+
+      holder.querySelector('[data-clear]').addEventListener('click', ()=>{
+        filterState.positions.clear();
+        holder.querySelectorAll('[data-pos]').forEach(b=>b.setAttribute('aria-pressed','false'));
+        renderGrid();
+      });
+
+      holder.querySelectorAll('[data-pos]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const pos = btn.dataset.pos;
+          if(filterState.positions.has(pos)){
+            filterState.positions.delete(pos);
+            btn.setAttribute('aria-pressed','false');
+          } else {
+            filterState.positions.add(pos);
+            btn.setAttribute('aria-pressed','true');
+          }
+          renderGrid();
+        });
+      });
     }
 
     /* =======================
@@ -437,27 +586,48 @@
       el('prac_time').value = `${hh}:${mm}`;
     }
 
+    // Convert Date or ms epoch to local "yyyy-MM-ddTHH:mm:ss" (no Z, no ms)
+    function toLocalT(dt) {
+      const d = (dt instanceof Date) ? dt : new Date(dt);
+      // 'sv-SE' gives "YYYY-MM-DD HH:mm:ss", then we swap the space for 'T'
+      return d.toLocaleString('sv-SE').replace(' ', 'T');
+    }
+
     /* =======================
      * UI: GRID
      * ======================= */
     function statusChip(rec){
       if(!rec) return '';
-      const base = rec.status==='Excused'?'exc':(rec.status==='Late'?'late':'on');
+      let base = 'on';
+      if(rec.status==='Late') base = 'late';
+      else if(rec.status==='Excused') base = 'exc';
+      else if(rec.status==='Excused Late') base = 'excl';
       const extra = rec.minutesLate?` (+${rec.minutesLate})`:'';
       return `<span class="status ${base}">${rec.status}${extra}</span>`;
     }
     function playerCard(p){
       const rec = attendance.get(p.id);
       const clsSaved = rec?.saved ? 'saved' : '';
-      const stateCls = rec
-        ? (rec.status==='Excused' ? 'state-exc' : (rec.status==='Late' ? 'state-late' : 'state-on'))
-        : '';
+      let stateCls = '';
+      if(rec){
+        stateCls =
+          rec.status==='Excused'      ? 'state-exc'  :
+          rec.status==='Excused Late' ? 'state-excl' :
+          rec.status==='Late'         ? 'state-late' : 'state-on';
+      }
       const stamp = rec?.arrivedAt ? new Date(rec.arrivedAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+
+      const leftBox = p.role === 'Coach'
+        ? `<div class="num" title="Coach">CO</div>`
+        : `<div class="num">#${p.num||'—'}</div>`;
+
+      const coachBadge = p.role === 'Coach' ? `<span class="chip tiny" style="margin-left:.4rem">Coach</span>` : '';
+
       return `
         <button class="plyr ${clsSaved} ${stateCls}" data-id="${p.id}" aria-pressed="${rec?'true':'false'}">
-          <div class="num">#${p.num||'—'}</div>
+          ${leftBox}
           <div class="name">
-            <div>${p.name}</div>
+            <div>${p.name} ${coachBadge}</div>
             <div class="pos tiny">${p.pos||''}</div>
           </div>
           <div class="stamp">${stamp}</div>
@@ -468,52 +638,61 @@
 
     function renderGrid(){
       const q = el('search').value.trim().toUpperCase();
-      const match = p => !q ||
+
+      const textMatch = p => !q ||
         p.name.toUpperCase().includes(q) ||
         (p.num||'').toString().includes(q) ||
         (p.pos||'').toUpperCase().includes(q);
+
+      const posMatch = (pos) => {
+        const up = (pos||'').toUpperCase();
+        if(filterState.positions.size > 0 && up !== 'PV'){
+          return filterState.positions.has(up);
+        }
+        return true;
+      };
+
+      const byFilters = p => inGroup(p.pos, filterState.group, p.role) && posMatch(p.pos);
 
       const numKey = p => {
         const n = parseInt((p.num||'').toString(), 10);
         return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
       };
       const sortByNum = (a,b) => (numKey(a) - numKey(b)) || a.name.localeCompare(b.name);
+      const isPV = p => (p.pos||'').toUpperCase()==='PV';
 
-      const isPV = p => (p.pos||'').toUpperCase() === 'PV';
+      const main = roster.filter(p=>!isPV(p) && textMatch(p) && byFilters(p)).sort(sortByNum);
+      const pv   = roster.filter(p=> isPV(p) && textMatch(p) && byFilters(p)).sort(sortByNum);
 
-      // Split + filter + sort
-      const main = roster.filter(p => !isPV(p) && match(p)).sort(sortByNum);
-      const pv   = roster.filter(p =>  isPV(p) && match(p)).sort(sortByNum);
-
-      // Render
       el('grid').innerHTML = main.map(playerCard).join('');
       el('countBadge').textContent = `${main.length} players`;
 
       el('grid_pv').innerHTML = pv.map(playerCard).join('');
-      el('countBadgePV').textContent = `${pv.length} PV`;
-      el('pvGroup').style.display = pv.length ? '' : 'none';
+      const pvGroup = document.getElementById('pvGroup');
+      document.getElementById('countBadgePV').textContent = `${pv.length} PV`;
+      pvGroup.style.display = pv.length ? '' : 'none';
     }
-
 
     /* =======================
      * SAVE HELPERS
      * ======================= */
     function buildRow(p, rec){
-      const startISO = (()=>{ const ms=practiceStartMs(); return ms? new Date(ms).toISOString() : '';})();
+      const startLocal = (()=>{ 
+        const ms = practiceStartMs(); 
+        return ms ? toLocalT(ms) : ''; 
+      })();
       return {
-        timestamp: new Date(),
+        timestamp: toLocalT(new Date()),
         date: el('prac_date').value || '',
-        practice_start: startISO,
+        practice_start: startLocal,
         grace_minutes: Number(el('prac_grace').value||0),
-
         player_id: p.id,
         player_name: p.name,
         position: p.pos||'',
         jersey_number: p.num||'',
-
         status: rec.status,
-        arrived_at: rec.arrivedAt ? new Date(rec.arrivedAt).toISOString() : '',
-        minutes_late: rec.status==='Late' ? rec.minutesLate : ''
+        arrived_at: rec.arrivedAt ? toLocalT(rec.arrivedAt) : '',
+        minutes_late: (rec.status==='Late' || rec.status==='Excused Late') ? rec.minutesLate : ''
       };
     }
 
@@ -525,7 +704,6 @@
       rec.saved = true; attendance.set(pId, rec);
       renderGrid();
     }
-
     async function saveAllUnsaved(){
       const ops = [];
       attendance.forEach((rec, pId)=>{
@@ -539,19 +717,16 @@
       renderGrid();
       log(`Saved ${ops.length} attendance rows.`, 'success');
     }
-
     async function finalizeAbsent(){
-      // anyone not in attendance map becomes Absent (Excused stays as-is)
       const absentees = roster.filter(p=>!attendance.has(p.id));
       if(!absentees.length){ log('No absentees to mark.'); return; }
       const ops = absentees.map(p=>({
         sheet_id: ATTEND_SHEET_ID, sheet_name: ATTEND_TAB,
         row: {
-          timestamp: new Date(),
+          timestamp: toLocalT(new Date()),
           date: el('prac_date').value || '',
-          practice_start: (()=>{ const ms=practiceStartMs(); return ms? new Date(ms).toISOString() : '';})(),
+          practice_start: (()=>{ const ms=practiceStartMs(); return ms? toLocalT(ms) : '';})(),
           grace_minutes: Number(el('prac_grace').value||0),
-
           player_id: p.id, player_name: p.name, position: p.pos||'', jersey_number: p.num||'',
           status: 'Absent', arrived_at: '', minutes_late: ''
         },
@@ -578,6 +753,11 @@
         attendance.set(id, { arrivedAt: now, status:'Late', minutesLate, saved:false });
       } else if(type==='excused'){
         attendance.set(id, { arrivedAt: null, status:'Excused', minutesLate:'', saved:false });
+      } else if(type==='excused_late'){
+        const now = Date.now();
+        const base = classifyArrival(now);
+        const minutesLate = Math.max(1, base.minutesLate || 1);
+        attendance.set(id, { arrivedAt: null, status:'Excused Late', minutesLate, saved:false });
       } else if(type==='clear'){
         attendance.delete(id);
       }
@@ -598,12 +778,11 @@
       menuTargetId = null;
     }
 
-    // click = present toggle; if already present -> clear; if excused -> mark present
     function clickPlayer(ev){
       const btn = ev.target.closest('.plyr'); if(!btn) return;
       const id = btn.dataset.id; const rec = attendance.get(id);
 
-      if(rec && rec.status==='Excused'){
+      if(rec && (rec.status==='Excused' || rec.status==='Excused Late')){
         presentNow(id);
       } else if(rec){
         attendance.delete(id);
@@ -617,7 +796,6 @@
       }
     }
 
-    // long press / right-click to open status picker
     let longTimer=null;
     function gridPointerDown(e){
       const btn = e.target.closest('.plyr'); if(!btn) return;
@@ -643,53 +821,67 @@
     document.addEventListener('click', (e)=>{ if(!e.target.closest('#statusMenu')) hideMenu(); });
 
     /* =======================
-     * ADD PLAYER (roster)
+     * ADD PLAYER / COACH (roster)
      * ======================= */
     const backdrop = el('modalBackdrop');
+    const coachToggle = document.getElementById('np_isCoach');
+    const jerseyRow = document.getElementById('np_jersey_row');
+
+    function refreshCoachUI(){
+      const isCoach = coachToggle?.checked;
+      if(jerseyRow){
+        jerseyRow.style.display = isCoach ? 'none' : '';
+      }
+    }
 
     function openAddPlayer(){
       backdrop.classList.add('open');
       backdrop.classList.remove('hidden');
       backdrop.setAttribute('aria-hidden','false');
+      refreshCoachUI();
       setTimeout(()=>document.getElementById('np_name')?.focus(), 0);
     }
-
     function closeAddPlayer(){
       backdrop.classList.remove('open');
       backdrop.classList.add('hidden');
       backdrop.setAttribute('aria-hidden','true');
       ['np_name','np_pos','np_num','np_pid'].forEach(i=>el(i).value='');
+      if(coachToggle){ coachToggle.checked = false; }
+      refreshCoachUI();
     }
-
+    coachToggle?.addEventListener('change', refreshCoachUI);
 
     async function saveNewPlayer(){
       const name = el('np_name').value.trim();
       const pos  = el('np_pos').value.trim().toUpperCase();
-      const num  = el('np_num').value.trim();
-      const pid  = el('np_pid').value.trim(); // optional
+      const isCoach = !!el('np_isCoach')?.checked;
+      const num  = isCoach ? '' : el('np_num').value.trim();
+      const pid  = el('np_pid').value.trim();
 
-      if(!name){ log('Player name required','error'); return; }
+      if(!name){ log('Name required','error'); return; }
+      if(!pos){ log('Position / group required','error'); return; }
 
-      const row = {
-        player_id: pid || '', // server generates if id_prefix provided
-        player_name: name,
-        position: pos,
-        jersey_number: num
-      };
-      await appendRowWithId(ROSTER_SHEET_ID, ROSTER_TAB, row, 'PLYR', 'player_id', ROSTER_HEADERS);
-      log(`Added ${name} to roster.`, 'success');
+      const row = { player_id: pid || '', player_name: name, position: pos, jersey_number: num };
+
+      // Auto ID prefix if none provided
+      const idPrefix = pid ? null : (isCoach ? 'CO' : 'PLYR');
+
+      if(idPrefix){
+        await appendRowWithId(ROSTER_SHEET_ID, ROSTER_TAB, row, idPrefix, 'player_id', ROSTER_HEADERS);
+      } else {
+        await appendRowTable(ROSTER_SHEET_ID, ROSTER_TAB, row, ROSTER_HEADERS);
+      }
+
+      log(`${isCoach ? 'Coach' : 'Player'} added: ${name}.`, 'success');
       closeAddPlayer();
-      await loadRoster(); // refresh grid
+      await loadRoster();
     }
-
-    // Close modal on backdrop click or Esc
     backdrop.addEventListener('click', (e)=>{ if(e.target === backdrop) closeAddPlayer(); });
     document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && !backdrop.classList.contains('hidden')) closeAddPlayer(); });
 
     /* =======================
      * INIT
      * ======================= */
-    // default practice start = today 16:00 local
     (function seedStart(){
       const now = new Date();
       el('prac_date').value = now.toISOString().slice(0,10);
@@ -704,14 +896,12 @@
 
     ['grid','grid_pv'].forEach(id=>{
       const root = el(id);
-      if(!root) return;                   // safe if PV section isn't on this page
+      if(!root) return;
       root.addEventListener('click', clickPlayer);
       root.addEventListener('mousedown', gridPointerDown);
       root.addEventListener('touchstart', gridPointerDown, {passive:true});
       root.addEventListener('contextmenu', gridContextMenu);
     });
-
-    // keep these document-level listeners as-is (they work for both grids)
     document.addEventListener('mouseup', gridPointerUp);
     document.addEventListener('touchend', gridPointerUp);
     document.addEventListener('pointercancel', gridPointerUp);
@@ -720,7 +910,7 @@
     el('np_cancel').addEventListener('click', closeAddPlayer);
     el('np_save').addEventListener('click', ()=>saveNewPlayer().catch(e=>log(String(e),'error')));
 
-    // go
+    wireGroupChips();
     loadRoster();
   </script>
 </body>

@@ -11,49 +11,159 @@
   })();
   </script>
   <title>OL Drills – Practice Logger</title>
+
+  <!-- Fonts + shared theme -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../style.css" />
+
+  <!-- Dark ATL skin (matches other position pages) -->
   <style>
-    /* Minimal page-specific layout only (theme handles everything else) */
-    .container{ max-width:calc(100vw - 100px)!important; width:100%; padding:0 50px; margin:0 auto; box-sizing:border-box; }
-    .panels{ display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; }
-    .panel-card{ container-type:inline-size; min-width:0; width:100%; }
-    .panel-card form{ width:100%; }
-    @media (max-width:768px){ .container{ padding:0 25px; max-width:calc(100vw - 50px);} }
-    @media (max-width:600px){ .panels{ grid-template-columns:1fr; } .container{ padding:0 16px; max-width:calc(100vw - 32px); } }
+    :root{
+      --panel-bg: rgba(255,255,255,.06);
+      --bd: rgba(139,92,246,.35);
+      --chip-bd: rgba(255,255,255,.22);
+      --chip-bg: rgba(255,255,255,.08);
+      --accent:#7C4DFF;
+      --accent2:#8B5CF6;
+      --ink:#ECECF3;
+      --ok:#34D399; --warn:#F59E0B; --err:#F87171;
+      --focus-ring: 0 0 0 3px rgba(139,92,246,.35);
+      --shadow-soft:0 10px 30px rgba(17,12,28,.35);
+    }
 
-    /* KPI bits not covered by theme */
-    .kpi-wrap{ border:1px solid var(--border); border-radius:12px; padding:12px; margin-top:10px; background:rgba(255,255,255,.05); }
+    body.practice-page{ color:var(--ink); }
+
+    /* layout */
+    .container{ max-width:1100px; margin:0 auto; padding:16px; }
+    .panels{ display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
+    @media (max-width:980px){ .panels{ grid-template-columns:1fr; } }
+    @media (max-width:700px){ .container{ padding:12px; } }
+
+    /* header / nav */
+    .page-header{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; margin-bottom:16px; }
+    .menu-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+    .menu-btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:8px 14px; border-radius:10px; text-decoration:none; font-weight:700;
+      border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.08); color:inherit;
+      transition:transform .15s ease, filter .15s ease;
+    }
+    .menu-btn.secondary{ background:transparent; }
+    .menu-btn:hover{ transform:translateY(-1px); filter:saturate(1.08); }
+
+    /* cards */
+    .panel-card{
+      background:var(--panel-bg);
+      border:1px solid var(--bd);
+      border-radius:16px;
+      padding:16px;
+      color:var(--ink);
+      box-shadow:var(--shadow-soft);
+      min-width:0;
+      container-type:inline-size;
+    }
+    .panel-card h3{
+      margin:0 0 12px 0; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,.1);
+      font-size:1.05rem;
+    }
+
+    /* fields */
+    .form-section{ margin:10px 0; }
+    .form-label{ display:block; font-weight:700; opacity:.92; font-size:.95rem; }
+    .hint{ font-size:.85rem; opacity:.78; }
+
+    .form-input, .form-select, textarea.form-input{
+      width:100%; padding:.72rem .85rem; border-radius:12px;
+      border:2px solid rgba(255,255,255,.28);
+      background:rgba(255,255,255,.08); color:#fff; font-size:1rem;
+      transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    .form-input::placeholder, textarea.form-input::placeholder{color:rgba(236,236,243,.65)}
+    .form-input:focus, .form-select:focus, textarea.form-input:focus{
+      outline:none; border-color:#C4B5FD; box-shadow:var(--focus-ring); background:rgba(255,255,255,.12);
+    }
+    input[type="number"]{-moz-appearance:textfield}
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+
+    /* KPI / chips */
+    .kpi-wrap{ border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:12px; margin-top:10px; }
     .kpi-grid{ display:grid; gap:14px; grid-template-columns:1fr; }
-    .kpi-label{ margin-bottom:6px; font-weight:600; opacity:.9; font-size:0.9rem; }
-    .coaching-note{ font-size:.9rem; opacity:.85; margin-bottom:8px; }
+    .kpi-label{ margin-bottom:6px; font-weight:700; opacity:.92; font-size:.95rem; }
+    .coaching-note{ font-size:.9rem; opacity:.88; margin-bottom:8px; }
+
     .kpi-row{ display:grid; grid-template-columns:1fr auto; gap:10px; align-items:end; }
-    .unit-badge{ font-size:.85rem; padding:6px 10px; border-radius:8px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); height:38px; display:flex; align-items:center; white-space:nowrap; }
+    .unit-badge{
+      font-size:.85rem; padding:6px 10px; border-radius:8px; border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06); height:38px; display:flex; align-items:center; white-space:nowrap;
+    }
     .kpi-inline{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:6px; }
-    .chip{ display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; font-size:.8rem; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); }
+    .chip{
+      display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px;
+      font-size:.8rem; border:1px solid var(--chip-bd); background:var(--chip-bg);
+    }
 
-    .timer-bar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0 4px; }
-    .timer-time{ font-variant-numeric:tabular-nums; font-weight:800; min-width:60px; color:#D6BCFA; }
+    /* timer */
+    .timer-bar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0 6px; }
+    .timer-time{ font-variant-numeric:tabular-nums; font-weight:800; min-width:66px; color:#D6BCFA; }
 
+    /* dial */
     .dial-wrap{ display:flex; align-items:center; gap:10px; margin-top:6px; }
     .dial-svg{ width:64px; height:64px; }
     .dial-needle{ transform-origin:32px 50px; transition:transform .08s linear; }
 
-    .reps-module{ margin-top:10px; padding-top:10px; border-top:1px dashed rgba(255,255,255,.16); }
-    .reps-title{ font-weight:700; margin-bottom:8px; opacity:.9; }
+    /* reps */
+    .reps-module{ margin-top:10px; padding-top:10px; border-top:1px dashed rgba(255,255,255,.12); }
+    .reps-title{ font-weight:800; margin-bottom:8px; opacity:.95; }
+    .btn-grid{ display:grid; grid-template-columns:1fr 1fr auto; gap:8px; }
+
+    .reps-stats{ display:grid; gap:12px; margin:10px 0 4px; grid-template-columns:repeat(2,1fr); }
+    @container (max-width:280px){ .reps-stats{ grid-template-columns:1fr; gap:8px; } }
+    .stat-card{ min-width:0; text-align:center; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); border-radius:10px; padding:8px; }
+    .stat-card .stat-value{ font-size:clamp(0.9rem,2vw,1.15rem); font-weight:800; }
+    .stat-card .stat-label{ font-size:clamp(0.65rem,1.5vw,0.8rem); letter-spacing:.06em; opacity:.8; }
+
+    /* buttons */
+    .btn{
+      appearance:none; border:1px solid transparent; cursor:pointer;
+      padding:.6rem .95rem; border-radius:999px; font-weight:800;
+      transition:transform .15s ease, filter .15s ease, box-shadow .15s ease;
+    }
+    .btn:hover{ transform:translateY(-2px); filter:saturate(1.05); }
+    .btn:focus-visible{ outline:2px solid #93C5FD; outline-offset:2px; }
+    .btn-neutral{ background:transparent; border-color:rgba(255,255,255,.32); color:#fff; }
+    .btn-success{ background:linear-gradient(135deg,#16A34A,#10B981); color:#071a12; box-shadow:0 10px 24px rgba(16,185,129,.25); }
+    .btn-danger{  background:linear-gradient(135deg,#EF4444,#F43F5E); color:#2a070b;  box-shadow:0 10px 24px rgba(244,63,94,.25); }
+
+    .submit-btn{
+      width:100%; margin-top:8px;
+      background:linear-gradient(135deg,var(--accent) 0%, var(--accent2) 100%);
+      color:#081018; border:1px solid transparent; border-radius:12px; font-weight:900;
+      padding:.75rem 1rem; box-shadow:0 10px 24px rgba(139,92,246,.28);
+      transition:transform .15s ease, filter .15s ease;
+    }
+    .submit-btn:hover{ transform:translateY(-2px); filter:saturate(1.05); }
+
+    /* statuses */
+    .status{ margin-top:8px; font-size:.92rem; opacity:.95; }
+    .status.success{ color:var(--ok); }
+    .status.warning{ color:var(--warn); }
+    .status.error{   color:var(--err); }
+    .status.show{ opacity:1; }
 
     .hidden{ display:none !important; }
-
-    /* Neutral button (theme lacks this one class) */
-    .btn-neutral{ background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.18); color:#fff; }
+    footer{ margin-top:24px; padding:16px 0; text-align:center; opacity:.8; font-size:.9rem; }
   </style>
 </head>
-<body class="practice-page">
+<body class="theme-atl practice-page">
 
   <header class="page-header">
     <h1>OL Drills</h1>
     <div class="menu-actions">
       <a href="../index.html" class="menu-btn">Home</a>
-      <a href="practice.html" class="menu-btn secondary">Practice</a>
+      <a href="practice.html" class="menu-btn">Practice</a>
     </div>
   </header>
 
@@ -79,7 +189,7 @@
               <input type="text" id="player-id-p1" class="form-input" placeholder="OL101" list="playerid-list" pattern="OL[0-9]{3}" title="Use format OL###" />
               <label for="player-name-p1" class="form-label" style="margin-top:10px;">Player Name</label>
               <input type="text" id="player-name-p1" class="form-input" placeholder="Type a few letters…" list="playername-list" />
-              <small class="hint" style="opacity:.8">Autocomplete lists are OL-only (includes OT/OG/C). Player ID format: <b>OL###</b></small>
+              <small class="hint">Autocomplete lists are OL-only (includes OT/OG/C). Player ID format: <b>OL###</b></small>
             </div>
 
             <div class="form-section">
@@ -148,7 +258,7 @@
                 <button type="button" id="btnFail-p1" class="btn btn-danger">✕ Unsuccessful</button>
                 <button type="button" id="btnReset-p1" class="btn btn-neutral">Reset</button>
               </div>
-              <div class="reps-stats" id="reps-stats-p1" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:12px 0 4px;">
+              <div class="reps-stats" id="reps-stats-p1">
                 <div class="stat-card"><div class="stat-value" id="successCount-p1">0</div><div class="stat-label" id="successLabel-p1">Success</div></div>
                 <div class="stat-card" id="failCard-p1"><div class="stat-value" id="failCount-p1">0</div><div class="stat-label">Unsuccessful</div></div>
                 <div class="stat-card" id="totalCard-p1"><div class="stat-value" id="totalReps-p1">0</div><div class="stat-label" id="totalLabel-p1">Total Reps</div></div>
@@ -209,7 +319,7 @@
               <input type="text" id="player-id-p2" class="form-input" placeholder="OL101" list="playerid-list" pattern="OL[0-9]{3}" title="Use format OL###" />
               <label for="player-name-p2" class="form-label" style="margin-top:10px;">Player Name</label>
               <input type="text" id="player-name-p2" class="form-input" placeholder="Type a few letters…" list="playername-list" />
-              <small class="hint" style="opacity:.8">Autocomplete lists are OL-only (includes OT/OG/C). Player ID format: <b>OL###</b></small>
+              <small class="hint">Autocomplete lists are OL-only (includes OT/OG/C). Player ID format: <b>OL###</b></small>
             </div>
 
             <div class="form-section">
@@ -276,7 +386,7 @@
                 <button type="button" id="btnFail-p2" class="btn btn-danger">✕ Unsuccessful</button>
                 <button type="button" id="btnReset-p2" class="btn btn-neutral">Reset</button>
               </div>
-              <div class="reps-stats" id="reps-stats-p2" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:12px 0 4px;">
+              <div class="reps-stats" id="reps-stats-p2">
                 <div class="stat-card"><div class="stat-value" id="successCount-p2">0</div><div class="stat-label" id="successLabel-p2">Success</div></div>
                 <div class="stat-card" id="failCard-p2"><div class="stat-value" id="failCount-p2">0</div><div class="stat-label">Unsuccessful</div></div>
                 <div class="stat-card" id="totalCard-p2"><div class="stat-value" id="totalReps-p2">0</div><div class="stat-label" id="totalLabel-p2">Total Reps</div></div>
@@ -332,6 +442,7 @@
     <datalist id="playername-list"></datalist>
   </div>
 
+  <!-- JS unchanged from your version -->
   <script>
     /* ===== CONFIG ===== */
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';

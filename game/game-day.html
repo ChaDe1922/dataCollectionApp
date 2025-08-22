@@ -1,32 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <script>
-  (function(){
-    const ok = localStorage.getItem('auth_ok')==='1' &&
-              Number(localStorage.getItem('auth_until')||0) > Date.now();
-    if(!ok){ window.location.href = '../index.html#login'; }
-  })();
-  </script>
   <title>Game Day – Football Data Tracker</title>
-  <link rel="stylesheet" href="../style.css" />
+
+  <!-- Auth guard (same pattern as before) -->
+  <script>
+    (function(){
+      const ok = localStorage.getItem('auth_ok')==='1' &&
+                 Number(localStorage.getItem('auth_until')||0) > Date.now();
+      if(!ok){ window.location.href = '../index.html#login'; }
+    })();
+  </script>
+
+  <!-- Fonts + theme stylesheet -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css"/>
 </head>
-<body class="practice-page">
+
+<!-- Use animated ATL background and the stacked header layout -->
+<body class="theme-atl practice-page">
+  <!-- Section header (centered like index, sized for subpages) -->
   <header class="page-header">
     <h1>Game Day</h1>
-    <nav class="menu-actions" aria-label="Header navigation">
-      <a href="../index.html" class="menu-btn">Home</a>
+    <nav class="menu-actions" aria-label="Top navigation">
+      <a class="menu-btn" href="../index.html">Home</a>
     </nav>
   </header>
 
   <main>
     <div class="container">
-      <p class="page-intro"><center>Choose a module to track during the game.</center></p>
-      <br>
+      <p class="page-intro" style="text-align:center">
+        Choose a module to track during the game.
+      </p>
 
-      <nav class="sub-nav" aria-label="Game Day menus">
+      <!-- Sub-menu grid (responsive) -->
+      <nav class="sub-nav" aria-label="Game Day modules">
         <a href="game-primary.html"   class="nav-button">📊 Primary / Drives</a>
         <a href="game-qb.html"        class="nav-button">🧠 QB Tracking</a>
         <a href="game-rb.html"        class="nav-button">💨 RB Tracking</a>
@@ -41,7 +53,7 @@
     </div>
   </main>
 
-  <footer>
+  <footer class="site-footer">
     <p>&copy; 2025 Game Speed Data Systems</p>
   </footer>
 </body>
