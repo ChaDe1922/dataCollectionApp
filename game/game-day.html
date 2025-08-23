@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Game Day – Football Data Tracker</title>
 
-  <!-- Auth guard (same pattern as before) -->
+  <!-- Auth guard -->
   <script>
     (function(){
       const ok = localStorage.getItem('auth_ok')==='1' &&
@@ -21,9 +21,7 @@
   <link rel="stylesheet" href="../style.css"/>
 </head>
 
-<!-- Use animated ATL background and the stacked header layout -->
 <body class="theme-atl practice-page">
-  <!-- Section header (centered like index, sized for subpages) -->
   <header class="page-header">
     <h1>Game Day</h1>
     <nav class="menu-actions" aria-label="Top navigation">
@@ -33,13 +31,20 @@
 
   <main>
     <div class="container">
+
+      <!-- Live context banner -->
+      <div id="ctxBanner" class="chip tiny" style="margin:.5rem 0"></div>
+
+  
+
       <p class="page-intro" style="text-align:center">
         Choose a module to track during the game.
       </p>
 
-      <!-- Sub-menu grid (responsive) -->
+      <!-- Sub-menu grid -->
       <nav class="sub-nav" aria-label="Game Day modules">
-        <a href="game-primary.html"   class="nav-button">📊 Primary / Drives</a>
+        <a href="game-primary.html"   class="nav-button"> Primary / Drives</a>
+        <a href="game-coverage.html"   class="nav-button"> Defensive Coverage</a>
         <a href="game-qb.html"        class="nav-button">🧠 QB Tracking</a>
         <a href="game-rb.html"        class="nav-button">💨 RB Tracking</a>
         <a href="game-wr.html"        class="nav-button">👟 WR / TE Tracking</a>
@@ -56,5 +61,32 @@
   <footer class="site-footer">
     <p>&copy; 2025 Game Speed Data Systems</p>
   </footer>
+
+  <!-- Shared plumbing -->
+  <script>
+    // Your Apps Script Web App endpoint
+    window.API_BASE = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
+  </script>
+  <script src="../js/api.js"></script>
+  <script src="../js/context.js"></script>
+
+  <script>
+    // Boot GameContext with server sync enabled
+    GameContext.configure({ apiBase: window.API_BASE, server: true, pollMs: 1000 });
+
+    // Banner shows "Game / Drive / Play" live
+    GameContext.mountBanner('#ctxBanner');
+
+    // Two-way bind inputs to shared context
+    GameContext.bindInputs({
+      game_id:  '#ctx_game',
+      drive_id: '#ctx_drive',
+      play_id:  '#ctx_play'
+    });
+
+    // Tiny “synced” hint feedback
+    const hint = document.getElementById('ctxSyncHint');
+    GameContext.subscribe(()=>{ hint.textContent = 'Synced'; });
+  </script>
 </body>
 </html>

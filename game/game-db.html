@@ -1,1 +1,559 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Secondary - Football Data Tracker</title><link rel="stylesheet" href="style.css"></head><body><header><h1>Secondary</h1><a href="game-day.html" class="back-link">&larr; Back to Game Day</a></header><main><div class="placeholder-content"><h2>Form Coming Soon</h2><p>The data collection form for this section is under construction.</p></div></main><footer><p>&copy; 2025 Game Speed Data Systems</p></footer></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Secondary (DB) – Football Data Tracker</title>
+
+  <!-- Auth guard -->
+  <script>
+    (function(){
+      const ok = localStorage.getItem('auth_ok')==='1' &&
+                 Number(localStorage.getItem('auth_until')||0) > Date.now();
+      if(!ok){ window.location.href = '../index.html#login'; }
+    })();
+  </script>
+
+  <!-- Fonts + site theme -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css"/>
+
+  <style>
+    :root{
+      --ink:#0f172a; --muted:#64748b; --ok:#1bbf83; --warn:#ffa142; --err:#ff6b6b;
+      --pill:#3a1660; --pill-2:#a36bff; --bd:#E7E9F2; --card:#fff; --halo:#a36bff33;
+    }
+    body.practice-page{ background:linear-gradient(180deg,#0f0b1a 0%, #130e22 55%, #0e0b18 100%); }
+    .container{
+      max-width:1100px; margin:0 auto; padding:16px; display:grid; gap:16px;
+      grid-template-columns: 1fr; grid-template-areas:
+        "ctx" "active" "quick" "table" "run" "rush" "log";
+    }
+    @media (min-width: 980px){
+      .container{ grid-template-columns: 1fr 1fr; grid-template-areas:
+        "ctx    active"
+        "quick  quick"
+        "table  table"
+        "run    rush"
+        "log    log";
+      }
+    }
+    .card{ background:var(--card); border:1px solid var(--bd); border-radius:18px; padding:18px; box-shadow:0 10px 24px rgba(2,8,23,.06); color:var(--ink); }
+    .area-ctx{grid-area:ctx} .area-active{grid-area:active} .area-quick{grid-area:quick}
+    .area-table{grid-area:table} .area-run{grid-area:run} .area-rush{grid-area:rush} .area-log{grid-area:log}
+    .section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .section-title h2{margin:0;font-size:1.2rem}
+    .tiny{font-size:.9rem;color:var(--muted)}
+    .chip{display:inline-block;padding:.35rem .7rem;border-radius:999px;background:#f3f4f7;border:1px solid #e5e7ef;font-weight:600;color:#4b5563}
+    label{display:block;font-size:.95rem;color:#334155;margin:0 0 .35rem}
+    input,select,textarea{
+      width:100%; padding:.7rem .85rem; border-radius:12px; border:2px solid #cfd6ea; background:#fff;
+      transition:border-color .15s ease, box-shadow .15s ease;
+    }
+    input:focus,select:focus,textarea:focus{ outline:none; border-color:#a36bff; box-shadow:0 0 0 4px var(--halo); }
+
+    .row{display:grid; gap:12px}
+    .row.cols-2{grid-template-columns:1fr 1fr} .row.cols-3{grid-template-columns:repeat(3,1fr)} .row.cols-4{grid-template-columns:repeat(4,1fr)}
+    @media (max-width:720px){ .row.cols-2,.row.cols-3,.row.cols-4{grid-template-columns:1fr} }
+
+    .btnbar{display:flex;gap:.5rem;flex-wrap:wrap}
+    .btn{appearance:none;border:1px solid var(--pill);background:var(--pill);color:#fff;cursor:pointer;padding:.6rem 1rem;border-radius:999px;font-weight:800}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(163,107,255,.22)}
+    .btn.subtle{background:#fff;color:var(--pill);border-color:#e2d6ff}
+    .btn.warn{background:#fde9d6;color:#7a3b01;border-color:#f5c899}
+    .btn.ghost{background:#fff;color:#111827;border-color:#e5e7ef}
+    .btn.small{padding:.45rem .7rem}
+
+    .chiplist{display:flex;gap:.4rem;flex-wrap:wrap}
+    .chipitem{display:flex;align-items:center;gap:.4rem;padding:.35rem .6rem;border:1px solid #e5e7ef;background:#f9fafb;border-radius:999px;cursor:pointer}
+    .chipitem.active{outline:2px solid #a36bff; background:#f6f1ff}
+    .chipitem .rm{background:transparent;border:none;color:#475569;cursor:pointer;font-weight:900}
+
+    table{ width:100%; border-collapse:separate; border-spacing:0; }
+    thead th{ text-align:left; font-size:.9rem; color:#475569; border-bottom:1px solid #e5e7ef; padding:.45rem .4rem; position:sticky; top:0; background:#fff; }
+    tbody td{ padding:.35rem .3rem; border-bottom:1px solid #f1f5f9; }
+    tbody tr:hover{ background:#fafaff; }
+    .num{ width:84px; }
+
+    #log{ max-height:220px; overflow:auto; background:#fbfbfe; border:1px solid #eef1f8; border-radius:12px; padding:10px; color:#1f2937 }
+    .success{color:var(--ok)} .error{color:var(--err)}
+  </style>
+</head>
+
+<body class="practice-page">
+  <header class="page-header">
+    <h1>Secondary (DB)</h1>
+    <nav class="menu-actions" aria-label="Header">
+      <a href="game-day.html" class="menu-btn">Game Day</a>
+      <a href="../index.html" class="menu-btn">Home</a>
+      <a href="game-coverage.html" class="menu-btn">Coverage Page</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="container">
+      <!-- ===== Game Context ===== -->
+      <section class="card area-ctx">
+        <div class="section-title">
+          <h2>Game Context</h2>
+          <span id="status" class="tiny">Ready</span>
+        </div>
+        <div class="row cols-3">
+          <div><label>Game ID</label><input id="ctx_game" placeholder="G2025-01" disabled></div>
+          <div><label>Drive ID</label><input id="ctx_drive" placeholder="DRIVE_…" disabled></div>
+          <div><label>Play ID</label><input id="ctx_play" placeholder="PLAY_…" disabled></div>
+        </div>
+        <div class="tiny" style="margin-top:.4rem">
+          This page is for **production events** (tackles, PBU/INT, takeaways, sacks/TFL).  
+          Detailed responsibilities belong on <strong>Coverage</strong>.
+        </div>
+      </section>
+
+      <!-- ===== Active DBs (Presence) ===== -->
+      <section class="card area-active">
+        <div class="section-title"><h2>Active DBs</h2><span class="tiny">Presence group: <strong>DB</strong></span></div>
+
+        <div class="row cols-3">
+          <div>
+            <label>Add Player</label>
+            <input id="add_player" list="dl_players" placeholder="Type name or #…">
+            <datalist id="dl_players"></datalist>
+          </div>
+          <div>
+            <label>Package</label>
+            <input id="pkg" list="dl_pkg" placeholder="Nickel, Dime, etc.">
+            <datalist id="dl_pkg">
+              <option>Base</option><option>Nickel</option><option>Dime</option><option>Quarter</option><option>Big Nickel</option>
+            </datalist>
+          </div>
+          <div>
+            <label>Unit Label</label>
+            <input id="unit" placeholder="DB">
+          </div>
+        </div>
+
+        <div class="chiplist" id="active_chips" style="margin-top:.5rem" aria-live="polite"></div>
+
+        <div class="btnbar" style="margin-top:.6rem">
+          <button class="btn" id="presenceSetBtn">Set Presence (DB)</button>
+          <button class="btn subtle" id="presenceLoadBtn">Load From Presence</button>
+          <span class="chip tiny" id="activeCount">0 active</span>
+          <span class="chip tiny" id="selCount">0 selected</span>
+        </div>
+      </section>
+
+      <!-- ===== Quick Events ===== -->
+      <section class="card area-quick">
+        <div class="section-title"><h2>Quick Events</h2><span class="tiny">Apply to selected chips (or all if none selected)</span></div>
+        <div class="btnbar">
+          <button class="btn small" data-ev="solo">+ Solo</button>
+          <button class="btn small" data-ev="assist">+ Assist</button>
+          <button class="btn small" data-ev="missed">+ Missed</button>
+          <button class="btn small" data-ev="tfl">+ TFL</button>
+          <button class="btn small" data-ev="sack">+ Sack</button>
+          <button class="btn small" data-ev="pbu">+ PBU</button>
+          <button class="btn small" data-ev="int">+ INT</button>
+          <button class="btn small" data-ev="ff">+ FF</button>
+          <button class="btn small" data-ev="fr">+ FR</button>
+          <button class="btn small" data-ev="safety">+ Safety</button>
+          <button class="btn ghost small" id="clearEventsBtn">Clear row(s)</button>
+        </div>
+      </section>
+
+      <!-- ===== Per-Player Table ===== -->
+      <section class="card area-table">
+        <div class="section-title"><h2>Per-Player Production</h2><span class="tiny">Writes to <strong>32_Fact_Tackles</strong></span></div>
+
+        <div style="overflow:auto; border:1px solid #eef1f8; border-radius:12px;">
+          <table id="tbl">
+            <thead>
+              <tr>
+                <th style="min-width:180px">Player</th>
+                <th class="num">Solo</th>
+                <th class="num">Assist</th>
+                <th class="num">Missed</th>
+                <th class="num">TFL</th>
+                <th class="num">Sack</th>
+                <th class="num">PBU</th>
+                <th class="num">INT</th>
+                <th class="num">INT Yds</th>
+                <th class="num">FF</th>
+                <th class="num">FR</th>
+                <th class="num">FR Yds</th>
+                <th>FR TD</th>
+                <th>Safety</th>
+                <th>Penalty</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="btnbar" style="margin-top:.6rem">
+          <button class="btn" id="saveTacklesBtn">Save Tackles / Takeaways</button>
+        </div>
+      </section>
+
+      <!-- ===== Run Fit (optional) ===== -->
+      <section class="card area-run">
+        <div class="section-title"><h2>Run Fit (Optional)</h2><span class="tiny">Writes to <strong>31_Fact_RunDefense</strong></span></div>
+        <div class="row cols-3">
+          <div>
+            <label>Run Fit</label>
+            <select id="run_fit">
+              <option value="">—</option><option>Force</option><option>Contain</option><option>Alley</option><option>Box</option><option>Spill</option>
+            </select>
+          </div>
+          <div><label>Gap</label><input id="run_gap" placeholder="A/B/C/D or —"></div>
+          <div><label>Result</label>
+            <select id="run_result">
+              <option value="">—</option><option>Edge Set</option><option>Stop</option><option>Missed Tackle</option><option>TFL</option>
+            </select>
+          </div>
+        </div>
+        <div class="btnbar" style="margin-top:.6rem">
+          <button class="btn subtle" id="saveRunFitBtn">Save Run Fit for Selected</button>
+        </div>
+      </section>
+
+      <!-- ===== DB Blitz / Pressure (optional) ===== -->
+      <section class="card area-rush">
+        <div class="section-title"><h2>Blitz / Pressure (Optional)</h2><span class="tiny">Writes to <strong>30_Fact_PassRush</strong></span></div>
+        <div class="row cols-4">
+          <div><label>Blitz?</label><select id="rush_blitz"><option>1</option><option selected>0</option></select></div>
+          <div><label>Pressure</label><select id="rush_pressure"><option>1</option><option selected>0</option></select></div>
+          <div><label>Hit</label><select id="rush_hit"><option>1</option><option selected>0</option></select></div>
+          <div><label>Hurry</label><select id="rush_hurry"><option>1</option><option selected>0</option></select></div>
+        </div>
+        <div class="btnbar" style="margin-top:.6rem">
+          <button class="btn subtle" id="saveRushBtn">Save Rush Event for Selected</button>
+        </div>
+      </section>
+
+      <!-- ===== Log ===== -->
+      <section class="card area-log">
+        <div class="section-title"><h2>Log</h2><span class="tiny">Most recent first</span></div>
+        <div id="log"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer><p>&copy; 2025 Game Speed Data Systems</p></footer>
+
+  <!-- === Shared plumbing === -->
+  <script>
+    // Configure GameContext auto-sync
+    window.GSDS_API_BASE   = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
+    window.GSDS_SERVER_SYNC = true;
+    window.GSDS_POLL_MS     = 1000;
+  </script>
+  <script src="../js/api.js"></script>
+  <script src="../js/context.js"></script>
+  <script src="../js/presence.js"></script>
+
+  <!-- === Page logic === -->
+  <script>
+  (function(){
+    // ---- Routes & IDs ----
+    const ROUTE_TACKLES   = 'tackles';      // 32_Fact_Tackles
+    const ROUTE_PASS_RUSH = 'pass_rush';    // 30_Fact_PassRush
+    const ROUTE_RUN_DEF   = 'run_defense';  // 31_Fact_RunDefense
+    const ROSTER_SHEET_ID = '1oHO-5gM9l3PTSjUxwQlYzFaAMTtlco2VZj8l315Uk1c';
+    const ROSTER_TAB      = '00_Dim_Roster';
+
+    // Header safelists
+    const TKL_HEADERS = [
+      'timestamp','game_id','play_id','player_id','player_name','position','jersey_number',
+      'solo_tackle','assist_tackle','missed_tackle','tfl','sack','pbu','ff','fr','fr_yards','fr_td',
+      'int','int_yards','int_td','safety','penalty','notes'
+    ];
+    const RUSH_HEADERS = [
+      'timestamp','game_id','play_id','player_id','player_name','position','jersey_number',
+      'blitz','pressure','hit','hurry','sack','batted_pass','penalty','notes'
+    ];
+    const RUN_HEADERS = [
+      'timestamp','game_id','play_id','player_id','player_name','position','jersey_number',
+      'run_fit','gap','edge_set','stop','tfl','missed_tackle','yards_allowed','penalty','notes'
+    ];
+
+    // ---- Elements & logging ----
+    const $ = id => document.getElementById(id);
+    const logBox = $('log');
+    function log(msg, type=''){
+      const row = document.createElement('div');
+      if(type==='success') row.className='success';
+      if(type==='error') row.className='error';
+      row.textContent = '['+new Date().toLocaleTimeString()+'] '+msg;
+      logBox.prepend(row);
+      $('status').textContent = (type==='error'?'Error':'Ready');
+    }
+
+    // ---- Bind GameContext to top fields ----
+    GameContext.bindInputs({ game_id:$('ctx_game'), drive_id:$('ctx_drive'), play_id:$('ctx_play') });
+
+    // ---- Roster ----
+    let roster = [];
+    const rosterById = new Map();
+    const rosterByName = new Map();
+
+    async function loadRoster(){
+      try{
+        const res = await apiGet({ action:'roster', sheet_id: ROSTER_SHEET_ID, sheet_name: ROSTER_TAB });
+        if(!res.ok) throw new Error(res.error||'Roster fetch failed');
+        roster = (res.roster||[]).map(r=>({ id:r.player_id, name:r.player_name, pos:(r.position||'').toUpperCase(), num:r.jersey_number||'' }));
+        rosterById.clear(); rosterByName.clear(); $('dl_players').innerHTML='';
+        roster.forEach(p=>{
+          rosterById.set(p.id, p);
+          rosterByName.set(p.name.toUpperCase(), p);
+          const opt = document.createElement('option');
+          opt.value = `${p.name} #${p.num} (${p.pos||''})`;
+          $('dl_players').appendChild(opt);
+        });
+        log(`Roster loaded (${roster.length}).`, 'success');
+      }catch(err){ log(String(err),'error'); }
+    }
+
+    function parsePlayerInput(s){
+      const raw = String(s||'').trim();
+      if(!raw) return null;
+      const name = raw.replace(/\s+#\d+.*$/,'').trim();
+      return roster.find(x=>x.name.toUpperCase()===name.toUpperCase()) ||
+             roster.find(x=>name && x.name.toUpperCase().startsWith(name.toUpperCase())) || null;
+    }
+
+    // ---- Active chips / selection ----
+    let active = [];
+    let selected = new Set();
+
+    function renderChips(){
+      const wrap = $('active_chips'); wrap.innerHTML='';
+      active.forEach((p,i)=>{
+        const el = document.createElement('span');
+        el.className = 'chipitem'+(selected.has(p.id)?' active':'');
+        el.innerHTML = `<strong>#${p.num||'—'}</strong> ${p.name} <span class="tiny">${p.pos||''}</span> <button class="rm" aria-label="Remove" data-i="${i}">×</button>`;
+        el.addEventListener('click', (ev)=>{
+          if (ev.target.closest('button.rm')) return;
+          if (selected.has(p.id)) selected.delete(p.id); else selected.add(p.id);
+          renderChips(); updateSelCount();
+        });
+        wrap.appendChild(el);
+      });
+      wrap.querySelectorAll('.rm').forEach(btn=>{
+        btn.addEventListener('click', (ev)=>{ ev.stopPropagation(); const i=Number(btn.dataset.i); active.splice(i,1); selected.delete((active[i]||{}).id); renderChips(); updateSelCount(); buildTable(); });
+      });
+      $('activeCount').textContent = `${active.length} active`;
+      buildTable();
+    }
+    function updateSelCount(){ $('selCount').textContent = `${selected.size || 0} selected`; }
+
+    $('add_player').addEventListener('change', ()=>{
+      const p = parsePlayerInput($('add_player').value);
+      if(p && !active.some(x=>x.id===p.id)){ active.push(p); renderChips(); }
+      $('add_player').value='';
+    });
+
+    $('presenceSetBtn').addEventListener('click', async ()=>{
+      try{
+        const ctx = GameContext.get();
+        if(!ctx.game_id) throw new Error('Set a Game ID (Game Primary).');
+        const players = active.map(p=>p.id);
+        await presenceSet('DB', players, { unit:$('unit').value||'DB', package:$('pkg').value||'', source:'game-db' });
+        log(`Presence set for DB: ${players.length} players.`, 'success');
+      }catch(err){ log(String(err),'error'); }
+    });
+
+    $('presenceLoadBtn').addEventListener('click', async ()=>{
+      try{
+        const ctx = GameContext.get();
+        if(!ctx.game_id) throw new Error('Set a Game ID first.');
+        const res = await apiGet({ action:'presence_get', game_id: ctx.game_id, group:'DB' });
+        if(!res.ok) throw new Error(res.error||'presence_get failed');
+        const arr = (res.data && res.data.players) || (res.presence && res.presence.players) || [];
+        const found = arr.map(id=>rosterById.get(id)).filter(Boolean);
+        active = found; selected.clear(); renderChips(); updateSelCount();
+        log(`Loaded ${active.length} from presence.`, 'success');
+      }catch(err){ log(String(err),'error'); }
+    });
+
+    // ---- Table model ----
+    const zeroRow = () => ({
+      solo:0, assist:0, missed:0, tfl:0, sack:0, pbu:0,
+      int:0, int_yards:'', ff:0, fr:0, fr_yards:'', fr_td:0, safety:0,
+      penalty:'', notes:''
+    });
+    const tableState = new Map(); // player_id -> rowObj
+
+    function ensureRow(pid){ if(!tableState.has(pid)) tableState.set(pid, zeroRow()); return tableState.get(pid); }
+
+    function buildTable(){
+      const tb = $('tbody'); tb.innerHTML='';
+      active.forEach(p=>{
+        const r = ensureRow(p.id);
+        const tr = document.createElement('tr');
+        tr.dataset.pid = p.id;
+        tr.innerHTML = `
+          <td><strong>#${p.num||'—'}</strong> ${p.name} <span class="tiny">${p.pos||''}</span></td>
+          <td><input class="num" type="number" min="0" step="1" data-k="solo" value="${r.solo}"></td>
+          <td><input class="num" type="number" min="0" step="1" data-k="assist" value="${r.assist}"></td>
+          <td><input class="num" type="number" min="0" step="1" data-k="missed" value="${r.missed}"></td>
+          <td><input class="num" type="number" min="0" step="1" data-k="tfl" value="${r.tfl}"></td>
+          <td><input class="num" type="number" min="0" step="1" data-k="sack" value="${r.sack}"></td>
+          <td><input class="num" type="number" min="0" step="1" data-k="pbu" value="${r.pbu}"></td>
+          <td><input class="num" type="number" min="0" step="1" data-k="int" value="${r.int}"></td>
+          <td><input class="num" type="number" step="1" data-k="int_yards" value="${r.int_yards}"></td>
+          <td><input class="num" type="number" min="0" step="1" data-k="ff" value="${r.ff}"></td>
+          <td><input class="num" type="number" min="0" step="1" data-k="fr" value="${r.fr}"></td>
+          <td><input class="num" type="number" step="1" data-k="fr_yards" value="${r.fr_yards}"></td>
+          <td><select data-k="fr_td"><option ${r.fr_td? 'selected':''}>1</option><option ${r.fr_td? '':'selected'}>0</option></select></td>
+          <td><select data-k="safety"><option ${r.safety? 'selected':''}>1</option><option ${r.safety? '':'selected'}>0</option></select></td>
+          <td><input data-k="penalty" placeholder="DPI, Holding, —" value="${escapeHtml(r.penalty)}"></td>
+          <td><input data-k="notes" placeholder="Notes" value="${escapeHtml(r.notes)}"></td>
+        `;
+        tb.appendChild(tr);
+      });
+      // wire edits
+      tb.querySelectorAll('input,select').forEach(inp=>{
+        inp.addEventListener('change', ()=>{
+          const tr = inp.closest('tr'); const pid = tr.dataset.pid;
+          const k = inp.dataset.k; if(!k) return;
+          const row = ensureRow(pid);
+          row[k] = (inp.type==='number') ? (inp.value===''? '' : Number(inp.value)) :
+                   (inp.tagName==='SELECT'? Number(inp.value) : inp.value);
+        });
+      });
+    }
+
+    // ---- Quick events ----
+    document.querySelectorAll('[data-ev]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const ev = btn.dataset.ev;
+        const targets = selected.size ? active.filter(p=>selected.has(p.id)) : active;
+        targets.forEach(p=>{
+          const row = ensureRow(p.id);
+          const map = {
+            solo:'solo', assist:'assist', missed:'missed', tfl:'tfl', sack:'sack',
+            pbu:'pbu', int:'int', ff:'ff', fr:'fr', safety:'safety'
+          };
+          const k = map[ev];
+          if(k){ row[k] = Number(row[k]||0) + 1; }
+        });
+        buildTable();
+      });
+    });
+    $('clearEventsBtn').addEventListener('click', ()=>{
+      const targets = selected.size ? active.filter(p=>selected.has(p.id)) : active;
+      targets.forEach(p=>tableState.set(p.id, zeroRow()));
+      buildTable();
+    });
+
+    // ---- Save: TACKLES / TAKEAWAYS ----
+    $('saveTacklesBtn').addEventListener('click', async ()=>{
+      try{
+        const ctx = GameContext.get();
+        if(!ctx.game_id) throw new Error('Game ID is required.');
+        if(!ctx.play_id) throw new Error('Play ID required (snap on Primary).');
+        const ops = [];
+        active.forEach(p=>{
+          const r = tableState.get(p.id);
+          if(!r) return;
+          // Only push rows with something logged
+          const sum = (Number(r.solo)+Number(r.assist)+Number(r.missed)+Number(r.tfl)+Number(r.sack)+Number(r.pbu)+Number(r.int)+Number(r.ff)+Number(r.fr)+Number(r.safety)) || 0;
+          const hasNotes = String(r.notes||'').trim() || String(r.penalty||'').trim();
+          if (!sum && !hasNotes) return;
+          const row = {
+            game_id: ctx.game_id, play_id: ctx.play_id,
+            player_id: p.id, player_name: p.name, position: p.pos||'', jersey_number: p.num||'',
+            solo_tackle: numOr(r.solo), assist_tackle: numOr(r.assist),
+            missed_tackle: numOr(r.missed), tfl: numOr(r.tfl), sack: numOr(r.sack),
+            pbu: numOr(r.pbu),
+            int: numOr(r.int), int_yards: numOr(r.int_yards), int_td: '', // mark here only if needed
+            ff: numOr(r.ff), fr: numOr(r.fr), fr_yards: numOr(r.fr_yards), fr_td: numOr(r.fr_td),
+            safety: numOr(r.safety),
+            penalty: (r.penalty||'').trim(),
+            notes: (r.notes||'').trim()
+          };
+          ops.push({ route: ROUTE_TACKLES, row, ensure_headers: TKL_HEADERS });
+        });
+        if (!ops.length) throw new Error('Nothing to save.');
+        const res = await apiPost({ action:'batch', ops });
+        if(!res.ok) throw new Error(res.error||'Save failed');
+        log(`Saved ${ops.length} tackle/takeaway row(s).`, 'success');
+      }catch(err){ log(String(err),'error'); }
+    });
+
+    // ---- Save: RUN FIT (optional) ----
+    $('saveRunFitBtn').addEventListener('click', async ()=>{
+      try{
+        const ctx = GameContext.get();
+        if(!ctx.game_id) throw new Error('Game ID is required.');
+        if(!ctx.play_id) throw new Error('Play ID required.');
+        const targets = selected.size ? active.filter(p=>selected.has(p.id)) : active;
+        if(!targets.length) throw new Error('Select at least one player or add actives.');
+
+        const fit = $('run_fit').value||'';
+        const gap = $('run_gap').value||'';
+        const result = $('run_result').value||'';
+        const edge_set = result==='Edge Set' ? 1 : 0;
+        const stop     = result==='Stop' ? 1 : 0;
+        const tfl      = result==='TFL' ? 1 : 0;
+        const missed   = result==='Missed Tackle' ? 1 : 0;
+
+        const ops = targets.map(p=>({
+          route: ROUTE_RUN_DEF,
+          row: {
+            game_id: ctx.game_id, play_id: ctx.play_id,
+            player_id: p.id, player_name: p.name, position: p.pos||'', jersey_number: p.num||'',
+            run_fit: fit, gap, edge_set, stop, tfl, missed_tackle: missed, yards_allowed: '',
+            penalty:'', notes:''
+          },
+          ensure_headers: RUN_HEADERS
+        }));
+        const res = await apiPost({ action:'batch', ops });
+        if(!res.ok) throw new Error(res.error||'Save failed');
+        log(`Saved ${ops.length} run-fit row(s).`, 'success');
+      }catch(err){ log(String(err),'error'); }
+    });
+
+    // ---- Save: BLITZ / PRESSURE (optional) ----
+    $('saveRushBtn').addEventListener('click', async ()=>{
+      try{
+        const ctx = GameContext.get();
+        if(!ctx.game_id) throw new Error('Game ID is required.');
+        if(!ctx.play_id) throw new Error('Play ID required.');
+        const targets = selected.size ? active.filter(p=>selected.has(p.id)) : active;
+        if(!targets.length) throw new Error('Select at least one player or add actives.');
+
+        const blitz = Number($('rush_blitz').value||0),
+              pressure = Number($('rush_pressure').value||0),
+              hit = Number($('rush_hit').value||0),
+              hurry = Number($('rush_hurry').value||0);
+
+        const ops = targets.map(p=>({
+          route: ROUTE_PASS_RUSH,
+          row: {
+            game_id: ctx.game_id, play_id: ctx.play_id,
+            player_id: p.id, player_name: p.name, position: p.pos||'', jersey_number: p.num||'',
+            blitz, pressure, hit, hurry,
+            sack: 0, batted_pass: 0, penalty:'', notes:'DB blitz/pressure'
+          },
+          ensure_headers: RUSH_HEADERS
+        }));
+        const res = await apiPost({ action:'batch', ops });
+        if(!res.ok) throw new Error(res.error||'Save failed');
+        log(`Saved ${ops.length} rush row(s).`, 'success');
+      }catch(err){ log(String(err),'error'); }
+    });
+
+    // ---- Utils ----
+    function numOr(v){ return (v===''||v==null) ? '' : Number(v); }
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;' }[m])); }
+
+    // ---- Boot ----
+    loadRoster();
+  })();
+  </script>
+</body>
+</html>

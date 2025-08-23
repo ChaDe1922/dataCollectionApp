@@ -1,4 +1,3 @@
-<script>
 /* ============================================================================
  * GameContext: shared, real-time game state across Game Day pages
  * - Same-device/tab sync: localStorage + BroadcastChannel
@@ -14,13 +13,13 @@
   const subs = new Set();
 
   // --- server sync config/state ---
-  let API_BASE = global.GSDS_API_BASE || global.API_BASE || ''; // <— also read window.API_BASE
-  let SERVER_SYNC = !!global.GSDS_SERVER_SYNC;
-  let POLL_MS = Number(global.GSDS_POLL_MS || 1000);
+  let API_BASE = '';              // e.g. 'https://script.google.com/macros/s/XXXXX/exec'
+  let SERVER_SYNC = false;        // disabled by default; call configure({server:true})
+  let POLL_MS = 1000;             // 1 second polling interval
   let pollTimer = null;
-  let lastServerTs = 0;
-  let pushTimer = null;
-  let pushDelay = 150;
+  let lastServerTs = 0;           // last server ctx ts we've applied
+  let pushTimer = null;           // debounce for outgoing pushes
+  let pushDelay = 150;            // debounce ms to avoid spamming while typing
 
   // ---------- Storage core ----------
   function safeParse(json, fallback){ try { return JSON.parse(json); } catch { return fallback; } }
@@ -28,20 +27,22 @@
 
   function read(){
     const ctx = safeParse(localStorage.getItem(KEY), {});
-    return (ctx && typeof ctx === 'object') ? ctx : {};
+    return ctx && typeof ctx === 'object' ? ctx : {};
   }
   function writeLocal(ctx, notify = true){
     localStorage.setItem(KEY, JSON.stringify(ctx));
     if (chan) chan.postMessage({ type:'ctx', ctx });
-    if (notify) subs.forEach(fn => { try{ fn(ctx); }catch{} });
+    if (notify) subs.forEach(fn => fn(ctx));
   }
   function merge(partial, opts){
     const cur = read();
     const next = { ...cur, ...partial };
+    // Only stamp updated_at if caller didn't explicitly provide a ts (server pulls bring their own)
     if (!Object.prototype.hasOwnProperty.call(partial, 'updated_at')) {
       next.updated_at = now();
     }
     writeLocal(next, true);
+    // If server sync is on and this wasn't a server-applied change, push upstream (debounced)
     if (SERVER_SYNC && !(opts && opts.fromServer)) {
       schedulePush(next);
     }
@@ -52,12 +53,12 @@
   function onStorage(e){
     if (e.key !== KEY) return;
     const ctx = safeParse(e.newValue || '{}', {});
-    subs.forEach(fn => { try{ fn(ctx); }catch{} });
+    subs.forEach(fn => fn(ctx));
   }
   if (typeof window !== 'undefined'){
     window.addEventListener('storage', onStorage);
     if (chan) chan.onmessage = ev => {
-      if (ev.data && ev.data.type === 'ctx') subs.forEach(fn => { try{ fn(ev.data.ctx); }catch{} });
+      if (ev.data && ev.data.type === 'ctx') subs.forEach(fn => fn(ev.data.ctx));
     };
   }
 
@@ -67,7 +68,7 @@
     const url = new URL(API_BASE);
     url.searchParams.set('action','ctx_get');
     const r = await fetch(url.toString(), { method:'GET', credentials:'omit' });
-    try { return r.ok ? await r.json() : null; } catch { return null; }
+    return r.ok ? r.json() : null;
   }
   async function setServerCtx(ctx){
     if (!API_BASE) return null;
@@ -79,12 +80,11 @@
     };
     const r = await fetch(API_BASE, {
       method:'POST',
-      // use text/plain to avoid preflight like the rest of the app
-      headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+      headers:{ 'Content-Type':'application/json' },
       body: JSON.stringify(payload),
       credentials:'omit'
     });
-    try { return r.ok ? await r.json() : null; } catch { return null; }
+    return r.ok ? r.json() : null;
   }
   function schedulePush(ctx){
     if (pushTimer) clearTimeout(pushTimer);
@@ -98,13 +98,15 @@
       const res = await getServerCtx();
       if (!res || !res.ok || !res.ctx) return;
       const srv = res.ctx;
+      // Only apply if server has something newer than what we've already applied from server
       if (Number(srv.ts||0) > Number(lastServerTs||0)) {
         lastServerTs = Number(srv.ts)||0;
+        // Merge from server WITHOUT pushing back (avoid loops)
         merge(
           {
-            game_id:  srv.game_id || '',
+            game_id: srv.game_id || '',
             drive_id: srv.drive_id || '',
-            play_id:  srv.play_id || '',
+            play_id: srv.play_id || '',
             updated_at: Number(srv.ts) || now()
           },
           { fromServer:true }
@@ -115,8 +117,9 @@
   function startServerPoll(){
     if (!SERVER_SYNC || !API_BASE) return;
     if (pollTimer) clearInterval(pollTimer);
+    // immediate sync-once, then every POLL_MS
     pollOnce();
-    pollTimer = setInterval(pollOnce, Math.max(300, POLL_MS|0));
+    pollTimer = setInterval(pollOnce, Math.max(300, POLL_MS|0)); // guard against crazy values
   }
   function stopServerPoll(){
     if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
@@ -146,6 +149,7 @@
 
     // helpers: two-way bind inputs to context keys (id or selector)
     bindInputs(map){
+      // map example: { game_id:'#game_id', drive_id:'#drive_id', play_id:'#play_id' }
       const resolve = sel => {
         if (!sel) return null;
         if (typeof sel === 'string') return document.querySelector(sel);
@@ -155,38 +159,29 @@
       const nodes = Object.fromEntries(
         Object.entries(map||{}).map(([k,sel])=>[k, resolve(sel)])
       );
+      // init UI from ctx & keep in sync
       const unsub = api.subscribe(ctx=>{
         for (const k of Object.keys(nodes)){
           const n = nodes[k];
           if (!n) continue;
           const val = (ctx && ctx[k]) || '';
           if (n.value !== undefined && n.value !== String(val)) n.value = String(val);
+          // also reflect as data-attr for CSS hooks if needed
           n.dataset.ctxValue = String(val);
         }
       });
+      // push UI edits to ctx (debounced by GameContext push)
       const onInput = e => {
         const id = Object.keys(nodes).find(key => nodes[key] === e.currentTarget);
         if (id) api.set({ [id]: e.currentTarget.value || '' });
       };
       Object.values(nodes).forEach(n => { if(n) n.addEventListener('change', onInput); });
+
+      // return unbinder
       return () => {
         unsub();
         Object.values(nodes).forEach(n => { if(n) n.removeEventListener('change', onInput); });
       };
-    },
-
-    // tiny UI helper for a standard banner chip
-    mountBanner(selector = '#ctxBanner'){
-      const el = document.querySelector(selector);
-      if (!el) return () => {};
-      const unsub = api.subscribe(c=>{
-        const parts = [];
-        if (c.game_id) parts.push(`Game: ${c.game_id}`);
-        if (c.drive_id) parts.push(`Drive: ${c.drive_id}`);
-        if (c.play_id) parts.push(`Play: ${c.play_id}`);
-        el.textContent = parts.join(' • ') || 'No game selected';
-      });
-      return unsub;
     },
 
     // expose internals for debugging (optional)
@@ -194,23 +189,22 @@
       get API_BASE(){ return API_BASE; },
       get SERVER_SYNC(){ return SERVER_SYNC; },
       get POLL_MS(){ return POLL_MS; },
-      forcePoll: pollOnce,
-      getServerCtx, setServerCtx
+      forcePoll: pollOnce
     }
   };
 
   // Export
   global.GameContext = api;
 
-  // Auto-configure if globals exist
+  // If a global default is present, auto-configure (non-fatal)
+  // e.g., set on page: window.GSDS_API_BASE = 'https://script.google.com/.../exec'
   try {
-    if (global.GSDS_API_BASE || global.API_BASE || global.GSDS_SERVER_SYNC) {
+    if (global.GSDS_API_BASE || global.GSDS_SERVER_SYNC) {
       api.configure({
-        apiBase: global.GSDS_API_BASE || global.API_BASE || API_BASE,
+        apiBase: global.GSDS_API_BASE || API_BASE,
         server:  !!global.GSDS_SERVER_SYNC,
         pollMs:  global.GSDS_POLL_MS || POLL_MS
       });
     }
   } catch {}
 })(window);
-</script>

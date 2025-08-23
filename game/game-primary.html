@@ -3,167 +3,82 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <script>
-  (function(){
-    const ok = localStorage.getItem('auth_ok')==='1' &&
-              Number(localStorage.getItem('auth_until')||0) > Date.now();
-    if(!ok){ window.location.href = '../index.html#login'; }
-  })();
-  </script>
   <title>Primary / Drives – Football Data Tracker</title>
+
+  <!-- Auth guard -->
+  <script>
+    (function(){
+      const ok = localStorage.getItem('auth_ok')==='1' &&
+                 Number(localStorage.getItem('auth_until')||0) > Date.now();
+      if(!ok){ window.location.href = '../index.html#login'; }
+    })();
+  </script>
+
+  <!-- Fonts + site theme -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../style.css"/>
 
-  <!-- Page-local light UI styles + layout -->
+  <!-- Page-local light UI styles (unchanged) -->
   <style>
     :root{
-      --card-bg:#fff;
-      --card-br:#E7E9F2;
-      --ink:#0f172a;
-      --ink-2:#334155;
-      --muted:#64748b;
-      --pill:#3a1660;      /* ATL dark plum */
-      --pill-2:#a36bff;    /* ATL lavender */
-      --focus:#a36bff33;   /* focus halo */
+      --card-bg:#fff; --card-br:#E7E9F2; --ink:#0f172a; --ink-2:#334155; --muted:#64748b;
+      --pill:#3a1660; --pill-2:#a36bff; --focus:#a36bff33;
     }
-
     body.practice-page{ background:linear-gradient(180deg,#0f0b1a 0%, #130e22 55%, #0e0b18 100%); }
 
-    /* ---------- layout (unchanged) ---------- */
-    .container{
-      max-width:1100px; margin:0 auto; padding:16px;
-      display:grid; gap:16px;
+    .container{ max-width:1100px; margin:0 auto; padding:16px; display:grid; gap:16px;
       grid-template-columns: 1fr;
-      grid-template-areas:
-        "ctx" "clock" "drive" "play" "summary" "log";
-    }
+      grid-template-areas: "ctx" "clock" "drive" "play" "summary" "log"; }
     @media (min-width: 980px){
-      .container{
-        gap:18px;
-        grid-template-columns: 1fr 1fr;
-        grid-template-areas:
-          "ctx    clock"
-          "drive  play"
-          "summary summary"
-          "log     log";
-      }
+      .container{ gap:18px; grid-template-columns: 1fr 1fr;
+        grid-template-areas: "ctx clock" "drive play" "summary summary" "log log"; }
     }
-
-    .card{
-      background:var(--card-bg);
-      border:1px solid var(--card-br);
-      border-radius:18px;
-      padding:18px;
-      box-shadow:0 10px 24px rgba(2,8,23,.06);
-      color:var(--ink);
-    }
-    .area-ctx{ grid-area:ctx; } .area-clock{ grid-area:clock; }
-    .area-drive{ grid-area:drive; } .area-play{ grid-area:play; }
-    .area-summary{ grid-area:summary; } .area-log{ grid-area:log; }
-
+    .card{ background:var(--card-bg); border:1px solid var(--card-br); border-radius:18px; padding:18px;
+      box-shadow:0 10px 24px rgba(2,8,23,.06); color:var(--ink);}
+    .area-ctx{grid-area:ctx}.area-clock{grid-area:clock}.area-drive{grid-area:drive}
+    .area-play{grid-area:play}.area-summary{grid-area:summary}.area-log{grid-area:log}
     .section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
     .section-title h2{margin:0;font-size:1.25rem;line-height:1.15}
     .tiny{font-size:.9rem;color:var(--muted)}
     .chip{display:inline-block;padding:.35rem .7rem;border-radius:999px;background:#f3f4f7;border:1px solid #e5e7ef;font-weight:600;color:#4b5563}
-
-    /* ---------- FIELDS (stronger outline + clear focus) ---------- */
     label{display:block;font-size:.95rem;color:var(--ink-2);margin:0 0 .35rem}
-    input,select,textarea{
-      width:100%; padding:.72rem .85rem; border-radius:12px;
-      border:2px solid #cfd6ea; background:#fff; color:var(--ink);
-      box-shadow:0 1px 0 rgba(0,0,0,.02) inset;
-      transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
-      font-size:1rem;
-    }
+    input,select,textarea{ width:100%; padding:.72rem .85rem; border-radius:12px; border:2px solid #cfd6ea; background:#fff; color:var(--ink);
+      box-shadow:0 1px 0 rgba(0,0,0,.02) inset; transition:border-color .15s, box-shadow .15s, background .15s; font-size:1rem; }
     input::placeholder, textarea::placeholder{ color:#9aa3b2 }
-    input:focus,select:focus,textarea:focus{
-      outline:none; border-color:#a36bff;
-      box-shadow:0 0 0 4px var(--focus);
-      background:#fff;
-    }
-    /* numeric fields – always show crisp outline + hide spinners */
-    input[type="number"]{
-      -moz-appearance:textfield;
-      border-color:#c0c9e3;
-      background:#fff;
-    }
-    input[type="number"]::-webkit-outer-spin-button,
-    input[type="number"]::-webkit-inner-spin-button{
-      -webkit-appearance:none; margin:0;
-    }
-    /* disabled fields still look like fields */
-    input[disabled], select[disabled], textarea[disabled]{
-      background:#f6f7fb; color:#94a3b8; border-color:#e2e8f0;
-    }
-
-    /* ---------- rows / grids ---------- */
+    input:focus,select:focus,textarea:focus{ outline:none; border-color:#a36bff; box-shadow:0 0 0 4px var(--focus); background:#fff; }
+    input[type="number"]{-moz-appearance:textfield; border-color:#c0c9e3} input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+    input[disabled], select[disabled], textarea[disabled]{ background:#f6f7fb; color:#94a3b8; border-color:#e2e8f0; }
     .row{display:grid; gap:12px}
-    .row.cols-2{ grid-template-columns: 1fr 1fr; }
-    .row.cols-3{ grid-template-columns: repeat(3, 1fr); }
-    .row.cols-4{ grid-template-columns: repeat(4, 1fr); }
-    .row.cols-5{ grid-template-columns: repeat(5, 1fr); }
-    @media (max-width: 680px){
-      .row.cols-2,.row.cols-3,.row.cols-4,.row.cols-5{ grid-template-columns: 1fr; }
-    }
-
-    /* ---------- buttons ---------- */
+    .row.cols-2{grid-template-columns:1fr 1fr}.row.cols-3{grid-template-columns:repeat(3,1fr)}
+    .row.cols-4{grid-template-columns:repeat(4,1fr)}.row.cols-5{grid-template-columns:repeat(5,1fr)}
+    @media (max-width:680px){ .row.cols-2,.row.cols-3,.row.cols-4,.row.cols-5{grid-template-columns:1fr} }
     .btnbar{display:flex;flex-wrap:wrap;gap:.5rem}
-    .btn{
-      appearance:none; border:1px solid var(--pill);
-      background:var(--pill); color:#fff; cursor:pointer;
-      padding:.65rem 1rem; border-radius:999px; font-weight:700;
-      transition:transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
-    }
+    .btn{appearance:none;border:1px solid var(--pill);background:var(--pill);color:#fff;cursor:pointer;
+      padding:.65rem 1rem;border-radius:999px;font-weight:700;transition:transform .15s, box-shadow .15s, background .15s, border-color .15s}
     .btn:hover{ transform:translateY(-1px); box-shadow:0 8px 18px rgba(163,107,255,.22) }
     .btn.subtle{ background:#fff; color:var(--pill); border-color:#e2d6ff }
     .btn.warn{ background:#fde9d6; color:#7a3b01; border-color:#f5c899 }
     .btn.ghost{ background:#fff; color:#111827; border-color:#e5e7ef }
     .btn.small{ padding:.45rem .7rem; font-weight:700 }
-
-    /* ---------- clock ---------- */
     .clock-wrap{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center}
     .clock-face{font-variant-numeric:tabular-nums;font-size:2.2rem;letter-spacing:.6px}
     .clock-keys{display:flex;flex-wrap:wrap;gap:.5rem}
-    .btn.pill-dark{ background:var(--pill); border-color:var(--pill); color:#fff }
-
-    /* ---------- pill toggles with clear ON state ---------- */
     .toggle{ display:flex; flex-wrap:wrap; gap:.6rem; }
     .toggle-input{ position:absolute; opacity:0; pointer-events:none; }
-    .toggle-btn{
-      position:relative;
-      padding:.55rem .9rem .55rem 2.2rem;  /* room for check */
-      border-radius:999px; border:2px solid #e2e8f0;
-      background:#fff; color:#111827; font-weight:800; cursor:pointer;
-      transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease, color .15s ease;
-    }
-    /* small circle when OFF */
-    .toggle-btn::before{
-      content:""; position:absolute; left:.8rem; top:50%; transform:translateY(-50%);
-      width:14px; height:14px; border-radius:50%;
-      border:2px solid #cbd5e1; background:#fff; transition:all .15s ease;
-    }
-    /* checkmark + filled pill when ON */
-    .toggle-input:checked + .toggle-btn{
-      background:linear-gradient(90deg, var(--pill), var(--pill-2));
-      color:#fff; border-color:transparent; box-shadow:0 8px 18px rgba(163,107,255,.24);
-    }
-    .toggle-input:checked + .toggle-btn::before{
-      content:"✓";
-      width:18px; height:18px;
-      display:grid; place-items:center;
-      border:none; background:#ffffff; color:#3a1660; font-size:.8rem; font-weight:900;
-    }
+    .toggle-btn{ position:relative; padding:.55rem .9rem .55rem 2.2rem; border-radius:999px; border:2px solid #e2e8f0;
+      background:#fff; color:#111827; font-weight:800; cursor:pointer; transition: transform .15s, box-shadow .15s, background .15s, border-color .15s, color .15s}
+    .toggle-btn::before{ content:""; position:absolute; left:.8rem; top:50%; transform:translateY(-50%);
+      width:14px; height:14px; border-radius:50%; border:2px solid #cbd5e1; background:#fff; transition:all .15s }
+    .toggle-input:checked + .toggle-btn{ background:linear-gradient(90deg, var(--pill), var(--pill-2)); color:#fff; border-color:transparent; box-shadow:0 8px 18px rgba(163,107,255,.24) }
+    .toggle-input:checked + .toggle-btn::before{ content:"✓"; width:18px; height:18px; display:grid; place-items:center; border:none; background:#ffffff; color:#3a1660; font-size:.8rem; font-weight:900 }
     .toggle-btn:focus-visible{ outline:2px solid #a36bff; outline-offset:2px; }
-
-    /* KPI grid */
     .kpi{ display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-
-    /* log */
     #log{ max-height:260px; overflow:auto; background:#fbfbfe; border:1px solid #eef1f8; border-radius:12px; padding:10px; color:#1f2937 }
-
-    /* meta chips */
     .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.4rem;margin-top:.6rem}
   </style>
-
 </head>
 
 <body class="practice-page">
@@ -177,6 +92,9 @@
 
   <main>
     <div class="container">
+      <!-- live Game/Drive/Play banner -->
+      <div id="ctxBanner" class="chip tiny" aria-live="polite" style="grid-column:1 / -1"></div>
+
       <!-- ===== Game Context ===== -->
       <section class="card area-ctx">
         <div class="section-title">
@@ -236,7 +154,6 @@
           <button class="btn subtle small" id="clk_pause">Pause</button>
           <button class="btn warn small" id="clk_reset">Reset Q</button>
 
-          <!-- nudge: ±1s and ±5s -->
           <button class="btn ghost small" data-dt="-5">-5s</button>
           <button class="btn ghost small" data-dt="-1">-1s</button>
           <button class="btn ghost small" data-dt="+1">+1s</button>
@@ -245,7 +162,6 @@
           <button class="btn pill-dark small" id="clk_snap">Snap → Play</button>
         </div>
 
-        <!-- toggle -->
         <div class="toggle" style="margin-top:.7rem">
           <input type="checkbox" id="auto_accum" class="toggle-input" checked>
           <button type="button" class="toggle-btn" data-for="auto_accum">Auto-accumulate possession time for active drive</button>
@@ -308,15 +224,14 @@
       <section class="card area-play">
         <div class="section-title">
           <h2>Play</h2>
-          <span class="chip" id="playBadge">No play ID yet</span>
         </div>
 
         <div class="btnbar" style="margin-bottom:.6rem">
           <button class="btn subtle" id="newPlayIdBtn">New Play ID</button>
           <button class="btn pill-dark" id="addPlayBtn">Add Play to Table</button>
+          <span class="chip" id="playBadge">No play ID yet</span>
         </div>
 
-        <!-- identifiers -->
         <div class="row cols-5">
           <div><label>Play ID</label><input id="play_id" placeholder="auto or click 'New Play ID'"/></div>
           <div><label>Drive ID</label><input id="play_drive_id" placeholder="auto from active drive" disabled/></div>
@@ -329,7 +244,6 @@
           <div><label>Clock (mm:ss)</label><input id="play_clock" placeholder="12:34"/></div>
         </div>
 
-        <!-- situational -->
         <div class="row cols-5">
           <div><label>Down</label><select id="play_down"><option>1</option><option>2</option><option>3</option><option>4</option></select></div>
           <div><label>Distance (yds)</label><input id="play_dist" type="number" step="1"/></div>
@@ -338,7 +252,6 @@
           <div><label>Result Yards</label><input id="play_yards" type="number" step="1"/></div>
         </div>
 
-        <!-- descriptive -->
         <div class="row cols-4">
           <div><label>Formation</label><input id="play_form" list="list_formations" placeholder="e.g. Gun Trips"/></div>
           <div><label>Personnel</label><input id="play_pers" list="list_personnel" placeholder="e.g. 11, 12, 21"/></div>
@@ -346,7 +259,6 @@
           <div><label>Play Name (Playbook)</label><input id="play_name" list="list_playnames" placeholder="Type to autocomplete…"/></div>
         </div>
 
-        <!-- flags as toggles -->
         <div class="toggle" style="margin-top:.4rem">
           <input type="checkbox" id="flag_explosive" class="toggle-input">
           <button type="button" class="toggle-btn" data-for="flag_explosive">Explosive</button>
@@ -364,14 +276,12 @@
           <button type="button" class="toggle-btn" data-for="flag_success">Success (EPA+)</button>
         </div>
 
-        <!-- EP math -->
         <div class="row cols-3" style="margin-top:.4rem">
           <div><label>EP Before</label><input id="ep_before" type="number" step="0.01"/></div>
           <div><label>EP After</label><input id="ep_after" type="number" step="0.01"/></div>
           <div><label>EPA</label><input id="epa" type="number" step="0.01" placeholder="auto if EP fields set"/></div>
         </div>
 
-        <!-- auto helpers as toggles -->
         <div class="toggle" style="margin-top:.6rem">
           <input type="checkbox" id="auto_offense_from_drive" class="toggle-input" checked>
           <button type="button" class="toggle-btn" data-for="auto_offense_from_drive">Auto: Offense = Drive Possession</button>
@@ -386,7 +296,6 @@
           <button type="button" class="toggle-btn" data-for="auto_playbook_fill">Auto: Fill from Playbook selection</button>
         </div>
 
-        <!-- datalists populated at runtime -->
         <datalist id="list_formations"></datalist>
         <datalist id="list_personnel"></datalist>
         <datalist id="list_motions"></datalist>
@@ -419,9 +328,7 @@
 
       <!-- ===== Log ===== -->
       <section class="card area-log">
-        <div class="section-title">
-          <h2>Log</h2><span class="tiny">Most recent first</span>
-        </div>
+        <div class="section-title"><h2>Log</h2><span class="tiny">Most recent first</span></div>
         <div id="log"></div>
       </section>
     </div>
@@ -429,510 +336,390 @@
 
   <footer><p>&copy; 2025 Game Speed Data Systems</p></footer>
 
-  <!-- ==== Page logic (unchanged except for nudge keys + toggle wiring) ==== -->
+  <!-- ===== Shared plumbing ===== -->
+  <script>window.API_BASE='https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';</script>
+  <script src="../js/api.js"></script>
+  <script src="../js/context.js"></script>
+
+  <!-- ===== Page logic ===== -->
   <script>
-  /* =======================
-  * SHARED GAME CONTEXT (master publisher)
-  * ======================= */
-  (function(global){
-    const KEY = 'gsds_game_ctx_v1';
-    const chan = ('BroadcastChannel' in window) ? new BroadcastChannel('gsds_ctx') : null;
-    const subs = new Set();
-    const read = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } };
-    const write = (ctx) => { localStorage.setItem(KEY, JSON.stringify(ctx)); if (chan) chan.postMessage({type:'ctx', ctx}); };
-    const merge = (partial) => { const next = { ...read(), ...partial, updated_at: Date.now() }; write(next); subs.forEach(fn=>fn(next)); };
+    // Configure shared context + banner
+    GameContext.configure({ apiBase: window.API_BASE, server: true, pollMs: 1000 });
+    GameContext.mountBanner('#ctxBanner');
+    GameContext.bindInputs({ game_id:'#game_id', drive_id:'#drive_id', play_id:'#play_id' });
 
-    if (typeof window !== 'undefined'){
-      window.addEventListener('storage', (e)=>{ if(e.key===KEY){ try{ const ctx=JSON.parse(e.newValue||'{}'); subs.forEach(fn=>fn(ctx)); }catch{} }});
-      if (chan) chan.onmessage = ev => { if (ev.data?.type==='ctx') subs.forEach(fn=>fn(ev.data.ctx)); };
+    /* ========= Config & constants ========= */
+    const DICT_SHEET_ID   = '1oHO-5gM9l3PTSjUxwQlYzFaAMTtlco2VZj8l315Uk1c'; // Master Data / dictionaries
+    const PLAYBOOK_TAB    = 'Playbook_Dictionary';
+    const SCHEDULE_SHEET  = '1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI';
+    const SCHEDULE_TAB    = '01_Dim_Schedule';
+    const ROUTE_DRIVES    = 'drives';
+    const ROUTE_PLAYS     = 'plays';
+    const ROUTE_SUM       = 'game_summary';
+    const QUARTER_LEN     = 15*60, OT_LEN = 10*60;
+
+    /* ========= Local log helper (UI only) ========= */
+    const el = id => document.getElementById(id);
+    const logBox = el('log');
+    function log(msg, type=''){
+      const row = document.createElement('div');
+      if(type==='success') row.className='success';
+      if(type==='error') row.className='error';
+      row.textContent = '['+new Date().toLocaleTimeString()+'] '+msg;
+      logBox.prepend(row);
+      el('status').textContent = (type==='error'?'Error':'Ready');
     }
-    global.GameContext = {
-      get: read,
-      set: merge,
-      setGame:  id => merge({ game_id:  (id||'').trim() }),
-      setDrive: id => merge({ drive_id: (id||'').trim() }),
-      setPlay:  id => merge({ play_id:  (id||'').trim() }),
-      clear: () => merge({ game_id:'', drive_id:'', play_id:'' }),
-      subscribe(fn){ subs.add(fn); fn(read()); return ()=>subs.delete(fn); }
+
+    /* ========= State ========= */
+    let activeDriveId = '';
+    let drivePlayCount = 0;
+    let driveElapsedSec = 0;
+    let lastSnap = null;
+
+    let playbook = [], playMap = {};
+    let schedule = [], scheduleMap = {};
+
+    const options = {
+      playTypes: ['Run','Pass','Sack','Kneel','Spike','Penalty only'],
+      formations: [], personnel: [], motions: []
     };
-  })(window);
 
-  /* =======================
-  * CONFIG
-  * ======================= */
-  const API_BASE = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
-  const DICT_SHEET_ID = '1oHO-5gM9l3PTSjUxwQlYzFaAMTtlco2VZj8l315Uk1c';
-  const PLAYBOOK_TAB  = 'Playbook_Dictionary';
-  const SCHEDULE_SHEET_ID = '1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI';
-  const SCHEDULE_TAB = '01_Dim_Schedule';
-  const ROUTE_DRIVES = 'drives';
-  const ROUTE_PLAYS  = 'plays';
-  const ROUTE_SUM    = 'game_summary';
-  const ROUTE_GC     = 'game_control';
-  const QUARTER_LEN = 15 * 60;
-  const OT_LEN = 10 * 60;
+    /* ========= Helpers (API wrappers) ========= */
+    async function appendRow(route, row, ensure=[]){
+      const res = await apiPost({ action:'append', route, row, ensure_headers: ensure });
+      if(!res.ok) throw new Error(res.error||'Append failed'); return res;
+    }
+    async function nextId(prefix){
+      const res = await apiGet({ action:'next_id', prefix });
+      if(!res.ok) throw new Error(res.error||'ID failed'); return res.id;
+    }
+    function ensureGame(){
+      const gid = (el('game_id').value || GameContext.get().game_id || '').trim();
+      if(!gid) throw new Error('Set a Game ID first (pick from schedule).');
+      return gid;
+    }
+    const numVal = v => (v===''||v==null ? '' : Number(v));
+    const boolVal = v => (v ? 1 : 0);
 
-  /* =======================
-  * STATE
-  * ======================= */
-  const el = id => document.getElementById(id);
-  const logBox = el('log');
-  const log = (msg, type='')=>{
-    const row = document.createElement('div');
-    if(type==='success') row.className='success';
-    if(type==='error') row.className='error';
-    row.textContent = '['+new Date().toLocaleTimeString()+'] '+msg;
-    logBox.prepend(row);
-    el('status').textContent = (type==='error'?'Error':'Ready');
-  };
+    /* ========= CLOCK ========= */
+    let secLeft = QUARTER_LEN, clkTimer = null;
+    function displayClock(){
+      const m = String(Math.floor(secLeft/60)).padStart(2,'0');
+      const s = String(secLeft%60).padStart(2,'0');
+      el('clk_display').textContent = `${m}:${s}`;
+    }
+    function getQSeconds(){ return (el('clk_quarter').value==='OT') ? OT_LEN : QUARTER_LEN; }
+    function startClock(){ if(clkTimer) return; clkTimer=setInterval(()=>{ if(secLeft>0){ secLeft--; displayClock(); } },1000); }
+    function pauseClock(){ if(clkTimer){ clearInterval(clkTimer); clkTimer=null; } }
+    function resetQuarter(){ pauseClock(); secLeft=getQSeconds(); displayClock(); }
+    function nudgeSeconds(d){ secLeft=Math.max(0, Math.min(getQSeconds(), secLeft+d)); displayClock(); }
+    function snapToPlay(){
+      const q = el('clk_quarter').value;
+      const m = String(Math.floor(secLeft/60)).padStart(2,'0');
+      const s = String(secLeft%60).padStart(2,'0');
+      el('play_qtr').value = q;
+      el('play_clock').value = `${m}:${s}`;
 
-  let activeDriveId = '';
-  let drivePlayCount = 0;
-  let driveElapsedSec = 0;
-  let lastSnap = null;
-
-  let playbook = [];
-  let playMap = {};
-  let schedule = [];
-  let scheduleMap = {};
-
-  const options = {
-    playTypes: ['Run','Pass','Sack','Kneel','Spike','Penalty only'],
-    formations: [],
-    personnel: [],
-    motions: []
-  };
-
-  /* =======================
-  * API helpers
-  * ======================= */
-  async function apiGet(params){
-    const url = new URL(API_BASE);
-    Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,v));
-    const r = await fetch(url);
-    return r.json();
-  }
-  async function apiPost(payload){
-    const r = await fetch(API_BASE,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
-    });
-    return r.json();
-  }
-  async function appendRow(route,row,ensure=[]){
-    const res = await apiPost({ action:'append', route, row, ensure_headers: ensure });
-    if(!res.ok) throw new Error(res.error||'Append failed');
-    return res;
-  }
-  async function nextId(prefix){
-    const res = await apiGet({ action:'next_id', prefix });
-    if(!res.ok) throw new Error(res.error||'ID failed');
-    return res.id;
-  }
-  function ensureGame(){
-    const gid = el('game_id').value.trim();
-    if(!gid) throw new Error('Set a Game ID first (pick from schedule).');
-    return gid;
-  }
-
-  /* =======================
-  * CLOCK
-  * ======================= */
-  let secLeft = QUARTER_LEN;
-  let clkTimer = null;
-
-  function displayClock(){
-    const m = Math.floor(secLeft/60).toString().padStart(2,'0');
-    const s = (secLeft%60).toString().padStart(2,'0');
-    el('clk_display').textContent = `${m}:${s}`;
-  }
-  function getQSeconds(){ return (el('clk_quarter').value==='OT') ? OT_LEN : QUARTER_LEN; }
-  function startClock(){ if(clkTimer) return; clkTimer = setInterval(()=>{ if(secLeft>0){ secLeft--; displayClock(); } },1000); }
-  function pauseClock(){ if(clkTimer){ clearInterval(clkTimer); clkTimer=null; } }
-  function resetQuarter(){ pauseClock(); secLeft = getQSeconds(); displayClock(); }
-  function nudgeSeconds(delta){ secLeft = Math.max(0, Math.min(getQSeconds(), secLeft + delta)); displayClock(); }
-
-  // Snap to Play + accumulate drive time
-  function snapToPlay(){
-    const q = el('clk_quarter').value;
-    const m = Math.floor(secLeft/60).toString().padStart(2,'0');
-    const s = (secLeft%60).toString().padStart(2,'0');
-    el('play_qtr').value = q;
-    el('play_clock').value = `${m}:${s}`;
-
-    if(el('auto_accum').checked && activeDriveId){
-      if(lastSnap){
-        const prevQ = lastSnap.q;
-        const prevSec = lastSnap.secLeft;
-        const currQ = q;
-        const currSec = secLeft;
-
-        const qIndex = x => x==='OT' ? 5 : Number(x);
-        const lenForQ = x => x==='OT' ? OT_LEN : QUARTER_LEN;
-
-        let elapsed = 0;
-        if(qIndex(currQ) === qIndex(prevQ)){
-          elapsed = Math.max(0, prevSec - currSec);
-        } else {
-          elapsed += prevSec;
-          for(let k=qIndex(prevQ)+1; k<qIndex(currQ); k++){
-            elapsed += (k===5 ? OT_LEN : QUARTER_LEN);
+      if(el('auto_accum').checked && activeDriveId){
+        if(lastSnap){
+          const qIndex = x => x==='OT' ? 5 : Number(x);
+          const lenForQ = x => x==='OT' ? OT_LEN : QUARTER_LEN;
+          let elapsed = 0;
+          if(qIndex(q) === qIndex(lastSnap.q)){
+            elapsed = Math.max(0, lastSnap.secLeft - secLeft);
+          }else{
+            elapsed += lastSnap.secLeft;
+            for(let k=qIndex(lastSnap.q)+1; k<qIndex(q); k++){
+              elapsed += (k===5 ? OT_LEN : QUARTER_LEN);
+            }
+            elapsed += (lenForQ(q) - secLeft);
           }
-          elapsed += (lenForQ(currQ) - currSec);
+          driveElapsedSec += elapsed;
+          el('drive_posstime').value = Math.round(driveElapsedSec);
         }
-        driveElapsedSec += elapsed;
-        el('drive_posstime').value = Math.round(driveElapsedSec);
+        lastSnap = { q, secLeft };
       }
-      lastSnap = { q, secLeft };
     }
-  }
+    // Wire clock
+    el('clk_start').onclick=startClock; el('clk_pause').onclick=pauseClock; el('clk_reset').onclick=resetQuarter;
+    el('clk_snap').onclick=snapToPlay; document.querySelectorAll('.clock-keys .btn[data-dt]')
+      .forEach(b=>b.addEventListener('click',()=>nudgeSeconds(parseInt(b.dataset.dt,10))));
+    el('clk_quarter').addEventListener('change', resetQuarter); displayClock();
 
-  // Wire clock buttons
-  el('clk_start').onclick = startClock;
-  el('clk_pause').onclick = pauseClock;
-  el('clk_reset').onclick = resetQuarter;
-  el('clk_snap').onclick  = snapToPlay;
-  document.querySelectorAll('.clock-keys .btn[data-dt]').forEach(b=>{
-    b.addEventListener('click',()=>nudgeSeconds(parseInt(b.dataset.dt,10)));
-  });
-  el('clk_quarter').addEventListener('change', resetQuarter);
-  displayClock();
+    /* ========= PLAYBOOK ========= */
+    function fillDatalist(id, arr){ const dl=el(id); dl.innerHTML=''; arr.forEach(v=>{ const o=document.createElement('option'); o.value=v; dl.appendChild(o); }); }
+    function fillSelect(id, arr){ const s=el(id); s.innerHTML=''; arr.forEach(v=>{ const o=document.createElement('option'); o.textContent=v; s.appendChild(o); }); }
+    fillSelect('play_type', options.playTypes);
 
-  /* =======================
-  * PLAYBOOK
-  * ======================= */
-  async function loadPlaybook(){
-    if(!DICT_SHEET_ID) return;
-    try{
-      const res = await apiGet({ action:'table', sheet_id: DICT_SHEET_ID, sheet_name: PLAYBOOK_TAB });
-      if(!res.ok) throw new Error(res.error || 'Playbook fetch failed');
-      playbook = res.rows || [];
-      playMap = {};
-      const names = new Set(), forms=new Set(), pers=new Set(), mot=new Set();
-      playbook.forEach(r=>{
-        const name = (r.play_name||'').toString().trim();
-        if(name){ names.add(name); playMap[name.toUpperCase()] = r; }
-        if(r.formation) forms.add(String(r.formation));
-        if(r.personnel) pers.add(String(r.personnel));
-        if(r.motion)    mot.add(String(r.motion));
-      });
-      fillDatalist('list_playnames', Array.from(names).sort());
-      options.formations = Array.from(forms).sort();
-      options.personnel  = Array.from(pers).sort();
-      options.motions    = Array.from(mot).sort();
-      fillDatalist('list_formations', options.formations);
-      fillDatalist('list_personnel',  options.personnel);
-      fillDatalist('list_motions',    options.motions);
-      log(`Playbook loaded (${playbook.length} rows).`, 'success');
-    } catch(err){ log(err.message, 'error'); }
-  }
-  function fillDatalist(id, arr){
-    const dl = el(id);
-    dl.innerHTML='';
-    arr.forEach(v=>{
-      const o = document.createElement('option');
-      o.value = v; dl.appendChild(o);
-    });
-  }
-  function fillSelect(id, arr){
-    const s = el(id); s.innerHTML='';
-    arr.forEach(v=>{
-      const o = document.createElement('option');
-      o.textContent = v; s.appendChild(o);
-    });
-  }
-  fillSelect('play_type', options.playTypes);
-
-  el('play_name').addEventListener('change', ()=>{
-    if(!el('auto_playbook_fill').checked) return;
-    const key = el('play_name').value.trim().toUpperCase();
-    const rec = playMap[key];
-    if(rec){
-      if(rec.play_type && options.playTypes.includes(rec.play_type)) el('play_type').value = rec.play_type;
-      if(rec.formation) el('play_form').value = rec.formation;
-      if(rec.personnel) el('play_pers').value = rec.personnel;
-      if(rec.motion)    el('play_motion').value = rec.motion;
+    async function loadPlaybook(){
+      try{
+        const res = await apiGet({ action:'table', sheet_id: DICT_SHEET_ID, sheet_name: PLAYBOOK_TAB });
+        if(!res.ok) throw new Error(res.error || 'Playbook fetch failed');
+        playbook = res.rows || []; playMap = {};
+        const names=new Set(), forms=new Set(), pers=new Set(), mot=new Set();
+        playbook.forEach(r=>{
+          const name = (r.play_name||'').toString().trim();
+          if(name){ names.add(name); playMap[name.toUpperCase()] = r; }
+          if(r.formation) forms.add(String(r.formation));
+          if(r.personnel) pers.add(String(r.personnel));
+          if(r.motion)    mot.add(String(r.motion));
+        });
+        fillDatalist('list_playnames', Array.from(names).sort());
+        options.formations = Array.from(forms).sort();
+        options.personnel  = Array.from(pers).sort();
+        options.motions    = Array.from(mot).sort();
+        fillDatalist('list_formations', options.formations);
+        fillDatalist('list_personnel',  options.personnel);
+        fillDatalist('list_motions',    options.motions);
+        log(`Playbook loaded (${playbook.length} rows).`, 'success');
+      } catch(err){ log(err.message, 'error'); }
     }
-  });
-
-  /* =======================
-  * SCHEDULE
-  * ======================= */
-  async function loadSchedule(){
-    if(!SCHEDULE_SHEET_ID) return;
-    try{
-      const res = await apiGet({ action:'table', sheet_id: SCHEDULE_SHEET_ID, sheet_name: SCHEDULE_TAB });
-      if(!res.ok) throw new Error(res.error || 'Schedule fetch failed');
-      schedule = (res.rows || []).filter(r => r.game_id);
-      scheduleMap = {};
-      const ids = [];
-      schedule.forEach(r=>{
-        const gid = String(r.game_id).trim();
-        if(!gid) return;
-        scheduleMap[gid] = r;
-        ids.push(gid);
-      });
-      ids.sort((a,b)=>{
-        const ra=scheduleMap[a], rb=scheduleMap[b];
-        const da=(ra.date||''), db=(rb.date||'');
-        if(da && db && da!==db) return da<db?-1:1;
-        const wa=Number(ra.week||0), wb=Number(rb.week||0);
-        return wa-wb;
-      });
-      fillDatalist('list_game_ids', ids);
-      log(`Schedule loaded (${ids.length} games).`, 'success');
-
-      const ctx = GameContext.get();
-      if (ctx.game_id && scheduleMap[ctx.game_id]) {
-        el('game_id').value = ctx.game_id;
-        el('game_id').dispatchEvent(new Event('change'));
+    el('play_name').addEventListener('change', ()=>{
+      if(!el('auto_playbook_fill').checked) return;
+      const key = el('play_name').value.trim().toUpperCase();
+      const rec = playMap[key];
+      if(rec){
+        if(rec.play_type && options.playTypes.includes(rec.play_type)) el('play_type').value = rec.play_type;
+        if(rec.formation) el('play_form').value = rec.formation;
+        if(rec.personnel) el('play_pers').value = rec.personnel;
+        if(rec.motion)    el('play_motion').value = rec.motion;
       }
-    } catch(err){ log(err.message, 'error'); }
-  }
+    });
 
-  function renderGameMeta(gid){
-    const box = el('game_meta');
-    const r = scheduleMap[gid];
-    if(!r){ box.style.display='none'; return; }
-    el('meta_date').textContent   = r.date ? `Date: ${r.date}` : 'Date: —';
-    el('meta_week').textContent   = r.week ? `Week: ${r.week}` : 'Week: —';
-    el('meta_opp').textContent    = r.opponent ? `Opponent: ${r.opponent}` : 'Opponent: —';
-    el('meta_ha').textContent     = r.home_away ? `Venue: ${r.home_away}` : 'Venue: —';
-    el('meta_weather').textContent= r.weather_conditions ? `Weather: ${r.weather_conditions}` : 'Weather: —';
-    box.style.display='grid';
-  }
+    /* ========= SCHEDULE ========= */
+    async function loadSchedule(){
+      try{
+        const res = await apiGet({ action:'table', sheet_id: SCHEDULE_SHEET, sheet_name: SCHEDULE_TAB });
+        if(!res.ok) throw new Error(res.error || 'Schedule fetch failed');
+        schedule = (res.rows || []).filter(r => r.game_id);
+        scheduleMap = {}; const ids=[];
+        schedule.forEach(r=>{ const gid=String(r.game_id).trim(); if(!gid) return; scheduleMap[gid]=r; ids.push(gid); });
+        ids.sort((a,b)=>{
+          const ra=scheduleMap[a], rb=scheduleMap[b];
+          const da=(ra.date||''), db=(rb.date||'');
+          if(da && db && da!==db) return da<db?-1:1;
+          const wa=Number(ra.week||0), wb=Number(rb.week||0);
+          return wa-wb;
+        });
+        fillDatalist('list_game_ids', ids);
+        log(`Schedule loaded (${ids.length} games).`, 'success');
 
-  el('game_id').addEventListener('change', ()=>{
-    const gid = el('game_id').value.trim();
-    if(!gid) return;
-    if(!scheduleMap[gid]){ log(`Game ID "${gid}" not found in schedule.`, 'error'); renderGameMeta(''); return; }
-    renderGameMeta(gid);
-    const opp = scheduleMap[gid].opponent || 'Opponent';
-    el('opp_team').placeholder = opp;
-    log(`Game selected: ${gid} vs ${opp}`, 'success');
-    GameContext.setGame(gid);
-  });
-
-  el('pickNextBtn').addEventListener('click', ()=>{
-    if(!schedule.length) return;
-    const today = new Date().toISOString().slice(0,10);
-    let next = schedule.find(r => (r.date||'') >= today)?.game_id || schedule[0].game_id;
-    el('game_id').value = next;
-    el('game_id').dispatchEvent(new Event('change'));
-  });
-
-  /* =======================
-  * QoL defaults
-  * ======================= */
-  el('setDefaultsBtn').addEventListener('click', ()=>{
-    if(!el('our_team').value) el('our_team').value = 'Us';
-    if(!el('opp_team').value) el('opp_team').value = 'Opponent';
-    el('drive_poss').value = 'Us';
-    el('play_offense').value = 'Us';
-    log('Defaults applied.', 'success');
-  });
-
-  el('drive_poss').addEventListener('change', ()=>{
-    if(el('auto_offense_from_drive').checked) el('play_offense').value = el('drive_poss').value;
-  });
-
-  /* =======================
-  * DRIVES
-  * ======================= */
-  el('newDriveBtn').addEventListener('click', async ()=>{
-    try{
-      ensureGame();
-      activeDriveId = await nextId('DRIVE');
-      drivePlayCount = 0;
-      driveElapsedSec = 0;
-      lastSnap = null;
-      el('drive_id').value = activeDriveId;
-      el('play_drive_id').value = activeDriveId;
-      el('driveBadge').textContent = `Active: ${activeDriveId}`;
-      el('endDriveBtn').disabled = false;
-      if(el('auto_offense_from_drive').checked){
-        el('play_offense').value = el('drive_poss').value;
-      }
-      GameContext.setDrive(activeDriveId);
-      log(`Started drive ${activeDriveId}`, 'success');
-    } catch(err){ log(err.message, 'error'); }
-  });
-
-  el('endDriveBtn').addEventListener('click', async ()=>{
-    try{
-      const game_id = ensureGame();
-      if(!activeDriveId) throw new Error('No active drive to end.');
-
-      if(el('auto_drive_yards').checked && el('drive_yards').value==='' &&
-        el('drive_start').value!=='' && el('drive_end').value!==''){
-        const yds = Number(el('drive_end').value) - Number(el('drive_start').value);
-        el('drive_yards').value = yds;
-      }
-      if(el('auto_drive_plays').checked && el('drive_plays').value===''){
-        el('drive_plays').value = drivePlayCount;
-      }
-
-      const row = {
-        game_id,
-        drive_id: activeDriveId,
-        'Team In Possession': el('drive_poss').value,
-        'Start Yardline': numVal(el('drive_start').value),
-        'End Yardline':   numVal(el('drive_end').value),
-        'Plays in Drive': numVal(el('drive_plays').value),
-        'Yards Gained':   numVal(el('drive_yards').value),
-        'Possession Time (sec)': numVal(el('drive_posstime').value),
-        'Result': el('drive_result').value,
-        'Scoring Type': el('drive_scoretype').value
-      };
-      await appendRow(ROUTE_DRIVES, row, Object.keys(row));
-      log(`Drive saved: ${activeDriveId}`, 'success');
-
-      el('driveBadge').textContent = 'No active drive';
-      el('endDriveBtn').disabled = true;
-      activeDriveId = '';
-      el('drive_id').value = '';
-      el('play_drive_id').value = '';
-      GameContext.setDrive('');
-    } catch(err){ log(err.message, 'error'); }
-  });
-
-  /* =======================
-  * PLAYS
-  * ======================= */
-  el('newPlayIdBtn').addEventListener('click', async ()=>{
-    try{
-      const id = await nextId('PLAY');
-      el('play_id').value = id;
-      el('playBadge').textContent = `Editing: ${id}`;
-      GameContext.setPlay(id);
-    } catch(err){ log(err.message, 'error'); }
-  });
-
-  el('addPlayBtn').addEventListener('click', async ()=>{
-    try{
-      const game_id = ensureGame();
-      const play_id = el('play_id').value.trim();
-      if(!play_id) throw new Error('Create a Play ID first.');
-      const drive_id = activeDriveId || el('play_drive_id').value.trim();
-      if(!drive_id) throw new Error('No drive_id (start a drive or paste one).');
-
-      if(el('auto_offense_from_drive').checked){
-        el('play_offense').value = el('drive_poss').value;
-      }
-
-      if(el('auto_epa').checked){
-        const epb = el('ep_before').value;
-        const epaft = el('ep_after').value;
-        if(epb!=='' && epaft!==''){
-          el('epa').value = (Number(epaft) - Number(epb)).toFixed(2);
+        // hydrate from GameContext if set elsewhere
+        const ctx = GameContext.get();
+        if (ctx.game_id && scheduleMap[ctx.game_id]) {
+          el('game_id').value = ctx.game_id;
+          el('game_id').dispatchEvent(new Event('change'));
         }
-      }
+      } catch(err){ log(err.message, 'error'); }
+    }
+    function renderGameMeta(gid){
+      const box = el('game_meta'); const r = scheduleMap[gid];
+      if(!r){ box.style.display='none'; return; }
+      el('meta_date').textContent    = r.date ? `Date: ${r.date}` : 'Date: —';
+      el('meta_week').textContent    = r.week ? `Week: ${r.week}` : 'Week: —';
+      el('meta_opp').textContent     = r.opponent ? `Opponent: ${r.opponent}` : 'Opponent: —';
+      el('meta_ha').textContent      = r.home_away ? `Venue: ${r.home_away}` : 'Venue: —';
+      el('meta_weather').textContent = r.weather_conditions ? `Weather: ${r.weather_conditions}` : 'Weather: —';
+      box.style.display='grid';
+    }
+    el('game_id').addEventListener('change', ()=>{
+      const gid = el('game_id').value.trim(); if(!gid) return;
+      if(!scheduleMap[gid]){ log(`Game ID "${gid}" not found in schedule.`, 'error'); renderGameMeta(''); return; }
+      renderGameMeta(gid);
+      const opp = scheduleMap[gid].opponent || 'Opponent';
+      el('opp_team').placeholder = opp;
+      log(`Game selected: ${gid} vs ${opp}`, 'success');
+      GameContext.setGame(gid);
+    });
+    el('pickNextBtn').addEventListener('click', ()=>{
+      if(!schedule.length) return;
+      const today = new Date().toISOString().slice(0,10);
+      const next = schedule.find(r => (r.date||'') >= today)?.game_id || schedule[0].game_id;
+      el('game_id').value = next; el('game_id').dispatchEvent(new Event('change'));
+    });
 
-      const row = {
-        play_id,
-        drive_id,
-        game_id,
-        'Offense Team': el('play_offense').value,
-        Quarter: el('play_qtr').value,
-        Clock: el('play_clock').value,
-        Down: el('play_down').value,
-        Distance: numVal(el('play_dist').value),
-        'Yard Line': numVal(el('play_yardline').value),
-        'Play Type': el('play_type').value,
-        Formation: el('play_form').value,
-        Personnel: el('play_pers').value,
-        Motion: el('play_motion').value,
-        'Result Yards': numVal(el('play_yards').value),
-        'Explosive Flag': boolVal(el('flag_explosive').checked),
-        'Red Zone Flag': boolVal(el('flag_rz').checked),
-        'Goal-to-Go Flag': boolVal(el('flag_g2g').checked),
-        'Two-Minute Flag': boolVal(el('flag_2min').checked),
-        'EP Before': numVal(el('ep_before').value),
-        'EP After':  numVal(el('ep_after').value),
-        EPA: numVal(el('epa').value),
-        'Success Flag': boolVal(el('flag_success').checked)
-      };
+    /* ========= QoL defaults ========= */
+    el('setDefaultsBtn').addEventListener('click', ()=>{
+      if(!el('our_team').value) el('our_team').value = 'Us';
+      if(!el('opp_team').value) el('opp_team').value = 'Opponent';
+      el('drive_poss').value = 'Us';
+      el('play_offense').value = 'Us';
+      log('Defaults applied.', 'success');
+    });
+    el('drive_poss').addEventListener('change', ()=>{
+      if(el('auto_offense_from_drive').checked) el('play_offense').value = el('drive_poss').value;
+    });
 
-      await appendRow(ROUTE_PLAYS, row, Object.keys(row));
-      log(`Play saved: ${play_id}`, 'success');
+    /* ========= DRIVES ========= */
+    el('newDriveBtn').addEventListener('click', async ()=>{
+      try{
+        ensureGame();
+        activeDriveId = await nextId('DRIVE');
+        drivePlayCount = 0; driveElapsedSec = 0; lastSnap = null;
+        el('drive_id').value = activeDriveId;
+        el('play_drive_id').value = activeDriveId;
+        el('driveBadge').textContent = `Active: ${activeDriveId}`;
+        el('endDriveBtn').disabled = false;
+        if(el('auto_offense_from_drive').checked){
+          el('play_offense').value = el('drive_poss').value;
+        }
+        GameContext.setDrive(activeDriveId);
+        log(`Started drive ${activeDriveId}`, 'success');
+      } catch(err){ log(err.message, 'error'); }
+    });
 
-      if(activeDriveId) drivePlayCount++;
+    el('endDriveBtn').addEventListener('click', async ()=>{
+      try{
+        const game_id = ensureGame();
+        if(!activeDriveId) throw new Error('No active drive to end.');
 
-      if(el('auto_next_yardline').checked && el('play_yardline').value!=='' && el('play_yards').value!==''){
-        const next = Number(el('play_yardline').value) + Number(el('play_yards').value);
-        el('play_yardline').value = String(next);
-      }
+        if(el('auto_drive_yards').checked && el('drive_yards').value==='' &&
+           el('drive_start').value!=='' && el('drive_end').value!==''){
+          el('drive_yards').value = Number(el('drive_end').value) - Number(el('drive_start').value);
+        }
+        if(el('auto_drive_plays').checked && el('drive_plays').value===''){
+          el('drive_plays').value = drivePlayCount;
+        }
 
-      GameContext.setPlay(play_id);
+        const row = {
+          game_id,
+          drive_id: activeDriveId,
+          'Team In Possession': el('drive_poss').value,
+          'Start Yardline': numVal(el('drive_start').value),
+          'End Yardline':   numVal(el('drive_end').value),
+          'Plays in Drive': numVal(el('drive_plays').value),
+          'Yards Gained':   numVal(el('drive_yards').value),
+          'Possession Time (sec)': numVal(el('drive_posstime').value),
+          'Result': el('drive_result').value,
+          'Scoring Type': el('drive_scoretype').value
+        };
+        await appendRow(ROUTE_DRIVES, row, Object.keys(row));
+        log(`Drive saved: ${activeDriveId}`, 'success');
 
-      el('play_id').value = '';
-      el('playBadge').textContent = 'No play ID yet';
-      ['play_yards','play_dist','ep_before','ep_after','epa'].forEach(i=>el(i).value='');
-      ['flag_explosive','flag_rz','flag_g2g','flag_2min','flag_success'].forEach(i=>el(i).checked=false);
+        el('driveBadge').textContent = 'No active drive';
+        el('endDriveBtn').disabled = true;
+        activeDriveId = '';
+        el('drive_id').value = '';
+        el('play_drive_id').value = '';
+        GameContext.setDrive('');
+      } catch(err){ log(err.message, 'error'); }
+    });
+
+    /* ========= PLAYS ========= */
+    el('newPlayIdBtn').addEventListener('click', async ()=>{
+      try{
+        const id = await nextId('PLAY');
+        el('play_id').value = id;
+        el('playBadge').textContent = `Editing: ${id}`;
+        GameContext.setPlay(id);
+      } catch(err){ log(err.message, 'error'); }
+    });
+
+    el('addPlayBtn').addEventListener('click', async ()=>{
+      try{
+        const game_id = ensureGame();
+        const play_id = el('play_id').value.trim(); if(!play_id) throw new Error('Create a Play ID first.');
+        const drive_id = activeDriveId || el('play_drive_id').value.trim();
+        if(!drive_id) throw new Error('No drive_id (start a drive or paste one).');
+
+        if(el('auto_offense_from_drive').checked){
+          el('play_offense').value = el('drive_poss').value;
+        }
+        if(el('auto_epa').checked){
+          const epb = el('ep_before').value, epaft = el('ep_after').value;
+          if(epb!=='' && epaft!==''){ el('epa').value = (Number(epaft) - Number(epb)).toFixed(2); }
+        }
+
+        const row = {
+          play_id, drive_id, game_id,
+          'Offense Team': el('play_offense').value,
+          Quarter: el('play_qtr').value,
+          Clock: el('play_clock').value,
+          Down: el('play_down').value,
+          Distance: numVal(el('play_dist').value),
+          'Yard Line': numVal(el('play_yardline').value),
+          'Play Type': el('play_type').value,
+          Formation: el('play_form').value,
+          Personnel: el('play_pers').value,
+          Motion: el('play_motion').value,
+          'Result Yards': numVal(el('play_yards').value),
+          'Explosive Flag': boolVal(el('flag_explosive').checked),
+          'Red Zone Flag': boolVal(el('flag_rz').checked),
+          'Goal-to-Go Flag': boolVal(el('flag_g2g').checked),
+          'Two-Minute Flag': boolVal(el('flag_2min').checked),
+          'EP Before': numVal(el('ep_before').value),
+          'EP After':  numVal(el('ep_after').value),
+          EPA: numVal(el('epa').value),
+          'Success Flag': boolVal(el('flag_success').checked)
+        };
+
+        await appendRow(ROUTE_PLAYS, row, Object.keys(row));
+        log(`Play saved: ${play_id}`, 'success');
+
+        if(activeDriveId) drivePlayCount++;
+
+        if(el('auto_next_yardline').checked && el('play_yardline').value!=='' && el('play_yards').value!==''){
+          el('play_yardline').value = String(Number(el('play_yardline').value) + Number(el('play_yards').value));
+        }
+
+        GameContext.setPlay(play_id);
+
+        // reset for next play
+        el('play_id').value = ''; el('playBadge').textContent = 'No play ID yet';
+        ['play_yards','play_dist','ep_before','ep_after','epa'].forEach(i=>el(i).value='');
+        ['flag_explosive','flag_rz','flag_g2g','flag_2min','flag_success'].forEach(i=>el(i).checked=false);
+        refreshToggleStates();
+      } catch(err){ log(err.message, 'error'); }
+    });
+
+    /* ========= SUMMARY ========= */
+    el('saveSummaryBtn').addEventListener('click', async ()=>{
+      try{
+        const game_id = ensureGame();
+        const row = {
+          game_id,
+          'Team Points': numVal(el('sum_pts_team').value),
+          'Opponent Points': numVal(el('sum_pts_opp').value),
+          'Team Offensive Yards': numVal(el('sum_yards').value),
+          'First Downs': numVal(el('sum_firstdowns').value),
+          'Plays': numVal(el('sum_plays').value),
+          'Time of Possession (sec)': numVal(el('sum_top').value),
+          'Penalties': numVal(el('sum_pens').value),
+          'Penalty Yards': numVal(el('sum_penyds').value),
+          'Drives': numVal(el('sum_drives').value),
+          'game_control_minutes': numVal(el('sum_gcmin').value),
+          'snap_count_total': numVal(el('sum_snaps').value)
+        };
+        await appendRow(ROUTE_SUM, row, Object.keys(row));
+        log('Game summary updated.', 'success');
+      } catch(err){ log(err.message, 'error'); }
+    });
+
+    /* ========= Toggles + init ========= */
+    function wireToggles(){
+      document.querySelectorAll('.toggle-btn').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const id = btn.getAttribute('data-for');
+          const box = document.getElementById(id);
+          if(!box) return;
+          box.checked = !box.checked;
+          btn.setAttribute('aria-pressed', box.checked ? 'true' : 'false');
+        });
+      });
       refreshToggleStates();
-    } catch(err){ log(err.message, 'error'); }
-  });
-
-  /* =======================
-  * SUMMARY
-  * ======================= */
-  el('saveSummaryBtn').addEventListener('click', async ()=>{
-    try{
-      const game_id = ensureGame();
-      const row = {
-        game_id,
-        'Team Points': numVal(el('sum_pts_team').value),
-        'Opponent Points': numVal(el('sum_pts_opp').value),
-        'Team Offensive Yards': numVal(el('sum_yards').value),
-        'First Downs': numVal(el('sum_firstdowns').value),
-        'Plays': numVal(el('sum_plays').value),
-        'Time of Possession (sec)': numVal(el('sum_top').value),
-        'Penalties': numVal(el('sum_pens').value),
-        'Penalty Yards': numVal(el('sum_penyds').value),
-        'Drives': numVal(el('sum_drives').value),
-        'game_control_minutes': numVal(el('sum_gcmin').value),
-        'snap_count_total': numVal(el('sum_snaps').value)
-      };
-      await appendRow(ROUTE_SUM, row, Object.keys(row));
-      log('Game summary updated.', 'success');
-    } catch(err){ log(err.message, 'error'); }
-  });
-
-  /* =======================
-  * UTIL + INIT
-  * ======================= */
-  const numVal = v => (v===''||v==null ? '' : Number(v));
-  const boolVal = v => (v ? 1 : 0);
-
-  // Toggle helpers: click the visual pill to flip the hidden checkbox
-  function wireToggles(){
-    document.querySelectorAll('.toggle-btn').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
+    }
+    function refreshToggleStates(){
+      document.querySelectorAll('.toggle-btn').forEach(btn=>{
         const id = btn.getAttribute('data-for');
         const box = document.getElementById(id);
-        if(!box) return;
-        box.checked = !box.checked;
-        btn.setAttribute('aria-pressed', box.checked ? 'true' : 'false');
+        btn.setAttribute('aria-pressed', box && box.checked ? 'true' : 'false');
       });
-    });
-    refreshToggleStates();
-  }
-  function refreshToggleStates(){
-    document.querySelectorAll('.toggle-btn').forEach(btn=>{
-      const id = btn.getAttribute('data-for');
-      const box = document.getElementById(id);
-      btn.setAttribute('aria-pressed', box && box.checked ? 'true' : 'false');
-    });
-  }
+    }
 
-  // init
-  wireToggles();
-  loadPlaybook();
-  loadSchedule();
-  if (el('game_id').value.trim()) {
-    GameContext.setGame(el('game_id').value.trim());
-  }
+    wireToggles();
+    loadPlaybook();
+    loadSchedule();
+    if (el('game_id').value.trim()) GameContext.setGame(el('game_id').value.trim());
   </script>
 </body>
 </html>

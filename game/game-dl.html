@@ -3,70 +3,94 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>D-Line (DL) – Football Data Tracker</title>
+
+  <!-- Auth guard -->
   <script>
-  (function(){
-    const ok = localStorage.getItem('auth_ok')==='1' &&
-              Number(localStorage.getItem('auth_until')||0) > Date.now();
-    if(!ok){ window.location.href = '../index.html#login'; }
-  })();
+    (function(){
+      const ok = localStorage.getItem('auth_ok')==='1' &&
+                 Number(localStorage.getItem('auth_until')||0) > Date.now();
+      if(!ok){ window.location.href = '../index.html#login'; }
+    })();
   </script>
-  <title>D-Line Tracking – Football Data Tracker</title>
+
+  <!-- Fonts + site theme -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../style.css"/>
+
   <style>
     :root{
-      --chip-bg: rgba(255,255,255,.08);
-      --chip-bd: rgba(255,255,255,.18);
-      --chip-fg: #eaeaea;
-      --seg-active-bg:#35c48a;
-      --seg-active-fg:#062318;
-      --panel-bg: rgba(255,255,255,.04);
+      --ink:#0f172a; --muted:#64748b; --ok:#1bbf83; --warn:#ffa142; --err:#ff6b6b;
+      --pill:#3a1660; --pill-2:#a36bff; --bd:#E7E9F2; --card:#fff; --halo:#a36bff33;
     }
-    .container{max-width:1200px;margin:0 auto;padding:1rem}
-    .grid{display:grid;gap:1rem}
-    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
-    .card{background:var(--panel-bg);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:1rem}
-    .card h2{margin:0 0 .5rem 0;font-size:1.1rem}
-    .row{display:flex;gap:.75rem;flex-wrap:wrap}
-    .row > *{flex:1 1 160px}
-    label{display:block;font-size:.85rem;opacity:.9;margin-bottom:.25rem}
-    input,select,textarea{width:100%;padding:.6rem .7rem;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.2);color:#fff}
+    body.practice-page{ background:linear-gradient(180deg,#0f0b1a 0%, #130e22 55%, #0e0b18 100%); }
+    .container{
+      max-width:1100px; margin:0 auto; padding:16px; display:grid; gap:16px;
+      grid-template-columns: 1fr; grid-template-areas:
+        "ctx" "active" "quick" "table" "run" "rush" "pen" "log";
+    }
+    @media (min-width: 980px){
+      .container{ grid-template-columns: 1fr 1fr; grid-template-areas:
+        "ctx    active"
+        "quick  quick"
+        "table  table"
+        "run    rush"
+        "pen    pen"
+        "log    log";
+      }
+    }
+    .card{ background:var(--card); border:1px solid var(--bd); border-radius:18px; padding:18px; box-shadow:0 10px 24px rgba(2,8,23,.06); color:var(--ink); }
+    .area-ctx{grid-area:ctx} .area-active{grid-area:active} .area-quick{grid-area:quick}
+    .area-table{grid-area:table} .area-run{grid-area:run} .area-rush{grid-area:rush}
+    .area-pen{grid-area:pen} .area-log{grid-area:log}
+
+    .section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .section-title h2{margin:0;font-size:1.2rem}
+    .tiny{font-size:.9rem;color:var(--muted)}
+    .chip{display:inline-block;padding:.35rem .7rem;border-radius:999px;background:#f3f4f7;border:1px solid #e5e7ef;font-weight:600;color:#4b5563}
+    label{display:block;font-size:.95rem;color:#334155;margin:0 0 .35rem}
+    input,select,textarea{
+      width:100%; padding:.7rem .85rem; border-radius:12px; border:2px solid #cfd6ea; background:#fff;
+      transition:border-color .15s ease, box-shadow .15s ease;
+    }
+    input:focus,select:focus,textarea:focus{ outline:none; border-color:#a36bff; box-shadow:0 0 0 4px var(--halo); }
+
+    .row{display:grid; gap:12px}
+    .row.cols-2{grid-template-columns:1fr 1fr} .row.cols-3{grid-template-columns:repeat(3,1fr)} .row.cols-4{grid-template-columns:repeat(4,1fr)}
+    @media (max-width:720px){ .row.cols-2,.row.cols-3,.row.cols-4{grid-template-columns:1fr} }
+
     .btnbar{display:flex;gap:.5rem;flex-wrap:wrap}
-    .btn{padding:.6rem .9rem;border-radius:999px;border:1px solid transparent;cursor:pointer}
-    .btn.primary{background:#43b581;color:#071a12}
-    .btn.subtle{background:transparent;border-color:rgba(255,255,255,.25);color:#fff}
-    .btn.warn{background:#ffa142;color:#2a1800}
-    .chip{display:inline-block;padding:.25rem .6rem;border-radius:999px;background:var(--chip-bg);border:1px solid var(--chip-bd);font-size:.8rem}
-    .tiny{font-size:.8rem;opacity:.85}
-    .success{color:#7CFC98}.error{color:#ff6b6b}
-    .section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:.35rem}
-    .meta{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.5rem;margin-top:.5rem}
-    .meta .chip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .btn{appearance:none;border:1px solid var(--pill);background:var(--pill);color:#fff;cursor:pointer;padding:.6rem 1rem;border-radius:999px;font-weight:800}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(163,107,255,.22)}
+    .btn.subtle{background:#fff;color:var(--pill);border-color:#e2d6ff}
+    .btn.warn{background:#fde9d6;color:#7a3b01;border-color:#f5c899}
+    .btn.ghost{background:#fff;color:#111827;border-color:#e5e7ef}
+    .btn.small{padding:.45rem .7rem}
 
-    /* toggles */
-    .tgl{display:inline-flex;align-items:center;gap:.5rem}
-    .tgl button{position:relative;width:52px;height:28px;border-radius:999px;border:1px solid var(--chip-bd);background:rgba(255,255,255,.08);cursor:pointer}
-    .tgl button::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#cfcfcf;transition:all .18s ease}
-    .tgl button[aria-checked="true"]{background:#35c48a;border-color:#35c48a}
-    .tgl button[aria-checked="true"]::after{left:27px;background:#fff}
+    /* Active chips */
+    .chiplist{display:flex;gap:.4rem;flex-wrap:wrap}
+    .chipitem{display:flex;align-items:center;gap:.4rem;padding:.35rem .6rem;border:1px solid #e5e7ef;background:#f9fafb;border-radius:999px;cursor:pointer}
+    .chipitem.active{outline:2px solid #a36bff; background:#f6f1ff}
+    .chipitem .rm{background:transparent;border:none;color:#475569;cursor:pointer;font-weight:900}
 
-    /* segmented pills */
-    .seg{display:flex;flex-wrap:wrap;gap:.4rem}
-    .seg-btn{border:1px solid var(--chip-bd);background:var(--chip-bg);color:var(--chip-fg);padding:.35rem .6rem;border-radius:999px;cursor:pointer}
-    .seg-btn[aria-pressed="true"]{background:var(--seg-active-bg);color:var(--seg-active-fg);border-color:var(--seg-active-bg);}
+    /* Table */
+    table{ width:100%; border-collapse:separate; border-spacing:0; }
+    thead th{ text-align:left; font-size:.9rem; color:#475569; border-bottom:1px solid #e5e7ef; padding:.45rem .4rem; position:sticky; top:0; background:#fff; }
+    tbody td{ padding:.35rem .3rem; border-bottom:1px solid #f1f5f9; }
+    tbody tr:hover{ background:#fafaff; }
+    .num{ width:84px; }
 
-    /* framed subgroups */
-    .group{border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:.9rem}
-    .group h3{margin:.1rem 0 .6rem 0;font-size:.95rem;opacity:.95}
-    .is-disabled{opacity:.55;pointer-events:none;filter:saturate(.6)}
+    #log{ max-height:220px; overflow:auto; background:#fbfbfe; border:1px solid #eef1f8; border-radius:12px; padding:10px; color:#1f2937 }
+    .success{color:var(--ok)} .error{color:var(--err)}
   </style>
-  <script src="../js/game-context.js"></script>
 </head>
 
 <body class="practice-page">
   <header class="page-header">
-    <h1>D-Line Tracking</h1>
-    <nav class="menu-actions">
+    <h1>Defensive Line (DL)</h1>
+    <nav class="menu-actions" aria-label="Header">
       <a href="game-day.html" class="menu-btn">Game Day</a>
       <a href="game-primary.html" class="menu-btn">Primary / Drives</a>
       <a href="../index.html" class="menu-btn">Home</a>
@@ -74,676 +98,517 @@
   </header>
 
   <main>
-    <div class="container grid grid-2">
-      <!-- Game Context -->
-      <section class="card">
+    <div class="container">
+      <!-- ===== Game Context ===== -->
+      <section class="card area-ctx">
         <div class="section-title">
           <h2>Game Context</h2>
           <span id="status" class="tiny">Ready</span>
         </div>
-        <div class="row">
-          <div>
-            <label>Game ID <span class="tiny">(from schedule)</span></label>
-            <input id="game_id" list="list_game_ids" placeholder="Pick game…"/>
-            <datalist id="list_game_ids"></datalist>
-          </div>
-          <div>
-            <label>Play ID</label>
-            <input id="play_id" placeholder="e.g. PLAY_000123"/>
-          </div>
-          <div>
-            <label>Lookup Play (optional)</label>
-            <div class="btnbar">
-              <button class="btn subtle" id="lookupPlayBtn">Fetch from Plays</button>
-              <button class="btn subtle" id="newPlayIdBtn">New Play ID</button>
-            </div>
-          </div>
+        <div class="row cols-3">
+          <div><label>Game ID</label><input id="ctx_game" placeholder="G2025-01" disabled></div>
+          <div><label>Drive ID</label><input id="ctx_drive" placeholder="DRIVE_…" disabled></div>
+          <div><label>Play ID</label><input id="ctx_play" placeholder="PLAY_…" disabled></div>
         </div>
-        <div id="game_meta" class="meta" style="display:none">
-          <span class="chip" id="meta_date"></span>
-          <span class="chip" id="meta_week"></span>
-          <span class="chip" id="meta_opp"></span>
-          <span class="chip" id="meta_ha"></span>
-          <span class="chip" id="meta_weather"></span>
+        <div class="tiny" style="margin-top:.4rem">
+          Use <strong>Game Primary</strong> to start drives, snap the clock, and generate Play IDs. This page focuses on DL production.
         </div>
       </section>
 
-      <!-- Participants -->
-      <section class="card">
-        <div class="section-title">
-          <h2>Participant</h2>
-          <span class="tiny">Filtered to DL (DL/DE/DT/NT/EDGE)</span>
-        </div>
-        <div class="row">
+      <!-- ===== Active DLs (Presence) ===== -->
+      <section class="card area-active">
+        <div class="section-title"><h2>Active DL</h2><span class="tiny">Presence group: <strong>DL</strong></span></div>
+
+        <div class="row cols-3">
           <div>
-            <label>Defender (name)</label>
-            <input id="def_name" list="list_dl_names" placeholder="DL name…"/>
-            <datalist id="list_dl_names"></datalist>
+            <label>Add Player</label>
+            <input id="add_player" list="dl_players" placeholder="Type name or #…">
+            <datalist id="dl_players"></datalist>
           </div>
           <div>
-            <label>Defender ID</label>
-            <input id="def_id" placeholder="auto from name/roster"/>
+            <label>Front / Package</label>
+            <input id="pkg" list="dl_pkg" placeholder="4-2-5, 3-3-5, Bear, Nickel…">
+            <datalist id="dl_pkg">
+              <option>Base 4-2-5</option><option>Base 3-3-5</option><option>Bear</option><option>Nickel</option><option>Dime</option>
+            </datalist>
+          </div>
+          <div>
+            <label>Unit Label</label>
+            <input id="unit" placeholder="DL">
           </div>
         </div>
+
+        <div class="chiplist" id="active_chips" style="margin-top:.5rem" aria-live="polite"></div>
+
+        <div class="btnbar" style="margin-top:.6rem">
+          <button class="btn" id="presenceSetBtn">Set Presence (DL)</button>
+          <button class="btn subtle" id="presenceLoadBtn">Load From Presence</button>
+          <span class="chip tiny" id="activeCount">0 active</span>
+          <span class="chip tiny" id="selCount">0 selected</span>
+        </div>
+      </section>
+
+      <!-- ===== Quick Events ===== -->
+      <section class="card area-quick">
+        <div class="section-title"><h2>Quick Events</h2><span class="tiny">Apply to selected chips (or all if none selected)</span></div>
         <div class="btnbar">
-          <button class="btn subtle" id="loadRosterBtn">Reload Roster</button>
-          <span class="chip tiny">Roster from 00_Dim_Roster</span>
-        </div>
-      </section>
-    </div>
-
-    <!-- Three lanes -->
-    <div class="container grid grid-3">
-      <!-- Pass Rush -->
-      <section class="card">
-        <div class="section-title">
-          <h2>Pass Rush</h2>
-          <span class="tiny">PR snap, pressure/hit/sack, doubles</span>
-        </div>
-
-        <div class="group">
-          <h3>Outcome</h3>
-          <div class="row">
-            <div>
-              <label>Pass Rush Snap</label>
-              <div class="tgl"><button class="tgl-btn" data-target="pr_snap" aria-checked="true"></button></div>
-              <input id="pr_snap" type="hidden" value="Yes"/>
-            </div>
-            <div>
-              <label>Pressure (Hurry)</label>
-              <div class="tgl"><button class="tgl-btn" data-target="pr_pressure" aria-checked="false"></button></div>
-              <input id="pr_pressure" type="hidden" value="No"/>
-            </div>
-            <div>
-              <label>QB Hit</label>
-              <div class="tgl"><button class="tgl-btn" data-target="pr_hit" aria-checked="false"></button></div>
-              <input id="pr_hit" type="hidden" value="No"/>
-            </div>
-            <div>
-              <label>Sack</label>
-              <div class="tgl"><button class="tgl-btn" data-target="pr_sack" aria-checked="false"></button></div>
-              <input id="pr_sack" type="hidden" value="No"/>
-            </div>
-          </div>
-          <div class="row">
-            <div>
-              <label>Time to Pressure (sec)</label>
-              <input id="pr_ttp" type="number" step="0.01" placeholder="e.g. 2.45"/>
-            </div>
-            <div>
-              <label>Double Team Faced</label>
-              <div class="tgl"><button class="tgl-btn" data-target="pr_double" aria-checked="false"></button></div>
-              <input id="pr_double" type="hidden" value="No"/>
-            </div>
-            <div id="double_win_wrap">
-              <label>Double Team Win</label>
-              <div class="tgl"><button class="tgl-btn" data-target="pr_double_win" aria-checked="false"></button></div>
-              <input id="pr_double_win" type="hidden" value="No"/>
-            </div>
-          </div>
-        </div>
-
-        <div class="group" style="margin-top:.7rem">
-          <h3>Rush Move</h3>
-          <div class="seg" data-target="pr_move" id="pr_move_seg"></div>
-          <input id="pr_move" type="hidden" value=""/>
-        </div>
-
-        <div class="btnbar" style="margin-top:.8rem">
-          <button class="btn primary" id="savePassRushBtn">Save Pass Rush</button>
-          <button class="btn subtle" id="clearPassRushBtn">Clear</button>
+          <button class="btn small" data-ev="solo">+ Solo</button>
+          <button class="btn small" data-ev="assist">+ Assist</button>
+          <button class="btn small" data-ev="missed">+ Missed</button>
+          <button class="btn small" data-ev="tfl">+ TFL</button>
+          <button class="btn small" data-ev="sack">+ Sack</button>
+          <button class="btn small" data-ev="ff">+ FF</button>
+          <button class="btn small" data-ev="fr">+ FR</button>
+          <button class="btn small" data-ev="safety">+ Safety</button>
+          <button class="btn ghost small" id="clearEventsBtn">Clear row(s)</button>
         </div>
       </section>
 
-      <!-- Run Defense -->
-      <section class="card">
-        <div class="section-title">
-          <h2>Run Defense</h2>
-          <span class="tiny">Run stop + gap integrity</span>
+      <!-- ===== Per-Player Table ===== -->
+      <section class="card area-table">
+        <div class="section-title"><h2>Per-Player Production</h2><span class="tiny">Writes to <strong>32_Fact_Tackles</strong></span></div>
+
+        <div style="overflow:auto; border:1px solid #eef1f8; border-radius:12px;">
+          <table id="tbl">
+            <thead>
+              <tr>
+                <th style="min-width:180px">Player</th>
+                <th class="num">Solo</th>
+                <th class="num">Assist</th>
+                <th class="num">Missed</th>
+                <th class="num">TFL</th>
+                <th class="num">Sack</th>
+                <th class="num">FF</th>
+                <th class="num">FR</th>
+                <th class="num">FR Yds</th>
+                <th>FR TD</th>
+                <th>Safety</th>
+                <th>Penalty</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
         </div>
 
-        <div class="group">
-          <h3>Outcome</h3>
-          <div class="row">
-            <div>
-              <label>Run Defense Snap</label>
-              <div class="tgl"><button class="tgl-btn" data-target="rd_snap" aria-checked="true"></button></div>
-              <input id="rd_snap" type="hidden" value="Yes"/>
-            </div>
-            <div>
-              <label>Run Stop</label>
-              <div class="tgl"><button class="tgl-btn" data-target="rd_stop" aria-checked="false"></button></div>
-              <input id="rd_stop" type="hidden" value="No"/>
-            </div>
-          </div>
-          <div class="row" style="margin-top:.4rem">
-            <div>
-              <label>Gap</label>
-              <div class="seg" data-target="rd_gap" id="rd_gap_seg"></div>
-              <input id="rd_gap" type="hidden" value="B"/>
-            </div>
-            <div>
-              <label>Gap Integrity</label>
-              <div class="seg" data-target="rd_integrity" id="rd_integrity_seg">
-                <button class="seg-btn" data-val="Maintained" aria-pressed="true">Maintained</button>
-                <button class="seg-btn" data-val="Lost" aria-pressed="false">Lost</button>
-              </div>
-              <input id="rd_integrity" type="hidden" value="Maintained"/>
-            </div>
-          </div>
-        </div>
-
-        <div class="btnbar" style="margin-top:.8rem">
-          <button class="btn primary" id="saveRunDefBtn">Save Run Defense</button>
-          <button class="btn subtle" id="clearRunDefBtn">Clear</button>
+        <div class="btnbar" style="margin-top:.6rem">
+          <button class="btn" id="saveTacklesBtn">Save Tackles / Takeaways</button>
         </div>
       </section>
 
-      <!-- Tackles & Penalties -->
-      <section class="card">
-        <div class="section-title">
-          <h2>Tackles & Penalty</h2>
-          <span class="tiny">Solo/assist/TFL, penalty (if any)</span>
-        </div>
-
-        <div class="group">
-          <h3>Tackle</h3>
-          <div class="row">
-            <div>
-              <label>Solo</label>
-              <div class="tgl"><button class="tgl-btn" data-target="tk_solo" aria-checked="false"></button></div>
-              <input id="tk_solo" type="hidden" value="No"/>
-            </div>
-            <div>
-              <label>Assist</label>
-              <div class="tgl"><button class="tgl-btn" data-target="tk_assist" aria-checked="false"></button></div>
-              <input id="tk_assist" type="hidden" value="No"/>
-            </div>
-            <div>
-              <label>TFL</label>
-              <div class="tgl"><button class="tgl-btn" data-target="tk_tfl" aria-checked="false"></button></div>
-              <input id="tk_tfl" type="hidden" value="No"/>
-            </div>
+      <!-- ===== Run Defense (DL) ===== -->
+      <section class="card area-run">
+        <div class="section-title"><h2>Run Defense</h2><span class="tiny">Writes to <strong>31_Fact_RunDefense</strong></span></div>
+        <div class="row cols-3">
+          <div>
+            <label>Gap</label>
+            <select id="rd_gap">
+              <option>A</option><option selected>B</option><option>C</option><option>D</option>
+            </select>
           </div>
-          <div class="btnbar" style="margin-top:.6rem">
-            <button class="btn primary" id="saveTackleBtn">Save Tackle</button>
-            <button class="btn subtle" id="clearTackleBtn">Clear</button>
+          <div>
+            <label>Integrity</label>
+            <select id="rd_integrity"><option selected>Maintained</option><option>Lost</option></select>
+          </div>
+          <div>
+            <label>Result</label>
+            <select id="rd_result">
+              <option value="">—</option><option>Run Stop</option><option>TFL</option><option>Missed Tackle</option>
+            </select>
           </div>
         </div>
-
-        <div class="group" style="margin-top:.8rem">
-          <h3>Penalty (DL committed)</h3>
-          <div class="row">
-            <div>
-              <label>Penalty Type</label>
-              <select id="pen_type"></select>
-            </div>
-            <div>
-              <label>Penalty Yards</label>
-              <input id="pen_yards" type="number" step="1" placeholder="e.g. 5, 10, 15"/>
-            </div>
-          </div>
-          <div class="btnbar" style="margin-top:.6rem">
-            <button class="btn warn" id="savePenaltyBtn">Save Penalty</button>
-          </div>
+        <div class="btnbar" style="margin-top:.6rem">
+          <button class="btn subtle" id="saveRunDefBtn">Save Run Defense for Selected</button>
         </div>
       </section>
-    </div>
 
-    <!-- Log -->
-    <div class="container">
-      <section class="card">
+      <!-- ===== Pass Rush (DL) ===== -->
+      <section class="card area-rush">
+        <div class="section-title"><h2>Pass Rush</h2><span class="tiny">Writes to <strong>30_Fact_PassRush</strong></span></div>
+        <div class="row cols-4">
+          <div><label>Rush Move</label>
+            <input id="pr_move" list="dl_moves" placeholder="Speed, Power, Swim…">
+            <datalist id="dl_moves">
+              <option>Speed</option><option>Power</option><option>Bull</option><option>Rip</option><option>Swim</option><option>Spin</option><option>Club</option><option>Inside</option><option>Counter</option><option>Stunt</option><option>Twist</option><option>Contain</option>
+            </datalist>
+          </div>
+          <div><label>Pressure</label><select id="pr_pressure"><option>1</option><option selected>0</option></select></div>
+          <div><label>QB Hit</label><select id="pr_hit"><option>1</option><option selected>0</option></select></div>
+          <div><label>Sack</label><select id="pr_sack"><option>1</option><option selected>0</option></select></div>
+        </div>
+        <div class="row cols-3">
+          <div><label>Hurry</label><select id="pr_hurry"><option>1</option><option selected>0</option></select></div>
+          <div><label>Batted Pass</label><select id="pr_batted"><option>1</option><option selected>0</option></select></div>
+          <div><label>Double Team Faced</label><select id="pr_double"><option>1</option><option selected>0</option></select></div>
+        </div>
+        <div class="row cols-2">
+          <div><label>Double Win</label><select id="pr_double_win"><option>1</option><option selected>0</option></select></div>
+          <div><label>Time to Pressure (sec)</label><input id="pr_ttp" type="number" step="0.01" placeholder="e.g. 2.45"/></div>
+        </div>
+        <div class="btnbar" style="margin-top:.6rem">
+          <button class="btn subtle" id="saveRushBtn">Save Rush for Selected</button>
+        </div>
+      </section>
+
+      <!-- ===== Penalties (DL) ===== -->
+      <section class="card area-pen">
+        <div class="section-title"><h2>Penalty (DL)</h2><span class="tiny">Writes to <strong>26_Fact_Penalties</strong></span></div>
+        <div class="row cols-3">
+          <div><label>Penalty Type</label><input id="pen_type" list="pen_types" placeholder="Offside, Holding…"><datalist id="pen_types"></datalist></div>
+          <div><label>Penalty Yards</label><input id="pen_yards" type="number" step="1" placeholder="5 / 10 / 15"/></div>
+          <div class="btnbar" style="align-items:end"><button class="btn warn" id="savePenaltyBtn">Save Penalty for Selected</button></div>
+        </div>
+      </section>
+
+      <!-- ===== Log ===== -->
+      <section class="card area-log">
         <div class="section-title"><h2>Log</h2><span class="tiny">Most recent first</span></div>
-        <div id="log" class="tiny" style="max-height:260px;overflow:auto"></div>
+        <div id="log"></div>
       </section>
     </div>
   </main>
 
   <footer><p>&copy; 2025 Game Speed Data Systems</p></footer>
 
+  <!-- === Shared plumbing === -->
   <script>
-    /* =======================
-     * CONFIG
-     * ======================= */
-    const API_BASE = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
+    // Configure GameContext auto-sync
+    window.GSDS_API_BASE   = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
+    window.GSDS_SERVER_SYNC = true;
+    window.GSDS_POLL_MS     = 1000;
+  </script>
+  <script src="../js/api.js"></script>
+  <script src="../js/context.js"></script>
+  <script src="../js/presence.js"></script>
 
-    // Schedule (for Game ID picklist)
-    const SCHEDULE_SHEET_ID = '1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI';
-    const SCHEDULE_TAB = '01_Dim_Schedule';
+  <!-- === Page logic === -->
+  <script>
+  (function(){
+    // ---- Routes ----
+    const ROUTE_TACKLES   = 'tackles';      // 32_Fact_Tackles
+    const ROUTE_PASS_RUSH = 'pass_rush';    // 30_Fact_PassRush
+    const ROUTE_RUN_DEF   = 'run_defense';  // 31_Fact_RunDefense
+    const ROUTE_PEN       = 'penalties';    // 26_Fact_Penalties
 
-    // Roster (filtered to DL)
-    const ROSTER_SHEET_ID = '1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI';
-    const ROSTER_TAB = '00_Dim_Roster';
+    // ---- Roster source ----
+    const ROSTER_SHEET_ID = '1oHO-5gM9l3PTSjUxwQlYzFaAMTtlco2VZj8l315Uk1c'; // MASTER_DATA_2025
+    const ROSTER_TAB      = '00_Dim_Roster';
     const DL_POS = ['DL','DE','DT','NT','EDGE','IDL','LEO','END','TACKLE'];
 
-    // Dictionary
-    const DICTIONARY_SHEET_ID = '1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI';
-    const DICTIONARY_TAB = 'Data_Validation_Lists';
+    // Header safelists
+    const TKL_HEADERS = [
+      'timestamp','game_id','play_id','player_id','player_name','position','jersey_number',
+      'solo_tackle','assist_tackle','missed_tackle','tfl','sack','ff','fr','fr_yards','fr_td',
+      'safety','penalty','notes'
+    ];
+    const RUSH_HEADERS = [
+      'timestamp','game_id','play_id','player_id','player_name','position','jersey_number',
+      'rush_move','pressure','hit','hurry','sack','batted_pass','double_team_faced','double_team_win','time_to_pressure_sec','penalty','notes'
+    ];
+    const RUN_HEADERS = [
+      'timestamp','game_id','play_id','player_id','player_name','position','jersey_number',
+      'gap','integrity_maintained','run_stop','tfl','missed_tackle','yards_allowed','penalty','notes'
+    ];
+    const PEN_HEADERS = ['timestamp','game_id','play_id','player_id','player_name','position','jersey_number','Penalty Type','Penalty Yards','notes'];
 
-    // WRITE TARGETS
-    const POS_GROUPS_ID = '1HoptAMRTqqTme8rwnVmanCIUUB563zlXtM_S_YDbc3Q'; // POSITION_GROUPS_2025
-    const DETAILED_TRACKING_ID = '1WjXYxh2j-MlzaYQjaq_1LpKuIf_G-0ZIBXSafzawLYM'; // for 26_Fact_Penalties
-
-    const TAB_PASSRUSH   = '30_Fact_PassRush';
-    const TAB_RUNDEF     = '31_Fact_RunDefense';
-    const TAB_TACKLES    = '32_Fact_Tackles';
-    const TAB_PENALTIES  = '26_Fact_Penalties';
-
-    /* =======================
-     * STATE + LOG
-     * ======================= */
-    const el = id => document.getElementById(id);
-    const logBox = el('log');
-    const log = (msg, type='')=>{
+    // ---- Elements & logging ----
+    const $ = id => document.getElementById(id);
+    const logBox = $('log');
+    function log(msg, type=''){
       const row = document.createElement('div');
       if(type==='success') row.className='success';
       if(type==='error') row.className='error';
       row.textContent = '['+new Date().toLocaleTimeString()+'] '+msg;
       logBox.prepend(row);
-      el('status').textContent = (type==='error'?'Error':'Ready');
-    };
+      $('status').textContent = (type==='error'?'Error':'Ready');
+    }
 
-    let schedule = [], scheduleMap = {};
+    // ---- Bind GameContext display ----
+    GameContext.bindInputs({ game_id:$('ctx_game'), drive_id:$('ctx_drive'), play_id:$('ctx_play') });
+
+    // ---- Roster ----
     let roster = [];
-    const playersById = new Map();
-    const playersByName = new Map();
-    const playersByNum  = new Map();
+    const rosterById = new Map();
+    const rosterByName = new Map();
 
-    /* =======================
-     * API helpers
-     * ======================= */
-    async function apiGet(params){
-      const url = new URL(API_BASE);
-      Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,v));
-      const r = await fetch(url);
-      return r.json();
-    }
-    async function apiPost(payload){
-      const r = await fetch(API_BASE,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
-      });
-      return r.json();
-    }
-    async function appendRowTable(sheet_id, sheet_name, row, ensure=[]){
-      const res = await apiPost({ action:'append', sheet_id, sheet_name, row, ensure_headers: ensure });
-      if(!res.ok) throw new Error(res.error||'Append failed');
-      return res;
-    }
-    async function nextId(prefix){
-      const res = await apiGet({ action:'next_id', prefix });
-      if(!res.ok) throw new Error(res.error||'ID failed');
-      return res.id;
-    }
-
-    /* =======================
-     * SCHEDULE
-     * ======================= */
-    function fillDatalist(id, arr){
-      const dl = el(id); dl.innerHTML='';
-      arr.forEach(v=>{ const o=document.createElement('option'); o.value=v; dl.appendChild(o); });
-    }
-    async function loadSchedule(){
-      try{
-        const res = await apiGet({ action:'table', sheet_id: SCHEDULE_SHEET_ID, sheet_name: SCHEDULE_TAB });
-        if(!res.ok) throw new Error(res.error||'Schedule fetch failed');
-        schedule = (res.rows||[]).filter(r=>r.game_id);
-        scheduleMap = {};
-        const ids = [];
-        schedule.forEach(r=>{
-          const gid = String(r.game_id).trim();
-          if(!gid) return;
-          scheduleMap[gid]=r; ids.push(gid);
-        });
-        ids.sort((a,b)=>{
-          const ra=scheduleMap[a], rb=scheduleMap[b];
-          const da=(ra.date||''), db=(rb.date||'');
-          if(da && db && da!==db) return da<db?-1:1;
-          return (Number(ra.week||0) - Number(rb.week||0));
-        });
-        fillDatalist('list_game_ids', ids);
-        log(`Schedule loaded (${ids.length} games).`, 'success');
-      }catch(err){ log(err.message,'error'); }
-    }
-    function renderGameMeta(gid){
-      const box = el('game_meta');
-      const r = scheduleMap[gid];
-      if(!r){ box.style.display='none'; return; }
-      el('meta_date').textContent   = r.date ? `Date: ${r.date}` : 'Date: —';
-      el('meta_week').textContent   = r.week ? `Week: ${r.week}` : 'Week: —';
-      el('meta_opp').textContent    = r.opponent ? `Opponent: ${r.opponent}` : 'Opponent: —';
-      el('meta_ha').textContent     = r.home_away ? `Venue: ${r.home_away}` : 'Venue: —';
-      el('meta_weather').textContent= r.weather_conditions ? `Weather: ${r.weather_conditions}` : 'Weather: —';
-      box.style.display='grid';
-    }
-    el('game_id').addEventListener('change',()=>{
-      const gid = el('game_id').value.trim();
-      if(!gid){ renderGameMeta(''); return; }
-      if(!scheduleMap[gid]){ log(`Game ID "${gid}" not found in schedule.`, 'error'); renderGameMeta(''); return; }
-      renderGameMeta(gid);
-    });
-
-    /* =======================
-     * ROSTER (DL)
-     * ======================= */
-    function pushOption(dlId, text){
-      const o = document.createElement('option'); o.value = text; el(dlId).appendChild(o);
-    }
-    function buildRosterIndexes(rows){
-      playersById.clear(); playersByName.clear(); playersByNum.clear();
-      el('list_dl_names').innerHTML='';
-      const dlnames = [];
-
-      rows.forEach(r=>{
-        const id = (r.player_id||r.id||'').toString().trim();
-        const name = (r.player_name||r.name||'').toString().trim();
-        const pos = (r.position||r.pos||'').toString().trim().toUpperCase();
-        const num = (r.jersey_number||r.jersey||'').toString().trim();
-        if(!id || !name) return;
-
-        playersById.set(id.toUpperCase(), {id,name,pos,num});
-        playersByName.set(name.toUpperCase(), id);
-        if(num) playersByNum.set(String(num), id);
-
-        if(DL_POS.includes(pos)) dlnames.push(name);
-      });
-
-      dlnames.sort((a,b)=>a.localeCompare(b));
-      dlnames.forEach(n=>pushOption('list_dl_names', n));
-    }
     async function loadRoster(){
       try{
         const res = await apiGet({ action:'roster', sheet_id: ROSTER_SHEET_ID, sheet_name: ROSTER_TAB });
         if(!res.ok) throw new Error(res.error||'Roster fetch failed');
-        roster = res.roster||[];
-        buildRosterIndexes(roster);
-        log(`Roster loaded (${roster.length} players).`, 'success');
-      }catch(err){ log(err.message,'error'); }
+        const rows = res.roster || [];
+        roster = rows
+          .map(r=>({ id:r.player_id, name:r.player_name, pos:(r.position||'').toUpperCase(), num:r.jersey_number||'' }))
+          .filter(p=>p.id && p.name && (DL_POS.includes(p.pos)));
+        rosterById.clear(); rosterByName.clear(); $('dl_players').innerHTML='';
+        roster.forEach(p=>{
+          rosterById.set(p.id, p);
+          rosterByName.set(p.name.toUpperCase(), p);
+          const opt = document.createElement('option');
+          opt.value = `${p.name} #${p.num} (${p.pos||''})`;
+          $('dl_players').appendChild(opt);
+        });
+        log(`DL roster ready (${roster.length}).`, 'success');
+      }catch(err){ log(String(err),'error'); }
     }
-    function resolvePlayerId(s){
-      const t = (s||'').toString().trim();
-      if(!t) return '';
-      if(playersById.has(t.toUpperCase())) return t;
-      if(playersByName.has(t.toUpperCase())) return playersByName.get(t.toUpperCase());
-      const num = t.replace(/[^0-9]/g,'');
-      if(num && playersByNum.has(num)) return playersByNum.get(num);
-      return '';
-    }
-    function syncDefender(){
-      const id = resolvePlayerId(el('def_name').value) || resolvePlayerId(el('def_id').value);
-      if(id) el('def_id').value = id;
-    }
-    el('loadRosterBtn').addEventListener('click', loadRoster);
-    el('def_name').addEventListener('change', syncDefender);
 
-    /* =======================
-     * Dictionary
-     * ======================= */
-    function rowsToListMap(rows){
-      const map = new Map();
-      rows.forEach(r=>{
-        const list = (r.list || r.list_name || r.group || r.key || '').toString().trim();
-        const val  = (r.value || r.item || r.option || r.name || '').toString().trim();
-        if(!list || !val) return;
-        if(!map.has(list)) map.set(list, []);
-        map.get(list).push(val);
+    function parsePlayerInput(s){
+      const raw = String(s||'').trim();
+      if(!raw) return null;
+      const name = raw.replace(/\s+#\d+.*$/,'').trim();
+      return roster.find(x=>x.name.toUpperCase()===name.toUpperCase()) ||
+             roster.find(x=>name && x.name.toUpperCase().startsWith(name.toUpperCase())) || null;
+    }
+
+    // ---- Active chips / selection ----
+    let active = [];
+    let selected = new Set();
+
+    function renderChips(){
+      const wrap = $('active_chips'); wrap.innerHTML='';
+      active.forEach((p,i)=>{
+        const el = document.createElement('span');
+        el.className = 'chipitem'+(selected.has(p.id)?' active':'');
+        el.innerHTML = `<strong>#${p.num||'—'}</strong> ${p.name} <span class="tiny">${p.pos||''}</span> <button class="rm" aria-label="Remove" data-i="${i}">×</button>`;
+        el.addEventListener('click', (ev)=>{
+          if (ev.target.closest('button.rm')) return;
+          if (selected.has(p.id)) selected.delete(p.id); else selected.add(p.id);
+          renderChips(); updateSelCount();
+        });
+        wrap.appendChild(el);
       });
-      return map;
-    }
-    function fillSeg(targetId, values, defVal){
-      const group = document.querySelector(`.seg[data-target="${targetId}"]`);
-      if(!group || !Array.isArray(values) || !values.length) return;
-      group.innerHTML = values.map((v,i)=>(
-        `<button class="seg-btn" data-val="${v}" aria-pressed="${(v===defVal)||(!defVal&&i===0)}">${v}</button>`
-      )).join('');
-      setSegValue(targetId, defVal || values[0]);
-    }
-    function fillSelect(id, arr){
-      const s = el(id); if(!s) return; s.innerHTML='';
-      arr.forEach((v,i)=>{
-        const o=document.createElement('option');
-        o.value = (i===0 && v==='—') ? '' : v;
-        o.textContent = v;
-        s.appendChild(o);
+      wrap.querySelectorAll('.rm').forEach(btn=>{
+        btn.addEventListener('click', (ev)=>{ ev.stopPropagation(); const i=Number(btn.dataset.i); const pid=active[i].id; active.splice(i,1); selected.delete(pid); renderChips(); updateSelCount(); buildTable(); });
       });
+      $('activeCount').textContent = `${active.length} active`;
+      buildTable();
     }
-    async function loadDictionary(){
+    function updateSelCount(){ $('selCount').textContent = `${selected.size || 0} selected`; }
+
+    $('add_player').addEventListener('change', ()=>{
+      const p = parsePlayerInput($('add_player').value);
+      if(p && !active.some(x=>x.id===p.id)){ active.push(p); renderChips(); }
+      $('add_player').value='';
+    });
+
+    $('presenceSetBtn').addEventListener('click', async ()=>{
       try{
-        const res = await apiGet({ action:'dropdowns', sheet_id: DICTIONARY_SHEET_ID, sheet_name: DICTIONARY_TAB });
-        if(!res.ok) throw new Error(res.error || 'Dictionary fetch failed');
-        const lists = rowsToListMap(res.lists || res.rows || []);
+        const ctx = GameContext.get();
+        if(!ctx.game_id) throw new Error('Set a Game ID (Game Primary).');
+        const players = active.map(p=>p.id);
+        await presenceSet('DL', players, { unit:$('unit').value||'DL', package:$('pkg').value||'', source:'game-dl' });
+        log(`Presence set for DL: ${players.length} players.`, 'success');
+      }catch(err){ log(String(err),'error'); }
+    });
 
-        const rushMoves = lists.get('DL_RushMove') ||
-                          lists.get('PassRush_Move') ||
-                          ['Speed','Power','Bull','Swim','Rip','Spin','Club','Inside','Counter','Stunt','Twist','Contain'];
+    $('presenceLoadBtn').addEventListener('click', async ()=>{
+      try{
+        const ctx = GameContext.get();
+        if(!ctx.game_id) throw new Error('Set a Game ID first.');
+        const res = await apiGet({ action:'presence_get', game_id: ctx.game_id, group:'DL' });
+        if(!res.ok) throw new Error(res.error||'presence_get failed');
+        const arr = (res.data && res.data.players) || (res.presence && res.presence.players) || [];
+        const found = arr.map(id=>rosterById.get(id)).filter(Boolean);
+        active = found; selected.clear(); renderChips(); updateSelCount();
+        log(`Loaded ${active.length} from presence.`, 'success');
+      }catch(err){ log(String(err),'error'); }
+    });
 
-        const gaps = lists.get('OL_Gap') || lists.get('Gap') || ['A','B','C','D'];
+    // ---- Table model (tackles/takeaways) ----
+    const zeroRow = () => ({
+      solo:0, assist:0, missed:0, tfl:0, sack:0,
+      ff:0, fr:0, fr_yards:'', fr_td:0, safety:0, penalty:'', notes:''
+    });
+    const tableState = new Map(); // player_id -> rowObj
+    function ensureRow(pid){ if(!tableState.has(pid)) tableState.set(pid, zeroRow()); return tableState.get(pid); }
 
-        const penalties = lists.get('Penalty_Types') ||
-                          lists.get('Penalties') ||
-                          ['Holding','Offside','Neutral Zone Infraction','Illegal Hands','Roughing the Passer','Face Mask','Personal Foul'];
-
-        fillSeg('pr_move', rushMoves, rushMoves[0]);
-        fillSeg('rd_gap', gaps, gaps.includes('B') ? 'B' : gaps[0]);
-        fillSelect('pen_type', ['—', ...penalties]);
-
-        log('Dictionary loaded (moves/gaps/penalties).', 'success');
-      }catch(err){
-        log(err.message, 'error');
-      }
-    }
-
-    /* =======================
-     * Segments & Toggles
-     * ======================= */
-    function setSegValue(id, val){
-      const hidden = el(id);
-      if(hidden) hidden.value = val;
-      const group = document.querySelector(`.seg[data-target="${id}"]`);
-      if(!group) return;
-      group.querySelectorAll('.seg-btn').forEach(btn=>{
-        const act = btn.dataset.val === val;
-        btn.setAttribute('aria-pressed', String(act));
+    function buildTable(){
+      const tb = $('tbody'); tb.innerHTML='';
+      active.forEach(p=>{
+        const r = ensureRow(p.id);
+        const tr = document.createElement('tr');
+        tr.dataset.pid = p.id;
+        tr.innerHTML = `
+          <td><strong>#${p.num||'—'}</strong> ${p.name} <span class="tiny">${p.pos||''}</span></td>
+          <td><input class="num" type="number" min="0" step="1" data-k="solo" value="${r.solo}"></td>
+          <td><input class="num" type="number" min="0" step="1" data-k="assist" value="${r.assist}"></td>
+          <td><input class="num" type="number" min="0" step="1" data-k="missed" value="${r.missed}"></td>
+          <td><input class="num" type="number" min="0" step="1" data-k="tfl" value="${r.tfl}"></td>
+          <td><input class="num" type="number" min="0" step="1" data-k="sack" value="${r.sack}"></td>
+          <td><input class="num" type="number" min="0" step="1" data-k="ff" value="${r.ff}"></td>
+          <td><input class="num" type="number" min="0" step="1" data-k="fr" value="${r.fr}"></td>
+          <td><input class="num" type="number" step="1" data-k="fr_yards" value="${r.fr_yards}"></td>
+          <td><select data-k="fr_td"><option ${r.fr_td? 'selected':''}>1</option><option ${r.fr_td? '':'selected'}>0</option></select></td>
+          <td><select data-k="safety"><option ${r.safety? 'selected':''}>1</option><option ${r.safety? '':'selected'}>0</option></select></td>
+          <td><input data-k="penalty" placeholder="Offside, Holding, —" value="${escapeHtml(r.penalty)}"></td>
+          <td><input data-k="notes" placeholder="Notes" value="${escapeHtml(r.notes)}"></td>
+        `;
+        tb.appendChild(tr);
       });
-    }
-    function initSegGroups(){
-      document.querySelectorAll('.seg[data-target]').forEach(group=>{
-        group.addEventListener('click', ev=>{
-          const btn = ev.target.closest('.seg-btn'); if(!btn) return;
-          const id = group.dataset.target;
-          setSegValue(id, btn.dataset.val);
+      tb.querySelectorAll('input,select').forEach(inp=>{
+        inp.addEventListener('change', ()=>{
+          const tr = inp.closest('tr'); const pid = tr.dataset.pid;
+          const k = inp.dataset.k; if(!k) return;
+          const row = ensureRow(pid);
+          row[k] = (inp.type==='number') ? (inp.value===''? '' : Number(inp.value)) :
+                   (inp.tagName==='SELECT'? Number(inp.value) : inp.value);
         });
       });
     }
 
-    function setToggle(id, on){
-      const btn = document.querySelector(`.tgl-btn[data-target="${id}"]`);
-      const hidden = el(id);
-      if(!btn || !hidden) return;
-      btn.setAttribute('aria-checked', String(on));
-      hidden.value = on ? 'Yes' : 'No';
-      refreshDependentUI();
-    }
-    function mountToggles(){
-      document.querySelectorAll('.tgl-btn[data-target]').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-          const id = btn.dataset.target;
-          const next = !(btn.getAttribute('aria-checked') === 'true');
-          setToggle(id, next);
-
-          // tie-ins
-          if(id==='pr_sack' && next) setToggle('pr_pressure', true);
-          if(id==='pr_hit'  && next) setToggle('pr_pressure', true);
-          if(id==='pr_double'===id && !next) setToggle('pr_double_win', false);
+    // Quick events
+    document.querySelectorAll('[data-ev]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const ev = btn.dataset.ev;
+        const targets = selected.size ? active.filter(p=>selected.has(p.id)) : active;
+        targets.forEach(p=>{
+          const row = ensureRow(p.id);
+          const map = { solo:'solo', assist:'assist', missed:'missed', tfl:'tfl', sack:'sack', ff:'ff', fr:'fr', safety:'safety' };
+          const k = map[ev];
+          if(k){ row[k] = Number(row[k]||0) + 1; }
         });
+        buildTable();
       });
-      // defaults
-      setToggle('pr_snap', true);
-      ['pr_pressure','pr_hit','pr_sack','pr_double','pr_double_win',
-       'rd_stop','tk_solo','tk_assist','tk_tfl'].forEach(i=>setToggle(i,false));
-      setToggle('rd_snap', true);
-    }
+    });
+    $('clearEventsBtn').addEventListener('click', ()=>{
+      const targets = selected.size ? active.filter(p=>selected.has(p.id)) : active;
+      targets.forEach(p=>tableState.set(p.id, zeroRow()));
+      buildTable();
+    });
 
-    function refreshDependentUI(){
-      const faced = el('pr_double').value === 'Yes';
-      document.getElementById('double_win_wrap').classList.toggle('is-disabled', !faced);
-      if(!faced) setToggle('pr_double_win', false);
-    }
-
-    /* =======================
-     * Helpers
-     * ======================= */
-    const numVal = v => (v===''||v==null ? '' : Number(v));
-    const ynTo01 = v => v==='Yes'?1 : (v==='No'?0 : '');
-
-    async function lookupPlay(){
+    // ---- Save: TACKLES / TAKEAWAYS ----
+    $('saveTacklesBtn').addEventListener('click', async ()=>{
       try{
-        const pid = el('play_id').value.trim();
-        if(!pid) throw new Error('Enter a Play ID first.');
-        const res = await apiGet({ action:'table', sheet_id: SCHEDULE_SHEET_ID, sheet_name: '20_Fact_Plays' });
-        if(!res.ok) throw new Error(res.error||'Fetch plays failed');
-        const row = (res.rows||[]).find(r => String(r.play_id||'').trim() === pid);
-        if(!row){ log(`Play ${pid} not found in 20_Fact_Plays`, 'error'); return; }
-        log(`Play ${pid} found (Q${row.quarter||'?'} @ ${row.clock||'??:??'})`, 'success');
-      }catch(err){ log(err.message,'error'); }
-    }
-    el('lookupPlayBtn').addEventListener('click', lookupPlay);
-    el('newPlayIdBtn').addEventListener('click', async ()=>{
-      try{ const id = await nextId('PLAY'); el('play_id').value = id; log(`New Play ID: ${id}`,'success'); }
-      catch(err){ log(err.message,'error'); }
+        const ctx = GameContext.get();
+        if(!ctx.game_id) throw new Error('Game ID is required.');
+        if(!ctx.play_id) throw new Error('Play ID required.');
+        const ops = [];
+        active.forEach(p=>{
+          const r = tableState.get(p.id);
+          if(!r) return;
+          const sum = (Number(r.solo)+Number(r.assist)+Number(r.missed)+Number(r.tfl)+Number(r.sack)+Number(r.ff)+Number(r.fr)+Number(r.safety)) || 0;
+          const hasNotes = String(r.notes||'').trim() || String(r.penalty||'').trim();
+          if (!sum && !hasNotes) return;
+          const row = {
+            game_id: ctx.game_id, play_id: ctx.play_id,
+            player_id: p.id, player_name: p.name, position: p.pos||'', jersey_number: p.num||'',
+            solo_tackle: numOr(r.solo), assist_tackle: numOr(r.assist), missed_tackle: numOr(r.missed),
+            tfl: numOr(r.tfl), sack: numOr(r.sack),
+            ff: numOr(r.ff), fr: numOr(r.fr), fr_yards: numOr(r.fr_yards), fr_td: numOr(r.fr_td),
+            safety: numOr(r.safety),
+            penalty: (r.penalty||'').trim(),
+            notes: (r.notes||'').trim()
+          };
+          ops.push({ route: ROUTE_TACKLES, row, ensure_headers: TKL_HEADERS });
+        });
+        if (!ops.length) throw new Error('Nothing to save.');
+        const res = await apiPost({ action:'batch', ops });
+        if(!res.ok) throw new Error(res.error||'Save failed');
+        log(`Saved ${ops.length} tackle/takeaway row(s).`, 'success');
+      }catch(err){ log(String(err),'error'); }
     });
 
-    function ensureGameAndDef(){
-      const game_id = el('game_id').value.trim();
-      if(!game_id) throw new Error('Pick a Game ID from schedule.');
-      if(!scheduleMap[game_id]) throw new Error('Game ID not found in schedule.');
-      const play_id = el('play_id').value.trim();
-      if(!play_id) throw new Error('Enter a Play ID.');
-      syncDefender();
-      const def_id = el('def_id').value.trim();
-      if(!def_id) throw new Error('Set Defender (name or ID).');
-      return { game_id, play_id, def_id };
-    }
-
-    /* =======================
-     * SAVE: Pass Rush
-     * ======================= */
-    el('savePassRushBtn').addEventListener('click', async ()=>{
+    // ---- Save: RUN DEFENSE ----
+    $('saveRunDefBtn').addEventListener('click', async ()=>{
       try{
-        const { game_id, play_id, def_id } = ensureGameAndDef();
+        const ctx = GameContext.get();
+        if(!ctx.game_id) throw new Error('Game ID is required.');
+        if(!ctx.play_id) throw new Error('Play ID required.');
+        const targets = selected.size ? active.filter(p=>selected.has(p.id)) : active;
+        if(!targets.length) throw new Error('Select at least one player or add actives.');
 
-        const row = {
-          play_id,
-          rusher_id: def_id,
-          'Pass Rush Snap': ynTo01(el('pr_snap').value),
-          'Pressure': ynTo01(el('pr_pressure').value),
-          'QB Hit': ynTo01(el('pr_hit').value),
-          'Sack': ynTo01(el('pr_sack').value),
-          'Time to Pressure': numVal(el('pr_ttp').value),
-          'Double Team Faced': ynTo01(el('pr_double').value),
-          'Double Team Win': ynTo01(el('pr_double_win').value),
-          'Rush Move': el('pr_move').value || ''
-        };
+        const gap = $('rd_gap').value||'';
+        const integ = $('rd_integrity').value==='Maintained' ? 1 : 0;
+        const result = $('rd_result').value||'';
+        const run_stop = (result==='Run Stop') ? 1 : 0;
+        const tfl      = (result==='TFL') ? 1 : 0;
+        const missed   = (result==='Missed Tackle') ? 1 : 0;
 
-        await appendRowTable(POS_GROUPS_ID, TAB_PASSRUSH, row, Object.keys(row));
-        log(`Pass Rush saved for ${play_id} (DL ${def_id}).`, 'success');
-      }catch(err){ log(err.message,'error'); }
+        const ops = targets.map(p=>({
+          route: ROUTE_RUN_DEF,
+          row: {
+            game_id: ctx.game_id, play_id: ctx.play_id,
+            player_id: p.id, player_name: p.name, position: p.pos||'', jersey_number: p.num||'',
+            gap, integrity_maintained: integ, run_stop, tfl, missed_tackle: missed, yards_allowed:'', penalty:'', notes:''
+          },
+          ensure_headers: RUN_HEADERS
+        }));
+        const res = await apiPost({ action:'batch', ops });
+        if(!res.ok) throw new Error(res.error||'Save failed');
+        log(`Saved ${ops.length} run-defense row(s).`, 'success');
+      }catch(err){ log(String(err),'error'); }
     });
-    el('clearPassRushBtn').addEventListener('click', ()=>{
-      ['pr_pressure','pr_hit','pr_sack','pr_double','pr_double_win'].forEach(i=>setToggle(i,false));
-      ['pr_ttp'].forEach(i=>el(i).value='');
-    });
 
-    /* =======================
-     * SAVE: Run Defense
-     * ======================= */
-    el('saveRunDefBtn').addEventListener('click', async ()=>{
+    // ---- Save: PASS RUSH ----
+    $('saveRushBtn').addEventListener('click', async ()=>{
       try{
-        const { game_id, play_id, def_id } = ensureGameAndDef();
+        const ctx = GameContext.get();
+        if(!ctx.game_id) throw new Error('Game ID is required.');
+        if(!ctx.play_id) throw new Error('Play ID required.');
+        const targets = selected.size ? active.filter(p=>selected.has(p.id)) : active;
+        if(!targets.length) throw new Error('Select at least one player or add actives.');
 
-        const row = {
-          play_id,
-          defender_id: def_id,
-          'Run Defense Snap': ynTo01(el('rd_snap').value),
-          'Run Stop': ynTo01(el('rd_stop').value),
-          'Gap': el('rd_gap').value || '',
-          'Gap Integrity': (el('rd_integrity').value === 'Maintained') ? 1 : 0
-        };
+        const move   = $('pr_move').value||'';
+        const pressure = Number($('pr_pressure').value||0);
+        const hit      = Number($('pr_hit').value||0);
+        const hurry    = Number($('pr_hurry').value||0);
+        const sack     = Number($('pr_sack').value||0);
+        const batted   = Number($('pr_batted').value||0);
+        const dbl      = Number($('pr_double').value||0);
+        const dblw     = Number($('pr_double_win').value||0);
+        const ttp      = $('pr_ttp').value==='' ? '' : Number($('pr_ttp').value);
 
-        await appendRowTable(POS_GROUPS_ID, TAB_RUNDEF, row, Object.keys(row));
-        log(`Run Defense saved for ${play_id} (DL ${def_id}).`, 'success');
-      }catch(err){ log(err.message,'error'); }
+        const ops = targets.map(p=>({
+          route: ROUTE_PASS_RUSH,
+          row: {
+            game_id: ctx.game_id, play_id: ctx.play_id,
+            player_id: p.id, player_name: p.name, position: p.pos||'', jersey_number: p.num||'',
+            rush_move: move, pressure, hit, hurry, sack, batted_pass: batted,
+            double_team_faced: dbl, double_team_win: dblw, time_to_pressure_sec: ttp,
+            penalty:'', notes:'DL rush'
+          },
+          ensure_headers: RUSH_HEADERS
+        }));
+        const res = await apiPost({ action:'batch', ops });
+        if(!res.ok) throw new Error(res.error||'Save failed');
+        log(`Saved ${ops.length} pass-rush row(s).`, 'success');
+      }catch(err){ log(String(err),'error'); }
     });
-    el('clearRunDefBtn').addEventListener('click', ()=>{
-      setToggle('rd_stop', false);
-      setSegValue('rd_integrity','Maintained');
-    });
 
-    /* =======================
-     * SAVE: Tackle
-     * ======================= */
-    el('saveTackleBtn').addEventListener('click', async ()=>{
+    // ---- Save: PENALTY ----
+    $('savePenaltyBtn').addEventListener('click', async ()=>{
       try{
-        const { game_id, play_id, def_id } = ensureGameAndDef();
+        const ctx = GameContext.get();
+        if(!ctx.game_id) throw new Error('Game ID is required.');
+        if(!ctx.play_id) throw new Error('Play ID required.');
+        const targets = selected.size ? active.filter(p=>selected.has(p.id)) : active;
+        if(!targets.length) throw new Error('Select at least one player or add actives.');
 
-        const row = {
-          play_id,
-          tackler_id: def_id,
-          Solo: ynTo01(el('tk_solo').value),
-          Assist: ynTo01(el('tk_assist').value),
-          TFL: ynTo01(el('tk_tfl').value)
-        };
+        const type = $('pen_type').value||'';
+        const yds  = $('pen_yards').value==='' ? '' : Number($('pen_yards').value);
 
-        await appendRowTable(POS_GROUPS_ID, TAB_TACKLES, row, Object.keys(row));
-        log(`Tackle saved for ${play_id} (DL ${def_id}).`, 'success');
-      }catch(err){ log(err.message,'error'); }
-    });
-    el('clearTackleBtn').addEventListener('click', ()=>{
-      ['tk_solo','tk_assist','tk_tfl'].forEach(i=>setToggle(i,false));
-    });
-
-    /* =======================
-     * SAVE: Penalty
-     * ======================= */
-    el('savePenaltyBtn').addEventListener('click', async ()=>{
-      try{
-        const { game_id, play_id, def_id } = ensureGameAndDef();
-        const row = {
-          play_id,
-          player_id: def_id,
-          'Penalty Type': el('pen_type').value || '',
-          'Penalty Yards': numVal(el('pen_yards').value)
-        };
-        await appendRowTable(DETAILED_TRACKING_ID, TAB_PENALTIES, row, Object.keys(row));
-        log(`Penalty saved for ${play_id} (DL ${def_id}).`, 'success');
-        el('pen_yards').value='';
-      }catch(err){ log(err.message,'error'); }
+        const ops = targets.map(p=>({
+          route: ROUTE_PEN,
+          row: {
+            game_id: ctx.game_id, play_id: ctx.play_id,
+            player_id: p.id, player_name: p.name, position: p.pos||'', jersey_number: p.num||'',
+            'Penalty Type': type, 'Penalty Yards': yds, notes:''
+          },
+          ensure_headers: PEN_HEADERS
+        }));
+        const res = await apiPost({ action:'batch', ops });
+        if(!res.ok) throw new Error(res.error||'Save failed');
+        log(`Saved ${ops.length} penalty row(s).`, 'success');
+        $('pen_yards').value='';
+      }catch(err){ log(String(err),'error'); }
     });
 
-    /* =======================
-     * INIT
-     * ======================= */
-    function setSegDefaults(){
-      // just in case dictionary hasn’t arrived yet
-      if(!el('rd_gap').value) setSegValue('rd_gap','B');
-    }
+    // ---- Utils ----
+    function numOr(v){ return (v===''||v==null) ? '' : Number(v); }
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;' }[m])); }
 
-    function followPrimary(){
-      if (!window.GameContext) return;
-      GameContext.subscribe(ctx=>{
-        if(ctx.game_id && el('game_id').value!==ctx.game_id){ el('game_id').value=ctx.game_id; el('game_id').dispatchEvent(new Event('change')); }
-        if(ctx.play_id && !el('play_id').value){ el('play_id').value = ctx.play_id; }
-      });
-    }
-
-    initSegGroups();
-    mountToggles();
-    loadSchedule();
+    // ---- Boot ----
     loadRoster();
-    loadDictionary();
-    setSegDefaults();
-    followPrimary();
+  })();
   </script>
 </body>
 </html>

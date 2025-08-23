@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Coverage (DB) – Football Data Tracker</title>
+
+  <!-- Auth guard -->
+  <script>
+    (function(){
+      const ok = localStorage.getItem('auth_ok')==='1' &&
+                 Number(localStorage.getItem('auth_until')||0) > Date.now();
+      if(!ok){ window.location.href = '../index.html#login'; }
+    })();
+  </script>
+
+  <!-- Fonts + site theme -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css"/>
+
+  <style>
+    :root{
+      --ink:#0f172a; --muted:#64748b; --ok:#1bbf83; --warn:#ffa142; --err:#ff6b6b;
+      --pill:#3a1660; --pill-2:#a36bff; --bd:#E7E9F2; --card:#fff; --halo:#a36bff33;
+    }
+    body.practice-page{ background:linear-gradient(180deg,#0f0b1a 0%, #130e22 55%, #0e0b18 100%); }
+
+    .container{
+      max-width:1100px; margin:0 auto; padding:16px; display:grid; gap:16px;
+      grid-template-columns: 1fr; grid-template-areas:
+        "ctx" "team" "active" "players" "log";
+    }
+    @media (min-width: 980px){
+      .container{ grid-template-columns: 1fr 1fr; grid-template-areas:
+        "ctx    team"
+        "active players"
+        "log    log";
+      }
+    }
+    .card{ background:var(--card); border:1px solid var(--bd); border-radius:18px; padding:18px; box-shadow:0 10px 24px rgba(2,8,23,.06); color:var(--ink); }
+    .area-ctx{grid-area:ctx} .area-team{grid-area:team} .area-active{grid-area:active} .area-players{grid-area:players} .area-log{grid-area:log}
+    .section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .section-title h2{margin:0;font-size:1.2rem}
+    .tiny{font-size:.9rem;color:var(--muted)} .chip{display:inline-block;padding:.35rem .7rem;border-radius:999px;background:#f3f4f7;border:1px solid #e5e7ef;font-weight:600;color:#4b5563}
+    label{display:block;font-size:.95rem;color:#334155;margin:0 0 .35rem}
+    input,select,textarea{
+      width:100%; padding:.7rem .85rem; border-radius:12px; border:2px solid #cfd6ea; background:#fff;
+      transition:border-color .15s ease, box-shadow .15s ease;
+    }
+    input:focus,select:focus,textarea:focus{ outline:none; border-color:#a36bff; box-shadow:0 0 0 4px var(--halo); }
+    .row{display:grid; gap:12px}
+    .row.cols-2{grid-template-columns:1fr 1fr} .row.cols-3{grid-template-columns:repeat(3,1fr)} .row.cols-4{grid-template-columns:repeat(4,1fr)}
+    @media (max-width:720px){ .row.cols-2,.row.cols-3,.row.cols-4{grid-template-columns:1fr} }
+
+    .btnbar{display:flex;gap:.5rem;flex-wrap:wrap}
+    .btn{appearance:none;border:1px solid var(--pill);background:var(--pill);color:#fff;cursor:pointer;padding:.6rem 1rem;border-radius:999px;font-weight:800}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(163,107,255,.22)}
+    .btn.subtle{background:#fff;color:var(--pill);border-color:#e2d6ff}
+    .btn.warn{background:#fde9d6;color:#7a3b01;border-color:#f5c899}
+    .btn.ghost{background:#fff;color:#111827;border-color:#e5e7ef}
+    .btn.small{padding:.45rem .7rem}
+
+    /* chips */
+    .chiplist{display:flex;gap:.4rem;flex-wrap:wrap}
+    .chipitem{display:flex;align-items:center;gap:.4rem;padding:.35rem .6rem;border:1px solid #e5e7ef;background:#f9fafb;border-radius:999px}
+    .chipitem .rm{background:transparent;border:none;color:#475569;cursor:pointer;font-weight:900}
+
+    /* table */
+    table{ width:100%; border-collapse:separate; border-spacing:0; }
+    thead th{ text-align:left; font-size:.9rem; color:#475569; border-bottom:1px solid #e5e7ef; padding:.45rem .4rem; position:sticky; top:0; background:#fff; }
+    tbody td{ padding:.35rem .3rem; border-bottom:1px solid #f1f5f9; }
+    tbody tr:hover{ background:#fafaff; }
+    .num{ width:84px; }
+
+    #log{ max-height:220px; overflow:auto; background:#fbfbfe; border:1px solid #eef1f8; border-radius:12px; padding:10px; color:#1f2937 }
+    .success{color:var(--ok)} .error{color:var(--err)}
+  </style>
+</head>
+
+<body class="practice-page">
+  <header class="page-header">
+    <h1>Coverage (DB)</h1>
+    <nav class="menu-actions" aria-label="Header">
+      <a href="game-day.html" class="menu-btn">Game Day</a>
+      <a href="../index.html" class="menu-btn">Home</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="container">
+      <!-- ===== Game Context ===== -->
+      <section class="card area-ctx">
+        <div class="section-title">
+          <h2>Game Context</h2>
+          <span id="status" class="tiny">Ready</span>
+        </div>
+        <div class="row cols-3">
+          <div><label>Game ID</label><input id="ctx_game" placeholder="G2025-01" disabled></div>
+          <div><label>Drive ID</label><input id="ctx_drive" placeholder="DRIVE_…" disabled></div>
+          <div><label>Play ID</label><input id="ctx_play" placeholder="PLAY_…" disabled></div>
+        </div>
+        <div class="tiny" style="margin-top:.4rem">
+          Tip: Play/Drive come from <strong>Game Primary</strong>. This page logs the team call and per-player responsibilities for the current play.
+        </div>
+      </section>
+
+      <!-- ===== Team Coverage Call ===== -->
+      <section class="card area-team">
+        <div class="section-title">
+          <h2>Team Coverage Call</h2>
+          <span class="tiny">Writes one row to <strong>33_Fact_Coverage</strong> (is_team_call = 1)</span>
+        </div>
+
+        <div class="row cols-2">
+          <div>
+            <label>Call / Family</label>
+            <input id="cov_family" list="dl_cov_family" placeholder="e.g., Quarters, Cover 3 Buzz, Tampa 2">
+            <datalist id="dl_cov_family"></datalist>
+          </div>
+          <div>
+            <label>Rotation / Check</label>
+            <input id="cov_rotation" list="dl_rotation" placeholder="Roll Weak, Buzz Strong, Cloud/Trap, Check 'Palms'">
+            <datalist id="dl_rotation"></datalist>
+          </div>
+        </div>
+
+        <div class="row cols-3" style="margin-top:.4rem">
+          <div><label>Coverage Strength</label>
+            <select id="cov_strength">
+              <option value="">—</option><option>Field</option><option>Boundary</option><option>To Strength</option><option>Away from Strength</option>
+            </select>
+          </div>
+          <div><label>Call Tag (optional)</label><input id="cov_tag" placeholder="e.g., Solo, Box, Alert 3"/></div>
+          <div><label>Pressure Called</label>
+            <select id="cov_pressure">
+              <option value="">—</option><option>None</option><option>4-Man</option><option>5-Man</option><option>6-Man+</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="btnbar" style="margin-top:.6rem">
+          <button class="btn" id="saveTeamCallBtn">Save Team Coverage</button>
+          <button class="btn subtle" id="clearTeamCallBtn">Clear</button>
+        </div>
+      </section>
+
+      <!-- ===== Active Secondary (Presence) ===== -->
+      <section class="card area-active">
+        <div class="section-title">
+          <h2>Active DBs</h2>
+          <span class="tiny">Pushes presence for <strong>DB</strong> group</span>
+        </div>
+
+        <div class="row cols-3">
+          <div>
+            <label>Add Player</label>
+            <input id="add_player" list="dl_players" placeholder="Type name or #…">
+            <datalist id="dl_players"></datalist>
+          </div>
+          <div>
+            <label>Package</label>
+            <input id="pkg" list="dl_pkg" placeholder="Nickel, Dime, 2-High, etc.">
+            <datalist id="dl_pkg">
+              <option>Base</option><option>Nickel</option><option>Dime</option><option>Quarter</option><option>Big Nickel</option>
+            </datalist>
+          </div>
+          <div>
+            <label>Unit Label</label>
+            <input id="unit" placeholder="e.g., DB"/>
+          </div>
+        </div>
+
+        <div class="chiplist" id="active_chips" style="margin-top:.5rem" aria-live="polite"></div>
+
+        <div class="btnbar" style="margin-top:.6rem">
+          <button class="btn" id="presenceSetBtn">Set Presence (DB)</button>
+          <button class="btn subtle" id="presenceLoadBtn">Load From Presence</button>
+          <span class="chip tiny" id="activeCount">0 active</span>
+        </div>
+      </section>
+
+      <!-- ===== Per-Player Responsibilities ===== -->
+      <section class="card area-players">
+        <div class="section-title">
+          <h2>Responsibilities & Outcomes</h2>
+          <span class="tiny">Writes one row per player to <strong>33_Fact_Coverage</strong></span>
+        </div>
+
+        <div class="tiny" style="margin-bottom:.35rem">
+          The table auto-populates from “Active DBs”. Edit responsibility/outcome then Save.
+        </div>
+
+        <div style="overflow:auto; border:1px solid #eef1f8; border-radius:12px;">
+          <table id="tbl">
+            <thead>
+              <tr>
+                <th style="min-width:180px">Player</th>
+                <th>Resp. Type</th>
+                <th>Assignment / Zone</th>
+                <th>Leverage</th>
+                <th>Technique</th>
+                <th class="num">Depth (yd)</th>
+                <th>Targeted</th>
+                <th>Comp?</th>
+                <th class="num">Yds</th>
+                <th class="num">YAC</th>
+                <th>PBU</th>
+                <th>INT</th>
+                <th class="num">INT Yds</th>
+                <th>TD Allowed</th>
+                <th>Penalty</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="btnbar" style="margin-top:.6rem">
+          <label class="tiny" style="display:flex;align-items:center;gap:.4rem">
+            <input type="checkbox" id="alsoTackles" checked/> Also mirror PBU/INT to <strong>32_Fact_Tackles</strong>
+          </label>
+          <button class="btn" id="savePlayersBtn">Save Player Rows</button>
+        </div>
+      </section>
+
+      <!-- ===== Log ===== -->
+      <section class="card area-log">
+        <div class="section-title"><h2>Log</h2><span class="tiny">Most recent first</span></div>
+        <div id="log"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer><p>&copy; 2025 Game Speed Data Systems</p></footer>
+
+  <!-- === Shared plumbing === -->
+  <script>
+    // Configure GameContext auto-sync before loading shared scripts
+    window.GSDS_API_BASE   = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
+    window.GSDS_SERVER_SYNC = true;
+    window.GSDS_POLL_MS     = 1000;
+  </script>
+  <script src="../js/api.js"></script>
+  <script src="../js/context.js"></script>
+  <script src="../js/presence.js"></script>
+
+  <!-- === Page logic === -->
+  <script>
+  (function(){
+    // ---- Constants (IDs & routes) ----
+    const API_BASE = window.GSDS_API_BASE;
+    const ROUTE_COVERAGE = 'coverage';   // 33_Fact_Coverage
+    const ROUTE_TACKLES  = 'tackles';    // 32_Fact_Tackles
+    const ROSTER_SHEET_ID = '1oHO-5gM9l3PTSjUxwQlYzFaAMTtlco2VZj8l315Uk1c';
+    const ROSTER_TAB      = '00_Dim_Roster';
+
+    // Coverage headers (server will add any missing)
+    const COV_HEADERS = [
+      'timestamp','game_id','drive_id','play_id',
+      'team_call','call_family','rotation','check','coverage_strength','call_tag','pressure_called',
+      'player_id','player_name','position','jersey_number',
+      'responsibility_type','assignment','zone','leverage','technique','depth_yd',
+      'targeted','completion','yards','yac','pbu','int','int_yards','td_allowed','penalty','notes',
+      'is_team_call'
+    ];
+    const TKL_HEADERS = [
+      'timestamp','game_id','play_id','player_id','player_name','position','jersey_number',
+      'solo_tackle','assist_tackle','tfl','sack','pbu','ff','fr','fr_yards','fr_td','int','int_yards','int_td','safety','notes'
+    ];
+
+    // ---- El helpers & log ----
+    const $ = id => document.getElementById(id);
+    const logBox = $('log');
+    function log(msg, type=''){
+      const row = document.createElement('div');
+      if(type==='success') row.className='success';
+      if(type==='error') row.className='error';
+      row.textContent = '['+new Date().toLocaleTimeString()+'] '+msg;
+      logBox.prepend(row);
+      $('status').textContent = (type==='error'?'Error':'Ready');
+    }
+
+    // ---- Game context wire-up ----
+    const unbind = GameContext.bindInputs({
+      game_id: $('ctx_game'),
+      drive_id: $('ctx_drive'),
+      play_id: $('ctx_play')
+    });
+
+    // ---- Dictionaries (defaults; can be replaced from Data Validation lists later) ----
+    const CovFamilies = ['Quarters','Cover 0','Cover 1','Cover 2','2-Man','Cover 3','3 Buzz','3 Cloud','Cover 4','Cover 6','Tampa 2','Palms','Box/Bracket','0 Pressure'];
+    const Rotations  = ['Roll Weak','Roll Strong','Buzz Weak','Buzz Strong','Cloud/Trap Weak','Cloud/Trap Strong','Spin Field','Spin Boundary','None'];
+    fillDL('dl_cov_family', CovFamilies);
+    fillDL('dl_rotation', Rotations);
+
+    // ---- Roster (for DBs; page allows anyone but filters POS starts with DB) ----
+    let roster = [];
+    let rosterByName = new Map();
+    let rosterById   = new Map();
+
+    async function loadRoster(){
+      try{
+        const res = await apiGet(API_BASE, { action:'roster', sheet_id: ROSTER_SHEET_ID, sheet_name: ROSTER_TAB });
+        if(!res.ok) throw new Error(res.error||'Roster fetch failed');
+        roster = (res.roster||[]).map(r=>{
+          return { id:r.player_id, name:r.player_name, pos:(r.position||'').toUpperCase(), num:r.jersey_number||'' };
+        });
+        rosterByName.clear(); rosterById.clear();
+        $('dl_players').innerHTML = '';
+        roster.forEach(p=>{
+          rosterByName.set(p.name.toUpperCase(), p);
+          rosterById.set(p.id, p);
+          const opt = document.createElement('option');
+          opt.value = `${p.name} #${p.num} (${p.pos||''})`;
+          $('dl_players').appendChild(opt);
+        });
+        log(`Roster loaded (${roster.length}).`, 'success');
+      }catch(err){ log(String(err), 'error'); }
+    }
+
+    function parsePlayerInput(s){
+      const raw = String(s||'').trim();
+      if(!raw) return null;
+      // Try to match by name prefix
+      const name = raw.replace(/\s+#\d+.*$/,'').trim();
+      const p = roster.find(x=>x.name.toUpperCase()===name.toUpperCase()) ||
+                roster.find(x=>name && x.name.toUpperCase().startsWith(name.toUpperCase()));
+      return p || null;
+    }
+
+    // ---- Active chips + presence ----
+    let active = []; // array of player objects {id,name,pos,num}
+
+    function renderChips(){
+      const wrap = $('active_chips'); wrap.innerHTML='';
+      active.forEach((p,i)=>{
+        const el = document.createElement('span');
+        el.className='chipitem';
+        el.innerHTML = `<strong>#${p.num||'—'}</strong> ${p.name} <span class="tiny">${p.pos||''}</span> <button class="rm" aria-label="Remove" data-i="${i}">×</button>`;
+        wrap.appendChild(el);
+      });
+      $('activeCount').textContent = `${active.length} active`;
+      buildTable();
+      wrap.querySelectorAll('.rm').forEach(btn=>{
+        btn.addEventListener('click', ()=>{ const i = Number(btn.dataset.i); active.splice(i,1); renderChips(); });
+      });
+    }
+
+    $('add_player').addEventListener('change', ()=>{
+      const p = parsePlayerInput($('add_player').value);
+      if(p && !active.some(x=>x.id===p.id)){ active.push(p); renderChips(); }
+      $('add_player').value='';
+    });
+
+    $('presenceSetBtn').addEventListener('click', async ()=>{
+      try{
+        const ctx = GameContext.get();
+        if(!ctx.game_id) throw new Error('Set a Game ID (Game Primary).');
+        const players = active.map(p=>p.id);
+        await presenceSet(API_BASE, {
+          game_id: ctx.game_id,
+          group: 'DB',
+          players,
+          meta: { unit: $('unit').value||'DB', package: $('pkg').value||'', source:'game-coverage' }
+        });
+        log(`Presence set for DB: ${players.length} players.`, 'success');
+      }catch(err){ log(String(err),'error'); }
+    });
+
+    $('presenceLoadBtn').addEventListener('click', async ()=>{
+      try{
+        const ctx = GameContext.get();
+        if(!ctx.game_id) throw new Error('Set a Game ID first.');
+        const res = await apiGet(API_BASE, { action:'presence_get', game_id: ctx.game_id, group:'DB' });
+        if(!res.ok) throw new Error(res.error||'presence_get failed');
+        const arr = (res.data && res.data.players) || (res.presence && res.presence.players) || [];
+        const found = arr.map(id=>rosterById.get(id)).filter(Boolean);
+        active = found;
+        renderChips();
+        log(`Loaded ${active.length} from presence.`, 'success');
+      }catch(err){ log(String(err),'error'); }
+    });
+
+    // ---- Table for responsibilities ----
+    function buildTable(){
+      const tb = $('tbody'); tb.innerHTML='';
+      active.forEach(p=>{
+        const tr = document.createElement('tr');
+        tr.dataset.pid = p.id;
+        tr.innerHTML = `
+          <td><strong>#${p.num||'—'}</strong> ${p.name} <span class="tiny">${p.pos||''}</span></td>
+          <td>
+            <select data-k="responsibility_type">
+              <option>Man</option><option>Zone</option><option>Bracket</option><option>Robber</option><option>Half-Field</option><option>Third</option>
+            </select>
+          </td>
+          <td><input data-k="assignment" placeholder="Man: #1/#2/TE | Zone: Flat/Hook/Seam/Deep Half/Third"></td>
+          <td>
+            <select data-k="leverage">
+              <option value="">—</option><option>Inside</option><option>Outside</option><option>Head Up</option><option>Trail</option>
+            </select>
+          </td>
+          <td>
+            <select data-k="technique">
+              <option value="">—</option><option>Press</option><option>Bail</option><option>Off</option><option>Soft</option>
+            </select>
+          </td>
+          <td><input class="num" type="number" step="1" data-k="depth_yd" placeholder=""></td>
+          <td><select data-k="targeted"><option value="">—</option><option>0</option><option>1</option></select></td>
+          <td><select data-k="completion"><option value="">—</option><option>0</option><option>1</option></select></td>
+          <td><input class="num" type="number" step="1" data-k="yards"></td>
+          <td><input class="num" type="number" step="1" data-k="yac"></td>
+          <td><select data-k="pbu"><option>0</option><option>1</option></select></td>
+          <td><select data-k="int"><option>0</option><option>1</option></select></td>
+          <td><input class="num" type="number" step="1" data-k="int_yards"></td>
+          <td><select data-k="td_allowed"><option>0</option><option>1</option></select></td>
+          <td><input data-k="penalty" placeholder="DPI, Holding, etc."></td>
+          <td><input data-k="notes" placeholder="Notes"></td>
+        `;
+        tb.appendChild(tr);
+      });
+    }
+
+    // ---- Save: Team call ----
+    $('saveTeamCallBtn').addEventListener('click', async ()=>{
+      try{
+        const ctx = GameContext.get();
+        const gid = ctx.game_id, did = ctx.drive_id, pid = ctx.play_id;
+        if(!gid) throw new Error('Game ID is required (Game Primary).');
+        if(!pid) throw new Error('Play ID required (snap on Primary).');
+
+        const row = {
+          game_id: gid,
+          drive_id: did||'',
+          play_id: pid,
+          team_call: ($('cov_family').value || $('cov_tag').value || '').trim(),
+          call_family: $('cov_family').value || '',
+          rotation: $('cov_rotation').value || '',
+          check: $('cov_rotation').value || '',
+          coverage_strength: $('cov_strength').value || '',
+          call_tag: $('cov_tag').value || '',
+          pressure_called: $('cov_pressure').value || '',
+          is_team_call: 1
+        };
+        await apiPost(API_BASE, { action:'append', route: ROUTE_COVERAGE, row, ensure_headers: COV_HEADERS });
+        log('Saved team coverage call.', 'success');
+      }catch(err){ log(String(err),'error'); }
+    });
+    $('clearTeamCallBtn').addEventListener('click', ()=>{
+      ['cov_family','cov_rotation','cov_tag'].forEach(id=>$(id).value='');
+      $('cov_strength').value=''; $('cov_pressure').value='';
+    });
+
+    // ---- Save: per-player rows (+ optional tackles mirror) ----
+    $('savePlayersBtn').addEventListener('click', async ()=>{
+      try{
+        const ctx = GameContext.get();
+        const gid = ctx.game_id, did = ctx.drive_id, pid = ctx.play_id;
+        if(!gid) throw new Error('Game ID is required.');
+        if(!pid) throw new Error('Play ID required.');
+        if(!active.length) throw new Error('Add at least one active DB.');
+
+        const teamCall = $('cov_family').value || $('cov_tag').value || '';
+
+        const ops = [];
+        const tackleOps = [];
+        document.querySelectorAll('#tbody tr').forEach(tr=>{
+          const pid_p = tr.dataset.pid;
+          const p = rosterById.get(pid_p); if(!p) return;
+          const vals = getRowVals(tr);
+          const row = {
+            game_id: gid, drive_id: did||'', play_id: pid,
+            team_call: teamCall||'',
+            call_family: $('cov_family').value || '',
+            rotation: $('cov_rotation').value || '',
+            check: $('cov_rotation').value || '',
+            coverage_strength: $('cov_strength').value || '',
+            call_tag: $('cov_tag').value || '',
+            pressure_called: $('cov_pressure').value || '',
+            player_id: p.id, player_name: p.name, position: p.pos||'', jersey_number: p.num||'',
+            responsibility_type: vals.responsibility_type || '',
+            assignment: vals.assignment || '',
+            zone: vals.assignment || '',
+            leverage: vals.leverage || '',
+            technique: vals.technique || '',
+            depth_yd: numOr(vals.depth_yd),
+            targeted: numOr(vals.targeted),
+            completion: numOr(vals.completion),
+            yards: numOr(vals.yards),
+            yac: numOr(vals.yac),
+            pbu: numOr(vals.pbu),
+            int: numOr(vals.int),
+            int_yards: numOr(vals.int_yards),
+            td_allowed: numOr(vals.td_allowed),
+            penalty: vals.penalty || '',
+            notes: vals.notes || '',
+            is_team_call: 0
+          };
+          ops.push({ route: ROUTE_COVERAGE, row, ensure_headers: COV_HEADERS });
+
+          if ($('alsoTackles').checked) {
+            // Mirror PBU/INT into tackles table (no double-counting sacks/TFL here)
+            const trow = {
+              game_id: gid, play_id: pid,
+              player_id: p.id, player_name: p.name, position: p.pos||'', jersey_number: p.num||'',
+              solo_tackle:'', assist_tackle:'', tfl:'', sack:'',
+              pbu: numOr(vals.pbu), ff:'', fr:'', fr_yards:'', fr_td:'',
+              int: numOr(vals.int), int_yards: numOr(vals.int_yards), int_td: (Number(vals.int)&&Number(vals.td_allowed)===0 ? 0 : ''), // leave TD blank unless you want to mark here
+              safety:'', notes: (vals.notes||'').trim()
+            };
+            if (Number(trow.pbu)||Number(trow.int)) {
+              tackleOps.push({ route: ROUTE_TACKLES, row: trow, ensure_headers: TKL_HEADERS });
+            }
+          }
+        });
+
+        if (!ops.length) throw new Error('Nothing to save.');
+        // Batch: coverage + (optional) tackles
+        const allOps = ops.concat(tackleOps);
+        await apiPost(API_BASE, { action:'batch', ops: allOps });
+        log(`Saved ${ops.length} coverage row(s)${tackleOps.length?` + ${tackleOps.length} tackle mirror(s)`:''}.`, 'success');
+      }catch(err){ log(String(err),'error'); }
+    });
+
+    function getRowVals(tr){
+      const obj = {};
+      tr.querySelectorAll('input,select,textarea').forEach(inp=>{
+        const k = inp.dataset.k;
+        if(!k) return;
+        obj[k] = inp.type==='checkbox' ? (inp.checked?1:0) : inp.value;
+      });
+      return obj;
+    }
+    const numOr = v => (v===''||v==null ? '' : Number(v));
+
+    // ---- Utils ----
+    function fillDL(id, arr){
+      const dl = $(id); dl.innerHTML='';
+      arr.forEach(v=>{ const o=document.createElement('option'); o.value=v; dl.appendChild(o); });
+    }
+
+    // ---- Boot ----
+    loadRoster();
+    renderChips();
+
+  })();
+  </script>
+</body>
+</html>
