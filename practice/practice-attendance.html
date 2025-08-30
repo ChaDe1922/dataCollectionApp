@@ -18,7 +18,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../style.css"/>
 
-  <!-- Dark ATL skin (matches Primary/Drives) -->
+  <!-- Dark ATL skin -->
   <style>
     :root{
       --panel-bg: rgba(255,255,255,.06);
@@ -39,7 +39,6 @@
       --shadow-soft:0 10px 30px rgba(17,12,28,.35);
     }
 
-    /* Layout grid (same structure you had) */
     .container{
       max-width:1100px;margin:0 auto;padding:16px;
       display:grid;gap:16px;
@@ -60,7 +59,6 @@
       }
     }
 
-    /* Cards */
     .card{
       background:var(--panel-bg);
       border:1px solid var(--bd);
@@ -73,7 +71,6 @@
     .section-title h2{margin:0;font-size:1.15rem}
     .tiny{font-size:.9rem;opacity:.9}
 
-    /* Inputs – strong outline + clear focus on dark */
     label{display:block;font-size:.9rem;opacity:.92;margin:0 0 .35rem}
     input,select,textarea{
       width:100%;padding:.7rem .85rem;border-radius:12px;
@@ -85,21 +82,15 @@
     input:focus,select:focus,textarea:focus{
       outline:none;border-color:#C4B5FD;box-shadow:var(--focus-ring);background:rgba(255,255,255,.12);
     }
-    input[type="number"]{
-      -moz-appearance:textfield;
-    }
+    input[type="number"]{-moz-appearance:textfield;}
     input[type="number"]::-webkit-outer-spin-button,
     input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
 
-    /* Rows */
     .row{display:grid;gap:12px}
     .row.cols-2{grid-template-columns:1fr 1fr}
     .row.cols-3{grid-template-columns:repeat(3,1fr)}
-    @media (max-width:680px){
-      .row.cols-2,.row.cols-3{grid-template-columns:1fr}
-    }
+    @media (max-width:680px){ .row.cols-2,.row.cols-3{grid-template-columns:1fr} }
 
-    /* Buttons */
     .btnbar{display:flex;gap:.5rem;flex-wrap:wrap}
     .btn{
       padding:.65rem 1rem;border-radius:999px;border:1px solid transparent;cursor:pointer;
@@ -108,12 +99,9 @@
       transition:transform .15s ease,filter .15s ease;
     }
     .btn:hover{transform:translateY(-2px);filter:saturate(1.05)}
-    .btn.subtle{
-      background:transparent;border-color:rgba(255,255,255,.3);color:#fff;box-shadow:none
-    }
+    .btn.subtle{ background:transparent;border-color:rgba(255,255,255,.3);color:#fff;box-shadow:none }
     .btn.warn{background:#F59E0B;color:#1f1300;border-color:#a66b07}
 
-    /* Toggle pill (Autosave) – clearly on/off */
     .toggle{display:flex;align-items:center}
     .toggle-input{position:absolute;opacity:0;pointer-events:none}
     .toggle-btn{
@@ -131,12 +119,9 @@
       background:linear-gradient(90deg,#16A34A,#10B981);border-color:transparent;color:#071a12;
       box-shadow:0 8px 18px rgba(16,185,129,.28);
     }
-    .toggle-input:checked + .toggle-btn::before{
-      content:"✓";display:grid;place-items:center;color:#0c2b1e;font-weight:900;box-shadow:none
-    }
+    .toggle-input:checked + .toggle-btn::before{content:"✓";display:grid;place-items:center;color:#0c2b1e;font-weight:900;box-shadow:none}
     .toggle-btn:focus-visible{outline:2px solid #93C5FD;outline-offset:2px}
 
-    /* Roster grid */
     .toolbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:.6rem}
     .search{flex:1 1 240px}
     .player-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.6rem}
@@ -166,13 +151,11 @@
       background:#22c55e;color:#052e1a;font-size:.75rem;display:grid;place-items:center;border:1px solid #0a7a3a;
     }
 
-    /* State tints (dark) */
     .plyr.state-on  { background: rgba(34,197,94,.14);  border-color: rgba(34,197,94,.6); }
     .plyr.state-late{ background: rgba(245,158,11,.14); border-color: rgba(245,158,11,.6); }
     .plyr.state-exc { background: rgba(96,165,250,.14); border-color: rgba(96,165,250,.6); }
     .plyr.state-excl{ background: rgba(167,139,250,.16); border-color: rgba(167,139,250,.65); }
 
-    /* Legend chips */
     .chip{display:inline-block;padding:.3rem .6rem;border-radius:999px;background:var(--chip-bg);border:1px solid var(--chip-bd);font-size:.85rem}
     .legend{display:flex;gap:.5rem;align-items:center}
     .legend .dot{width:12px;height:12px;border-radius:50%}
@@ -181,10 +164,8 @@
     .dot.exc{background:var(--excused)}
     .dot.excl{background:var(--exlate)}
 
-    /* Log */
     #log{max-height:260px;overflow:auto;background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:12px;padding:10px;color:#fff}
 
-    /* Popover (dark) */
     .popover{
       position:fixed;z-index:50;background:#121316;border:1px solid var(--bd);border-radius:12px;padding:.4rem;box-shadow:0 12px 34px rgba(0,0,0,.35)
     }
@@ -192,7 +173,6 @@
     .popover button:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15)}
     .hidden{display:none}
 
-    /* Modal (dark) */
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:saturate(120%) blur(4px);display:none;align-items:center;justify-content:center;z-index:60}
     .modal-backdrop.open{display:flex}
     .modal{background:#15161a;color:#e7e7f1;border:1px solid var(--bd);border-radius:14px;padding:16px;max-width:520px;width:92%;box-shadow:0 20px 40px rgba(0,0,0,.45)}
@@ -201,7 +181,6 @@
     .row-tight > *{flex:1 1 160px}
     .modal-backdrop.hidden{display:none !important}
 
-    /* Quick Filters (chips) */
     .filters{display:flex;flex-direction:column;gap:.35rem;margin:4px 0 10px}
     .chipbar{display:flex;gap:.4rem;overflow:auto;padding:.2rem 0;-webkit-overflow-scrolling:touch}
     .filter-chip{
@@ -216,7 +195,6 @@
     }
     .filter-chip:focus-visible{outline:2px solid #93C5FD;outline-offset:2px}
 
-    /* Responsive tweaks */
     @media (max-width:700px){
       .container{padding:12px}
       .player-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.5rem}
@@ -239,7 +217,6 @@
   </style>
 </head>
 
-<!-- Important: same dark animated background class as Primary/Drives -->
 <body class="theme-atl practice-page">
   <header class="page-header">
     <h1>Practice Attendance</h1>
@@ -352,7 +329,7 @@
     <button data-action="clear">Clear</button>
   </div>
 
-  <!-- Add Player modal -->
+  <!-- Add Player / Coach modal -->
   <div id="modalBackdrop" class="modal-backdrop hidden" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="newPlayerTitle" tabindex="-1">
       <h3 id="newPlayerTitle">Add to Roster</h3>
@@ -423,6 +400,39 @@
     const playersById = new Map();
     const attendance = new Map();
 
+    // Session persistence
+    const SESSION_KEY = 'ATTEND_SESS_V1';
+    function sessionSnapshot(){
+      // convert Map -> plain object
+      const att = {};
+      attendance.forEach((v, k)=>{ att[k] = v; });
+      return {
+        date: el('prac_date').value || '',
+        time: el('prac_time').value || '',
+        grace: Number(el('prac_grace').value||0),
+        autosave: !!el('autosave').checked,
+        attendance: att,
+        ts: Date.now(),
+        finalized: false
+      };
+    }
+    function saveSession(){
+      try {
+        localStorage.setItem(SESSION_KEY, JSON.stringify(sessionSnapshot()));
+      } catch(e) { /* ignore storage errors */ }
+    }
+    function clearSession(){
+      try { localStorage.removeItem(SESSION_KEY); } catch(e){}
+    }
+    function loadSession(){
+      try {
+        const raw = localStorage.getItem(SESSION_KEY);
+        if(!raw) return null;
+        const data = JSON.parse(raw);
+        return data && typeof data==='object' ? data : null;
+      } catch(e){ return null; }
+    }
+
     // Filters
     const filterState = { group: 'ALL', positions: new Set() };
     let groupChipsWired = false;
@@ -486,6 +496,7 @@
         roster = normalizeRoster(res.roster||[]);
         playersById.clear(); roster.forEach(p=>playersById.set(p.id,p));
         buildPosChips();
+        restoreFromSession(); // <- restore after roster available
         renderGrid();
         log(`Roster loaded (${roster.length} people).`, 'success');
       }catch(err){ log(err.message,'error'); }
@@ -584,12 +595,12 @@
       const hh = String(now.getHours()).padStart(2,'0');
       const mm = String(now.getMinutes()).padStart(2,'0');
       el('prac_time').value = `${hh}:${mm}`;
+      saveSession();
     }
 
     // Convert Date or ms epoch to local "yyyy-MM-ddTHH:mm:ss" (no Z, no ms)
     function toLocalT(dt) {
       const d = (dt instanceof Date) ? dt : new Date(dt);
-      // 'sv-SE' gives "YYYY-MM-DD HH:mm:ss", then we swap the space for 'T'
       return d.toLocaleString('sv-SE').replace(' ', 'T');
     }
 
@@ -702,6 +713,7 @@
       const row = buildRow(p, rec);
       await appendRowTable(ATTEND_SHEET_ID, ATTEND_TAB, row, ATTEND_HEADERS);
       rec.saved = true; attendance.set(pId, rec);
+      saveSession();          // persist after save
       renderGrid();
     }
     async function saveAllUnsaved(){
@@ -714,6 +726,7 @@
       if(!ops.length){ log('Nothing to save (all up to date).'); return; }
       await batchAppend(ops);
       attendance.forEach((rec)=>{ if(!rec.saved) rec.saved=true; });
+      saveSession();
       renderGrid();
       log(`Saved ${ops.length} attendance rows.`, 'success');
     }
@@ -734,15 +747,21 @@
       }));
       await batchAppend(ops);
       log(`Finalized: marked ${ops.length} absent.`, 'success');
+
+      // mark session finalized & clear
+      clearSession();
+      attendance.clear();
+      renderGrid();
     }
 
     /* =======================
-     * STATUS UX
+     * STATUS UX (Autosave on ANY change)
      * ======================= */
     function presentNow(id){
       const now = Date.now();
       const {status, minutesLate} = classifyArrival(now);
       attendance.set(id, { arrivedAt: now, status, minutesLate, saved: false });
+      saveSession();
     }
     function setStatus(id, type){
       if(type==='on'){ presentNow(id); }
@@ -751,15 +770,19 @@
         const base = classifyArrival(now);
         const minutesLate = Math.max(1, base.minutesLate || 1);
         attendance.set(id, { arrivedAt: now, status:'Late', minutesLate, saved:false });
+        saveSession();
       } else if(type==='excused'){
         attendance.set(id, { arrivedAt: null, status:'Excused', minutesLate:'', saved:false });
+        saveSession();
       } else if(type==='excused_late'){
         const now = Date.now();
         const base = classifyArrival(now);
         const minutesLate = Math.max(1, base.minutesLate || 1);
         attendance.set(id, { arrivedAt: null, status:'Excused Late', minutesLate, saved:false });
+        saveSession();
       } else if(type==='clear'){
         attendance.delete(id);
+        saveSession();
       }
       renderGrid();
       hideMenu();
@@ -786,6 +809,7 @@
         presentNow(id);
       } else if(rec){
         attendance.delete(id);
+        saveSession();
       } else {
         presentNow(id);
       }
@@ -863,7 +887,6 @@
 
       const row = { player_id: pid || '', player_name: name, position: pos, jersey_number: num };
 
-      // Auto ID prefix if none provided
       const idPrefix = pid ? null : (isCoach ? 'CO' : 'PLYR');
 
       if(idPrefix){
@@ -880,13 +903,47 @@
     document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && !backdrop.classList.contains('hidden')) closeAddPlayer(); });
 
     /* =======================
+     * SESSION RESTORE
+     * ======================= */
+    function restoreFromSession(){
+      const ss = loadSession();
+      if(!ss || ss.finalized) return;
+
+      if(ss.date) el('prac_date').value = ss.date;
+      if(ss.time) el('prac_time').value = ss.time;
+      if(typeof ss.grace === 'number') el('prac_grace').value = ss.grace;
+      if(typeof ss.autosave === 'boolean') el('autosave').checked = ss.autosave;
+
+      attendance.clear();
+      if(ss.attendance && typeof ss.attendance === 'object'){
+        Object.keys(ss.attendance).forEach(pid=>{
+          const rec = ss.attendance[pid];
+          // basic shape guard
+          if(rec && typeof rec==='object' && ('status' in rec)){
+            attendance.set(pid, rec);
+          }
+        });
+      }
+      renderGrid();
+      log('Session restored.', 'success');
+    }
+
+    /* =======================
      * INIT
      * ======================= */
     (function seedStart(){
       const now = new Date();
-      el('prac_date').value = now.toISOString().slice(0,10);
-      el('prac_time').value = '16:00';
+      if(!loadSession()){ // don't overwrite if we will restore
+        el('prac_date').value = now.toISOString().slice(0,10);
+        el('prac_time').value = '16:00';
+      }
     })();
+
+    // Persist setup inputs on change
+    el('prac_date').addEventListener('change', saveSession);
+    el('prac_time').addEventListener('change', saveSession);
+    el('prac_grace').addEventListener('change', saveSession);
+    el('autosave').addEventListener('change', saveSession);
 
     el('setNowBtn').addEventListener('click', setNowAsStart);
     el('reloadRosterBtn').addEventListener('click', loadRoster);

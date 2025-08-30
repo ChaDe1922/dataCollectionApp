@@ -3,163 +3,117 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <script>
-  (function(){
-    const ok = localStorage.getItem('auth_ok')==='1' &&
-              Number(localStorage.getItem('auth_until')||0) > Date.now();
-    if(!ok){ window.location.href = '../index.html#login'; }
-  })();
-  </script>
-  <title>QB Tracking – Football Data Tracker</title>
-  <link rel="stylesheet" href="../style.css"/>
-  <script src="../js/game-context.js"></script>
-  <style>
-    .container{max-width:1200px;margin:0 auto;padding:1rem}
-    .grid{display:grid;gap:1rem}
-    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .card{background:var(--panel-bg,rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:1rem}
-    .card h2{margin:0 0 .5rem 0;font-size:1.1rem}
-    .row{display:flex;gap:.75rem;flex-wrap:wrap}
-    .row > *{flex:1 1 160px}
-    label{display:block;font-size:.85rem;opacity:.9;margin-bottom:.25rem}
-    input,select,textarea{width:100%;padding:.6rem .7rem;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.2);color:#fff}
-    .btnbar{display:flex;gap:.5rem;flex-wrap:wrap}
-    .btn{padding:.6rem .9rem;border-radius:999px;border:1px solid transparent;cursor:pointer}
-    .btn.primary{background:#43b581;color:#071a12}
-    .btn.subtle{background:transparent;border-color:rgba(255,255,255,.25);color:#fff}
-    .btn.warn{background:#ffa142;color:#2a1800}
-    .chip{display:inline-block;padding:.25rem .6rem;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);font-size:.8rem}
-    .tiny{font-size:.8rem;opacity:.85}
-    .success{color:#7CFC98}.error{color:#ff6b6b}
-    .section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:.35rem}
-    .meta{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.5rem;margin-top:.5rem}
-    .meta .chip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .stopwatch{font-variant-numeric:tabular-nums;font-size:1.8rem}
 
-    /* Choice pills (non-binary) */
-    .seg{display:inline-flex;gap:.35rem;flex-wrap:wrap}
-    .seg-btn{
-      padding:.45rem .8rem;border-radius:999px;border:1px solid rgba(255,255,255,.2);
-      background:rgba(255,255,255,.06);color:#fff;cursor:pointer;user-select:none
+  <title>QB Tracking – Football Data Tracker</title>
+
+  <!-- Auth guard -->
+  <script>
+    (function(){
+      const ok = localStorage.getItem('auth_ok')==='1' &&
+                 Number(localStorage.getItem('auth_until')||0) > Date.now();
+      if(!ok){ window.location.href = '../index.html#login'; }
+    })();
+    /* Shared API config (BEFORE loading /js/api.js) */
+    window.GSDS_API_BASE   = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
+    window.GSDS_SERVER_SYNC = true;
+    window.GSDS_POLL_MS      = 1000;
+  </script>
+
+  <!-- Fonts + site theme -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css"/>
+
+  <!-- Shared libs -->
+  <script src="../js/api.js"></script>
+  <script src="../js/context.js"></script>
+  <script src="../js/presence.js"></script>
+
+  <!-- Page styles: dark bg + light cards (match Primary page) -->
+  <style>
+    :root{
+      --card-bg:#fff; --card-br:#E7E9F2; --ink:#0f172a; --ink-2:#334155; --muted:#64748b;
+      --pill:#3a1660; --pill-2:#a36bff; --focus:#a36bff33; --accent:#43b581;
     }
-    .seg-btn[aria-pressed="true"]{background:#43b581;color:#071a12;border-color:transparent}
+    body.practice-page{ background:linear-gradient(180deg,#0f0b1a 0%, #130e22 55%, #0e0b18 100%); color:var(--ink); }
+    .container{ max-width:1100px; margin:0 auto; padding:16px; display:grid; gap:16px;
+      grid-template-columns: 1fr;
+      grid-template-areas: "ctx" "ttt" "people" "throw" "help" }
+    @media (min-width: 980px){
+      .container{ gap:18px; grid-template-columns: 1fr 1fr;
+        grid-template-areas: "ctx ttt" "people throw" "help help"; }
+    }
+
+    .card{ background:var(--card-bg); border:1px solid var(--card-br); border-radius:18px; padding:18px;
+      box-shadow:0 10px 24px rgba(2,8,23,.06); color:var(--ink); }
+
+    .area-ctx{grid-area:ctx}
+    .area-ttt{grid-area:ttt}
+    .area-people{grid-area:people}
+    .area-throw{grid-area:throw}
+    .area-help{grid-area:help}
+
+    .section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+    .section-title h2{margin:0;font-size:1.25rem;line-height:1.15}
+    .tiny{font-size:.9rem;color:var(--muted)}
+    .chip{display:inline-block;padding:.35rem .7rem;border-radius:999px;background:#f3f4f7;border:1px solid #e5e7ef;font-weight:600;color:#4b5563}
+
+    /* Inputs */
+    label{display:block;font-size:.95rem;color:var(--ink-2);margin:0 0 .35rem}
+    input,select,textarea{ width:100%; padding:.72rem .85rem; border-radius:12px; border:2px solid #cfd6ea; background:#fff; color:var(--ink);
+      box-shadow:0 1px 0 rgba(0,0,0,.02) inset; transition:border-color .15s, box-shadow .15s, background .15s; font-size:1rem; }
+    input::placeholder, textarea::placeholder{ color:#9aa3b2 }
+    input:focus,select:focus,textarea:focus{ outline:none; border-color:#a36bff; box-shadow:0 0 0 4px var(--focus); background:#fff; }
+    input[type="number"]{-moz-appearance:textfield; border-color:#c0c9e3}
+    input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+
+    /* Row/grid utilities */
+    .row{display:grid; gap:12px}
+    .row.cols-2{grid-template-columns:1fr 1fr}
+    .row.cols-3{grid-template-columns:repeat(3,1fr)}
+    .row.cols-4{grid-template-columns:repeat(4,1fr)}
+    @media (max-width:680px){ .row.cols-2,.row.cols-3,.row.cols-4{grid-template-columns:1fr} }
+
+    /* Buttons */
+    .btnbar{display:flex;gap:.5rem;flex-wrap:wrap}
+    .btn{appearance:none;border:1px solid var(--pill);background:var(--pill);color:#fff;cursor:pointer;
+      padding:.65rem 1rem;border-radius:999px;font-weight:700;transition:transform .15s, box-shadow .15s, background .15s, border-color .15s}
+    .btn:hover{ transform:translateY(-1px); box-shadow:0 8px 18px rgba(163,107,255,.22) }
+    .btn.subtle{ background:#fff; color:var(--pill); border-color:#e2d6ff }
+    .btn.warn{ background:#fde9d6; color:#7a3b01; border-color:#f5c899 }
+    .btn.primary{ background:var(--accent); border-color:var(--accent); color:#071a12 }
+
+    /* Chips, log, meta */
+    #log{ max-height:260px; overflow:auto; background:#fbfbfe; border:1px solid #eef1f8; border-radius:12px; padding:10px; color:#1f2937 }
+    .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.4rem;margin-top:.6rem}
+    .success{color:#0f7a43}.error{color:#b42318}
+
+    /* Stopwatch + segmented controls + toggles */
+    .stopwatch{font-variant-numeric:tabular-nums;font-size:1.8rem}
+    .seg{display:flex;flex-wrap:wrap;gap:.5rem .55rem}
+    .seg-btn{padding:.45rem .75rem;border-radius:999px;border:1px solid #d9e0f2;background:#fff;color:var(--ink);cursor:pointer}
+    .seg-btn[aria-pressed="true"]{background:var(--accent);color:#071a12;border-color:var(--accent)}
     .stack-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem}
     .stack-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.5rem}
 
-    /* Compact toggle switch (Yes/No) */
-    .tgl{
-      --w:44px; --h:24px;
-      position:relative; width:var(--w); height:var(--h);
-      border-radius:999px; background:rgba(255,255,255,.18);
-      border:1px solid rgba(255,255,255,.25); cursor:pointer;
-      display:inline-block; vertical-align:middle;
-    }
-    .tgl .knob{
-      position:absolute; top:2px; left:2px;
-      width:calc(var(--h) - 4px); height:calc(var(--h) - 4px);
-      border-radius:999px; background:#fff; transition:transform .18s ease;
-    }
-    .tgl[data-on="true"]{ background:#43b581; border-color:transparent }
-    .tgl[data-on="true"] .knob{ transform:translateX(calc(var(--w) - var(--h))); }
+    .tgl{--w:44px; --h:24px; position:relative; width:var(--w); height:var(--h);
+         border-radius:999px; background:#e5e7ef; border:1px solid #d7dbe8; cursor:pointer; display:inline-block}
+    .tgl .knob{position:absolute; top:2px; left:2px; width:calc(var(--h) - 4px); height:calc(var(--h) - 4px); border-radius:999px; background:#fff; transition:transform .18s ease}
+    .tgl[data-on="true"]{ background:var(--accent); border-color:var(--accent) }
+    .tgl[data-on="true"] .knob{ transform:translateX(calc(var(--w) - var(--h))) }
     .field-inline{display:flex;align-items:center;gap:.6rem}
 
-    .group{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:.75rem}
-    .gh{font-size:.85rem;opacity:.8;margin-bottom:.35rem}
-    .subrow{display:grid;grid-template-columns:1fr auto;align-items:center;gap:.6rem;margin:.3rem 0}
-    .group.is-disabled{opacity:.45;pointer-events:none}
+    .group{background:#fafbff;border:1px solid #eef1f8;border-radius:12px;padding:.9rem}
+    .gh{font-size:.9rem;color:var(--ink-2);margin-bottom:.35rem}
+    .subrow{display:grid;grid-template-columns:1fr auto;align-items:center;gap:.6rem;margin:.35rem 0}
+    .group.is-disabled{opacity:.55;pointer-events:none}
 
-    /* —— Throw Detail layout fix —— */
-    .throw-grid{
-      display:grid;
-      grid-template-columns: 1.1fr 1.3fr 1.3fr; /* left a bit narrower */
-      gap: 1rem 1.2rem;
-      align-items:start;
-    }
-
-    /* Responsive: collapse to 2 cols, then 1 */
-    @media (max-width: 1120px){
-      .throw-grid{ grid-template-columns: 1fr 1fr; }
-      #path_target{ grid-column: 1 / -1; } /* span full width */
-    }
-    @media (max-width: 720px){
-      .throw-grid{ grid-template-columns: 1fr; }
-    }
-
-    /* Each throw “card” box */
-    .throw-card{
-      background: var(--panel-bg, rgba(255,255,255,.04));
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 14px;
-      padding: .9rem;
-      min-width: 0;                /* allow children to shrink inside grid cell */
-      display: grid;
-      grid-auto-rows: min-content; /* stack neatly */
-      row-gap: .65rem;
-    }
-
-    /* Label + control blocks stack cleanly */
-    .throw-card .field{
-      display: grid;
-      grid-template-columns: 1fr;  /* keep label then control vertically */
-      row-gap: .35rem;
-    }
-
-    /* Inputs inside cards */
-    .throw-card input[type="text"],
-    .throw-card input[type="number"]{
-      width: 100%;
-    }
-
-    /* Segmented pill groups */
-    .seg{
-      display:flex;
-      flex-wrap: wrap;             /* WRAP! */
-      gap: .5rem .55rem;
-      min-width: 0;                /* fix flex overflow in grid cell */
-    }
-
-    .seg-btn{
-      padding: .45rem .75rem;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.22);
-      background: transparent;
-      line-height: 1;
-      cursor: pointer;
-      flex: 0 0 auto;              /* don’t stretch; just wrap to next line */
-      white-space: nowrap;         /* each pill doesn’t break mid-word */
-    }
-    .seg-btn[aria-pressed="true"]{
-      background: #43b581;
-      color: #071a12;
-      border-color: transparent;
-    }
-
-    /* Toggle row spacing inside the left/right/target columns */
-    .toggle-row{
-      display:grid;
-      grid-template-columns: auto 1fr; /* label, then control */
-      align-items:center;
-      gap:.5rem .75rem;
-    }
-
-    /* Give the long “Depth Bucket” area breathing room */
-    #depthBucketGroup{ margin-top: .25rem; }
-
-    /* Avoid any accidental overlap with following blocks */
-    #depthBucketGroup + .field{ margin-top: .35rem; }
-
-    /* Make sure nothing visually spills outside the card */
-    .throw-card{ overflow: hidden; } /* with wrap above, this just guards animations */
-
-    /* Slightly smaller helper subtitle so it doesn’t collide with content */
-    .card .tiny.helper{
-      display:block;
-      margin-top:-.25rem;
-      margin-bottom:.25rem;
-      opacity:.8;
-    }
-
-
+    /* Throw layout */
+    .throw-grid{display:grid;grid-template-columns:1.1fr 1.3fr 1.3fr;gap:1rem 1.2rem;align-items:start}
+    @media (max-width:1120px){ .throw-grid{grid-template-columns:1fr 1fr} #path_target{grid-column:1 / -1} }
+    @media (max-width:720px){ .throw-grid{grid-template-columns:1fr} }
+    .throw-card{min-width:0;display:grid;grid-auto-rows:min-content;row-gap:.65rem}
   </style>
 </head>
 
@@ -174,17 +128,20 @@
   </header>
 
   <main>
-    <div class="container grid grid-2">
-      <!-- ===== Game Context ===== -->
-      <section class="card">
+    <div class="container">
+      <!-- Live context banner like Primary -->
+      <div id="ctxBanner" class="chip tiny" aria-live="polite" style="grid-column:1 / -1"></div>
+
+      <!-- Game Context -->
+      <section class="card area-ctx">
         <div class="section-title">
           <h2>Game Context</h2>
           <span id="status" class="tiny">Ready</span>
         </div>
-        <div class="row">
+        <div class="row cols-3">
           <div>
-            <label>Game ID <span class="tiny">(from schedule)</span></label>
-            <input id="game_id" list="list_game_ids" placeholder="Pick game…"/>
+            <label>Game ID <span class="tiny" style="color:var(--muted)">(from schedule)</span></label>
+            <input id="game_id" list="list_game_ids" placeholder="e.g. G2025-01"/>
             <datalist id="list_game_ids"></datalist>
           </div>
           <div>
@@ -208,21 +165,12 @@
         </div>
       </section>
 
-      <!-- ===== TTT Stopwatch ===== -->
-      <section class="card">
-        <div class="section-title">
-          <h2>Time to Throw (TTT)</h2>
-          <span class="tiny">Start at snap → stop at pass or sack</span>
-        </div>
-        <div class="row">
-          <div>
-            <label>Stopwatch</label>
-            <div class="stopwatch" id="ttt_display">0.00</div>
-          </div>
-          <div>
-            <label>TTT (sec)</label>
-            <input id="ttt" type="number" step="0.01" placeholder="auto from stopwatch"/>
-          </div>
+      <!-- TTT -->
+      <section class="card area-ttt">
+        <div class="section-title"><h2>Time to Throw (TTT)</h2><span class="tiny">Start at snap → stop at pass or sack</span></div>
+        <div class="row cols-2">
+          <div><label>Stopwatch</label><div class="stopwatch" id="ttt_display">0.00</div></div>
+          <div><label>TTT (sec)</label><input id="ttt" type="number" step="0.01" placeholder="auto from stopwatch"/></div>
         </div>
         <div class="btnbar" style="margin-top:.4rem">
           <button class="btn primary" id="ttt_start">Start</button>
@@ -235,90 +183,41 @@
         </div>
       </section>
 
-      <!-- ===== Participants (filtered by position) ===== -->
-      <section class="card">
-        <div class="section-title">
-          <h2>Participants</h2>
-          <span class="tiny">Type to search roster (filtered)</span>
-        </div>
-        <div class="row">
-          <div>
-            <label>Passer (name) <span class="tiny chip">QB only</span></label>
-            <input id="passer_name" list="list_qb_names" placeholder="QB name…"/>
-            <datalist id="list_qb_names"></datalist>
-          </div>
-          <div>
-            <label>Passer ID</label>
-            <input id="passer_id" placeholder="auto from name/roster"/>
-          </div>
-          <div>
-            <label>Target (name) <span class="tiny chip">WR/TE/RB/FB</span></label>
-            <input id="target_name" list="list_rcv_names" placeholder="WR/TE/RB name…"/>
-            <datalist id="list_rcv_names"></datalist>
-          </div>
-          <div>
-            <label>Target ID</label>
-            <input id="target_id" placeholder="auto from name/roster"/>
-          </div>
+      <!-- Participants -->
+      <section class="card area-people">
+        <div class="section-title"><h2>Participants</h2><span class="tiny">Type to search roster (filtered)</span></div>
+        <div class="row cols-2">
+          <div><label>Passer (name) <span class="tiny chip">QB only</span></label><input id="passer_name" list="list_qb_names" placeholder="QB name…"/><datalist id="list_qb_names"></datalist></div>
+          <div><label>Passer ID</label><input id="passer_id" placeholder="auto from name/roster"/></div>
+          <div><label>Target (name) <span class="tiny chip">WR/TE/RB/FB</span></label><input id="target_name" list="list_rcv_names" placeholder="WR/TE/RB name…"/><datalist id="list_rcv_names"></datalist></div>
+          <div><label>Target ID</label><input id="target_id" placeholder="auto from name/roster"/></div>
         </div>
         <div class="btnbar">
           <button class="btn subtle" id="loadRosterBtn">Reload Roster</button>
-          <span class="chip tiny">Roster from 00_Dim_Roster</span>
+          <button class="btn subtle" id="setQBPresenceBtn">Set Presence (QB)</button>
+          <button class="btn subtle" id="loadQBPresenceBtn">Load From Presence</button>
+          <span class="chip tiny">Roster: 00_Dim_Roster • Presence group: “QB”</span>
         </div>
       </section>
 
-      <!-- ===== Throw Detail (ordered by play action) ===== -->
-      <section class="card">
-        <div class="section-title">
-          <h2>Throw Detail</h2>
-          <span class="tiny">Auto depth bucket from Air Yards</span>
-        </div>
-
+      <!-- Throw Detail -->
+      <section class="card area-throw">
+        <div class="section-title"><h2>Throw Detail</h2><span class="tiny">Auto depth bucket from Air Yards</span></div>
         <div class="throw-grid">
-          <!-- 1) Outcome path -->
-          <div class="group" id="path_outcome">
+          <!-- Outcome -->
+          <div class="group throw-card" id="path_outcome">
             <div class="gh">Outcome path</div>
-
-            <div class="subrow">
-              <label>Sack</label>
-              <div class="field-inline">
-                <button type="button" class="tgl" data-target="sack" role="switch" aria-checked="false" aria-label="Sack"><span class="knob"></span></button>
-                <input type="hidden" id="sack" value="No"/>
-              </div>
-            </div>
-
-            <div class="subrow">
-              <label>Sack Yards</label>
-              <input id="sack_yards" type="number" step="1" placeholder="—"/>
-            </div>
-
-            <div class="subrow">
-              <label>Throwaway</label>
-              <div class="field-inline">
-                <button type="button" class="tgl" data-target="throwaway" role="switch" aria-checked="false" aria-label="Throwaway"><span class="knob"></span></button>
-                <input type="hidden" id="throwaway" value="No"/>
-              </div>
-            </div>
-
-            <div class="subrow">
-              <label>Spike</label>
-              <div class="field-inline">
-                <button type="button" class="tgl" data-target="spike" role="switch" aria-checked="false" aria-label="Spike"><span class="knob"></span></button>
-                <input type="hidden" id="spike" value="No"/>
-              </div>
-            </div>
+            <div class="subrow"><label>Sack</label><div class="field-inline"><button type="button" class="tgl" data-target="sack" role="switch" aria-checked="false"><span class="knob"></span></button><input type="hidden" id="sack" value="No"/></div></div>
+            <div class="subrow"><label>Sack Yards</label><input id="sack_yards" type="number" step="1" placeholder="—"/></div>
+            <div class="subrow"><label>Throwaway</label><div class="field-inline"><button type="button" class="tgl" data-target="throwaway" role="switch" aria-checked="false"><span class="knob"></span></button><input type="hidden" id="throwaway" value="No"/></div></div>
+            <div class="subrow"><label>Spike</label><div class="field-inline"><button type="button" class="tgl" data-target="spike" role="switch" aria-checked="false"><span class="knob"></span></button><input type="hidden" id="spike" value="No"/></div></div>
           </div>
 
-          <!-- 2) Ball flight -->
-          <div class="group" id="path_flight">
+          <!-- Flight -->
+          <div class="group throw-card" id="path_flight">
             <div class="gh">Ball flight</div>
-
-            <div class="subrow">
-              <label>Air Yards</label>
-              <input id="air_yards" type="number" step="1" placeholder="neg for behind LOS"/>
-            </div>
-
-            <div class="subrow">
+            <div class="subrow"><label>Air Yards</label><input id="air_yards" type="number" step="1" placeholder="neg for behind LOS"/></div>
+            <div class="subrow" id="depthBucketGroup">
               <label>Depth Bucket</label>
               <div class="seg stack-4" data-target="depth_bucket">
                 <button type="button" class="seg-btn" data-val="Behind LOS" aria-pressed="true">Behind LOS</button>
@@ -328,7 +227,6 @@
               </div>
               <input type="hidden" id="depth_bucket" value="Behind LOS"/>
             </div>
-
             <div class="subrow">
               <label>Left/Middle/Right</label>
               <div class="seg stack-3" data-target="lmr">
@@ -338,72 +236,19 @@
               </div>
               <input type="hidden" id="lmr" value="Left"/>
             </div>
-
-            <div class="subrow">
-              <label>Pressure Faced</label>
-              <div class="field-inline">
-                <button type="button" class="tgl" data-target="pressure_faced_yn" role="switch" aria-checked="false" aria-label="Pressure faced"><span class="knob"></span></button>
-                <input type="hidden" id="pressure_faced_yn" value="No"/>
-              </div>
-            </div>
+            <div class="subrow"><label>Pressure Faced</label><div class="field-inline"><button type="button" class="tgl" data-target="pressure_faced_yn" role="switch" aria-checked="false"><span class="knob"></span></button><input type="hidden" id="pressure_faced_yn" value="No"/></div></div>
           </div>
 
-          <!-- 3) Target & result -->
-          <div class="group" id="path_target">
+          <!-- Target & result -->
+          <div class="group throw-card" id="path_target">
             <div class="gh">Target &amp; result</div>
-
-            <div class="subrow">
-              <label>Catchable Target</label>
-              <div class="field-inline">
-                <button type="button" class="tgl" data-target="catchable" role="switch" aria-checked="false" aria-label="Catchable target"><span class="knob"></span></button>
-                <input type="hidden" id="catchable" value="No"/>
-              </div>
-            </div>
-
-            <div class="subrow">
-              <label>Contested Target</label>
-              <div class="field-inline">
-                <button type="button" class="tgl" data-target="contested" role="switch" aria-checked="false" aria-label="Contested target"><span class="knob"></span></button>
-                <input type="hidden" id="contested" value="No"/>
-              </div>
-            </div>
-
-            <div class="subrow">
-              <label>Complete</label>
-              <div class="field-inline">
-                <button type="button" class="tgl" data-target="complete" role="switch" aria-checked="false" aria-label="Complete"><span class="knob"></span></button>
-                <input type="hidden" id="complete" value="No"/>
-              </div>
-            </div>
-
-            <div class="subrow">
-              <label>Drop</label>
-              <div class="field-inline">
-                <button type="button" class="tgl" data-target="drop" role="switch" aria-checked="false" aria-label="Drop"><span class="knob"></span></button>
-                <input type="hidden" id="drop" value="No"/>
-              </div>
-            </div>
-
-            <div class="subrow">
-              <label>YAC</label>
-              <input id="yac" type="number" step="1" placeholder="0"/>
-            </div>
-
-            <div class="subrow">
-              <label>Touchdown</label>
-              <div class="field-inline">
-                <button type="button" class="tgl" data-target="td" role="switch" aria-checked="false" aria-label="Touchdown"><span class="knob"></span></button>
-                <input type="hidden" id="td" value="No"/>
-              </div>
-            </div>
-
-            <div class="subrow">
-              <label>Interception</label>
-              <div class="field-inline">
-                <button type="button" class="tgl" data-target="interception" role="switch" aria-checked="false" aria-label="Interception"><span class="knob"></span></button>
-                <input type="hidden" id="interception" value="No"/>
-              </div>
-            </div>
+            <div class="subrow"><label>Catchable Target</label><div class="field-inline"><button type="button" class="tgl" data-target="catchable" role="switch" aria-checked="false"><span class="knob"></span></button><input type="hidden" id="catchable" value="No"/></div></div>
+            <div class="subrow"><label>Contested Target</label><div class="field-inline"><button type="button" class="tgl" data-target="contested" role="switch" aria-checked="false"><span class="knob"></span></button><input type="hidden" id="contested" value="No"/></div></div>
+            <div class="subrow"><label>Complete</label><div class="field-inline"><button type="button" class="tgl" data-target="complete" role="switch" aria-checked="false"><span class="knob"></span></button><input type="hidden" id="complete" value="No"/></div></div>
+            <div class="subrow"><label>Drop</label><div class="field-inline"><button type="button" class="tgl" data-target="drop" role="switch" aria-checked="false"><span class="knob"></span></button><input type="hidden" id="drop" value="No"/></div></div>
+            <div class="subrow"><label>YAC</label><input id="yac" type="number" step="1" placeholder="0"/></div>
+            <div class="subrow"><label>Touchdown</label><div class="field-inline"><button type="button" class="tgl" data-target="td" role="switch" aria-checked="false"><span class="knob"></span></button><input type="hidden" id="td" value="No"/></div></div>
+            <div class="subrow"><label>Interception</label><div class="field-inline"><button type="button" class="tgl" data-target="interception" role="switch" aria-checked="false"><span class="knob"></span></button><input type="hidden" id="interception" value="No"/></div></div>
           </div>
         </div>
 
@@ -413,51 +258,41 @@
         </div>
       </section>
 
-
-      <!-- ===== Quick Help / Log ===== -->
-      <section class="card">
-        <div class="section-title">
-          <h2>Quick Help</h2>
-          <span class="tiny">Rules & sanity</span>
-        </div>
+      <!-- Help / Log -->
+      <section class="card area-help">
+        <div class="section-title"><h2>Quick Help</h2><span class="tiny">Rules & sanity</span></div>
         <ul class="tiny">
           <li><strong>Passer list = QBs</strong>. <strong>Target list = WR/TE/RB/FB.</strong></li>
           <li><strong>Interception ON</strong> → Complete OFF.</li>
           <li><strong>Sack ON</strong> → stamps TTT, sets Air Yds &amp; YAC to 0.</li>
           <li><strong>Spike ON</strong> → Catchable OFF, Complete OFF.</li>
-          <li><strong>Depth Bucket</strong> auto from Air Yards (≤0: Behind LOS; 1–9: Short; 10–19: Intermediate; ≥20: Deep).</li>
+          <li><strong>Depth Bucket</strong> auto from Air Yards (≤0 BL, 1–9 Short, 10–19 Intermediate, ≥20 Deep).</li>
         </ul>
-        <div class="section-title" style="margin-top:.5rem">
-          <h2>Log</h2><span class="tiny">Most recent first</span>
-        </div>
-        <div id="log" class="tiny" style="max-height:260px;overflow:auto"></div>
+        <div class="section-title" style="margin-top:.5rem"><h2>Log</h2><span class="tiny">Most recent first</span></div>
+        <div id="log" class="tiny"></div>
       </section>
     </div>
   </main>
 
   <footer><p>&copy; 2025 Game Speed Data Systems</p></footer>
 
+  <!-- Page logic -->
   <script>
-    /* =======================
-    * CONFIG
-    * ======================= */
-    const API_BASE = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
+  // Configure shared context + banner (same as Primary)
+  GameContext.configure({ apiBase: window.GSDS_API_BASE, server: true, pollMs: window.GSDS_POLL_MS||1000 });
+  GameContext.mountBanner('#ctxBanner');
 
-    // Schedule (for Game ID picklist)
-    const SCHEDULE_SHEET_ID = '1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI';
-    const SCHEDULE_TAB = '01_Dim_Schedule';
-
-    // Roster (filtered)
-    const ROSTER_SHEET_ID = '1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI';
-    const ROSTER_TAB = '00_Dim_Roster';
+  window.addEventListener('DOMContentLoaded', () => {
+    /* ===== CONFIG (2025 master IDs) ===== */
+    const SCHEDULE_SHEET_ID = '1oHO-5gM9l3PTSjUxwQlYzFaAMTtlco2VZj8l315Uk1c';
+    const SCHEDULE_TAB      = '01_Dim_Schedule';
+    const ROSTER_SHEET_ID   = '1oHO-5gM9l3PTSjUxwQlYzFaAMTtlco2VZj8l315Uk1c';
+    const ROSTER_TAB        = '00_Dim_Roster';
     const ELIGIBLE_TARGET_POS = ['WR','TE','RB','FB','HB','TB','SB'];
+    const ROUTE_PASS        = 'pass_detail';
+    const ROUTE_PLAYS       = 'plays';
 
-    // Routes
-    const ROUTE_PASS = 'pass_detail';
-
-    /* =======================
-    * STATE + LOG
-    * ======================= */
+    /* ===== STATE + LOG ===== */
     const el = id => document.getElementById(id);
     const logBox = el('log');
     const log = (msg, type='')=>{
@@ -466,77 +301,56 @@
       if(type==='error') row.className='error';
       row.textContent = '['+new Date().toLocaleTimeString()+'] '+msg;
       logBox.prepend(row);
-      el('status').textContent = (type==='error'?'Error':'Ready');
+      const st = document.getElementById('status'); if (st) st.textContent = (type==='error'?'Error':'Ready');
     };
 
-    let schedule = [], scheduleMap = {};
-    let roster = [];
-    const playersById = new Map();
-    const playersByName = new Map(); // UPPER name -> id
-    const playersByNum  = new Map(); // jersey string -> id
-    const qbs = [];
-    const receivers = [];
+    let schedule=[], scheduleMap={};
+    let roster=[];
+    const playersById=new Map(), playersByName=new Map(), playersByNum=new Map();
+    const qbs=[], receivers=[];
+    let pendingGidFromCtx = null;
+    const scheduleReady = () => Object.keys(scheduleMap).length > 0;
 
-    /* =======================
-    * API helpers
-    * ======================= */
-    async function apiGet(params){
-      const url = new URL(API_BASE);
-      Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,v));
-      const r = await fetch(url);
-      return r.json();
-    }
-    async function apiPost(payload){
-      const r = await fetch(API_BASE,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
-      });
-      return r.json();
-    }
-    async function appendRow(route,row,ensure=[]){
-      const res = await apiPost({ action:'append', route, row, ensure_headers: ensure });
-      if(!res.ok) throw new Error(res.error||'Append failed');
-      return res;
-    }
-    async function nextId(prefix){
-      const res = await apiGet({ action:'next_id', prefix });
-      if(!res.ok) throw new Error(res.error||'ID failed');
-      return res.id;
-    }
-
-    /* =======================
-    * SCHEDULE
-    * ======================= */
+    /* ===== SCHEDULE ===== */
     function fillDatalist(id, arr){
       const dl = el(id); dl.innerHTML='';
       arr.forEach(v=>{ const o=document.createElement('option'); o.value=v; dl.appendChild(o); });
     }
     async function loadSchedule(){
       try{
-        const res = await apiGet({ action:'table', sheet_id: SCHEDULE_SHEET_ID, sheet_name: SCHEDULE_TAB });
+        const res = await apiGet({ action:'table', sheet_id:SCHEDULE_SHEET_ID, sheet_name:SCHEDULE_TAB });
         if(!res.ok) throw new Error(res.error||'Schedule fetch failed');
         schedule = (res.rows||[]).filter(r=>r.game_id);
         scheduleMap = {};
         const ids = [];
         schedule.forEach(r=>{
-          const gid = String(r.game_id).trim();
-          if(!gid) return;
+          const gid = String(r.game_id).trim(); if(!gid) return;
           scheduleMap[gid]=r; ids.push(gid);
         });
         ids.sort((a,b)=>{
           const ra=scheduleMap[a], rb=scheduleMap[b];
           const da=(ra.date||''), db=(rb.date||'');
           if(da && db && da!==db) return da<db?-1:1;
-          return (Number(ra.week||0) - Number(rb.week||0));
+          return (Number(ra.week||0)-Number(rb.week||0));
         });
         fillDatalist('list_game_ids', ids);
         log(`Schedule loaded (${ids.length} games).`, 'success');
+
+        if (pendingGidFromCtx) {
+          el('game_id').value = pendingGidFromCtx;
+          el('game_id').dispatchEvent(new Event('change'));
+          pendingGidFromCtx = null;
+        } else {
+          const ctx = window.GameContext?.get?.() || {};
+          if (ctx.game_id && scheduleMap[ctx.game_id]) {
+            el('game_id').value = ctx.game_id;
+            el('game_id').dispatchEvent(new Event('change'));
+          }
+        }
       }catch(err){ log(err.message,'error'); }
     }
     function renderGameMeta(gid){
-      const box = el('game_meta');
-      const r = scheduleMap[gid];
+      const box = el('game_meta'), r = scheduleMap[gid];
       if(!r){ box.style.display='none'; return; }
       el('meta_date').textContent   = r.date ? `Date: ${r.date}` : 'Date: —';
       el('meta_week').textContent   = r.week ? `Week: ${r.week}` : 'Week: —';
@@ -548,35 +362,36 @@
     el('game_id').addEventListener('change',()=>{
       const gid = el('game_id').value.trim();
       if(!gid){ renderGameMeta(''); return; }
+      if(!scheduleReady()){ pendingGidFromCtx = gid; return; }
       if(!scheduleMap[gid]){ log(`Game ID "${gid}" not found in schedule.`, 'error'); renderGameMeta(''); return; }
       renderGameMeta(gid);
+      GameContext.setGame(gid);
     });
 
-    /* =======================
-    * ROSTER (filtered)
-    * ======================= */
-    function pushOption(dlId, text){
-      const o = document.createElement('option'); o.value = text; el(dlId).appendChild(o);
-    }
+    /* ===== ROSTER (enhanced autofill) ===== */
+    function pushOption(dlId, text){ const o=document.createElement('option'); o.value=text; el(dlId).appendChild(o); }
+
+    let qbRecords=[], rcvRecords=[]; // for partial/number matching
+
     function buildRosterIndexes(rows){
       playersById.clear(); playersByName.clear(); playersByNum.clear();
-      qbs.length=0; receivers.length=0;
-      const qbDL = el('list_qb_names'); const rcvDL = el('list_rcv_names');
-      if (qbDL) qbDL.innerHTML=''; if (rcvDL) rcvDL.innerHTML='';
+      qbs.length=0; receivers.length=0; qbRecords=[]; rcvRecords=[];
+      el('list_qb_names').innerHTML=''; el('list_rcv_names').innerHTML='';
 
       rows.forEach(r=>{
-        const id = (r.player_id||r.id||'').toString().trim();
-        const name = (r.player_name||r.name||'').toString().trim();
-        const pos = (r.position||r.pos||'').toString().trim().toUpperCase();
-        const num = (r.jersey_number||r.jersey||'').toString().trim();
-        if(!id || !name) return;
+        const id=(r.player_id||r.id||'').toString().trim();
+        const name=(r.player_name||r.name||'').toString().trim();
+        const pos=(r.position||r.pos||'').toString().trim().toUpperCase();
+        const num=(r.jersey_number||r.jersey||'').toString().trim();
+        if(!id||!name) return;
 
-        playersById.set(id.toUpperCase(), {id,name,pos,num});
+        const rec = { id, name, pos, num };
+        playersById.set(id.toUpperCase(), rec);
         playersByName.set(name.toUpperCase(), id);
         if(num) playersByNum.set(String(num), id);
 
-        if(pos==='QB'){ qbs.push(name); }
-        if(ELIGIBLE_TARGET_POS.includes(pos)){ receivers.push(name); }
+        if(pos==='QB'){ qbs.push(name); qbRecords.push(rec); }
+        if(ELIGIBLE_TARGET_POS.includes(pos)){ receivers.push(name); rcvRecords.push(rec); }
       });
 
       qbs.sort((a,b)=>a.localeCompare(b));
@@ -584,9 +399,10 @@
       qbs.forEach(n=>pushOption('list_qb_names', n));
       receivers.forEach(n=>pushOption('list_rcv_names', n));
     }
+
     async function loadRoster(){
       try{
-        const res = await apiGet({ action:'roster', sheet_id: ROSTER_SHEET_ID, sheet_name: ROSTER_TAB });
+        const res = await apiGet({ action:'roster', sheet_id:ROSTER_SHEET_ID, sheet_name:ROSTER_TAB });
         if(!res.ok) throw new Error(res.error||'Roster fetch failed');
         roster = res.roster||[];
         buildRosterIndexes(roster);
@@ -594,109 +410,161 @@
       }catch(err){ log(err.message,'error'); }
     }
 
-    function resolvePlayerId(s){
-      const t = (s||'').toString().trim();
-      if(!t) return '';
-      if(playersById.has(t.toUpperCase())) return t; // already an ID
-      if(playersByName.has(t.toUpperCase())) return playersByName.get(t.toUpperCase());
-      const num = t.replace(/[^0-9]/g,'');
-      if(num && playersByNum.has(num)) return playersByNum.get(num);
-      return '';
-    }
-    function syncPlayerIds(){
-      const pid = resolvePlayerId(el('passer_name').value) || resolvePlayerId(el('passer_id').value);
-      if(pid) el('passer_id').value = pid;
-      const tid = resolvePlayerId(el('target_name').value) || resolvePlayerId(el('target_id').value);
-      if(tid) el('target_id').value = tid;
-    }
-    el('loadRosterBtn').addEventListener('click', loadRoster);
-    el('passer_name').addEventListener('change', syncPlayerIds);
-    el('target_name').addEventListener('change', syncPlayerIds);
+    /* ---------- Autofill helpers ---------- */
+    const jerseyDigits = s => (s||'').toString().replace(/[^0-9]/g,'');
+    function findByIdRaw(id){ return id ? playersById.get(id.toUpperCase()) : undefined; }
 
-    /* =======================
-    * Toggle helpers (Yes/No)
-    * ======================= */
-    function setToggle(id, on){
-      const btn = document.querySelector(`.tgl[data-target="${id}"]`);
-      const hidden = el(id);
-      if(!btn || !hidden) return;
-      btn.dataset.on = on ? 'true' : 'false';
-      btn.setAttribute('aria-checked', String(on));
-      hidden.value = on ? 'Yes' : 'No';
+    function uniqueIdFromPartialName(q, pool){
+      const U = (q||'').trim().toUpperCase();
+      if(!U) return '';
+      // exact match via name map
+      const exactId = playersByName.get(U);
+      if(exactId){
+        const rec = findByIdRaw(exactId);
+        if(rec && pool.some(p=>p.id===rec.id)) return rec.id;
+      }
+      // unique contains match within the given pool (QBs or eligible receivers)
+      const matches = pool.filter(p => p.name.toUpperCase().includes(U));
+      return matches.length===1 ? matches[0].id : '';
+    }
+
+    function idFromJersey(numLike, pool){
+      const n = jerseyDigits(numLike);
+      if(!n) return '';
+      const matches = pool.filter(p => String(p.num||'')===n);
+      if(matches.length===1) return matches[0].id;
+      // fall back to global jersey map if unique there
+      const global = playersByNum.get(n);
+      return (global && pool.some(p=>p.id===global)) ? global : '';
+    }
+
+    function setNameAndId(which, id){
+      const rec = findByIdRaw(id); if(!rec) return;
+      if(which==='passer'){ if(el('passer_id').value!==rec.id) el('passer_id').value=rec.id;
+                            if(el('passer_name').value.trim().toUpperCase()!==rec.name.toUpperCase()) el('passer_name').value=rec.name; }
+      if(which==='target'){ if(el('target_id').value!==rec.id) el('target_id').value=rec.id;
+                            if(el('target_name').value.trim().toUpperCase()!==rec.name.toUpperCase()) el('target_name').value=rec.name; }
+    }
+
+    function syncPasser(){
+      const nameInput = el('passer_name').value;
+      const idInput   = el('passer_id').value;
+      // 1) ID typed → fill name
+      let rec = findByIdRaw(idInput);
+      if(rec && rec.pos==='QB'){ setNameAndId('passer', rec.id); return; }
+
+      // 2) Name (exact or partial) → fill ID
+      let id = uniqueIdFromPartialName(nameInput, qbRecords);
+      if(!id) id = idFromJersey(nameInput, qbRecords);
+      if(!id && idInput){ // ID looked invalid; try jersey in ID box
+        const alt = idFromJersey(idInput, qbRecords); if(alt) id = alt;
+      }
+      if(id){ setNameAndId('passer', id); return; }
+      // leave as-is if ambiguous; avoid stomping user text
+    }
+
+    function syncTarget(){
+      const nameInput = el('target_name').value;
+      const idInput   = el('target_id').value;
+      // 1) ID typed → fill name
+      let rec = findByIdRaw(idInput);
+      if(rec && ELIGIBLE_TARGET_POS.includes(rec.pos)){ setNameAndId('target', rec.id); return; }
+
+      // 2) Name (exact or partial) → fill ID
+      let id = uniqueIdFromPartialName(nameInput, rcvRecords);
+      if(!id) id = idFromJersey(nameInput, rcvRecords);
+      if(!id && idInput){
+        const alt = idFromJersey(idInput, rcvRecords); if(alt) id = alt;
+      }
+      if(id){ setNameAndId('target', id); return; }
+    }
+
+    // Wire events (both fields, live + on blur)
+    [['passer_name', syncPasser], ['passer_id', syncPasser],
+     ['target_name', syncTarget], ['target_id', syncTarget]]
+      .forEach(([id,fn])=>{
+        const node = el(id);
+        node.addEventListener('input', fn);
+        node.addEventListener('change', fn);
+      });
+
+    // Buttons already present
+    el('loadRosterBtn').addEventListener('click', loadRoster);
+
+
+    /* ===== Presence (QB) ===== */
+    async function setQBPresence(){
+      const gid = el('game_id').value.trim(); if(!gid) return log('Pick a Game ID first.','error');
+      syncPlayerIds();
+      const qb = el('passer_id').value.trim(); if(!qb) return log('Choose a passer first.','error');
+      try{ await Presence.set(gid, 'QB', [qb], { unit:'offense', source:'game-qb' }); log(`Presence set (QB: ${qb}).`, 'success'); }
+      catch(e){ log(e.message||String(e),'error'); }
+    }
+    async function loadQBPresence(){
+      const gid = el('game_id').value.trim(); if(!gid) return log('Pick a Game ID first.','error');
+      try{
+        const data = await Presence.get(gid, 'QB');
+        const arr = (data && (data.players || data.data?.players || data.presence?.players)) || [];
+        const first = Array.isArray(arr) && arr[0];
+        if(!first) return log('No QB in presence for this game.','error');
+        el('passer_id').value = first;
+        const rec = playersById.get(first.toUpperCase()); if(rec) el('passer_name').value = rec.name;
+        log(`Loaded QB from presence (${first}).`,'success');
+      }catch(e){ log(e.message||String(e),'error'); }
+    }
+    document.getElementById('setQBPresenceBtn').addEventListener('click', setQBPresence);
+    document.getElementById('loadQBPresenceBtn').addEventListener('click', loadQBPresence);
+
+    /* ===== Toggles & Segments ===== */
+    function setToggle(id,on){
+      const btn=document.querySelector(`.tgl[data-target="${id}"]`), hidden=el(id);
+      if(!btn||!hidden) return; btn.dataset.on = on ? 'true':'false'; btn.setAttribute('aria-checked',String(on)); hidden.value = on?'Yes':'No';
     }
     function mountToggles(){
       document.querySelectorAll('.tgl[data-target]').forEach(btn=>{
-        if (btn.dataset.wired === '1') return;
-        btn.dataset.wired = '1';
+        if (btn.dataset.wired === '1') return; btn.dataset.wired='1';
         btn.addEventListener('click', ()=>{
-          const id = btn.dataset.target;
-          const next = !(btn.dataset.on === 'true');
-          setToggle(id, next);
-
-          // sanity ties
+          const id=btn.dataset.target; const next = !(btn.dataset.on==='true'); setToggle(id,next);
           if(id==='interception' && next){ setToggle('complete', false); el('yac').value='0'; }
           if(id==='drop' && next){ setToggle('complete', false); }
           if(id==='spike' && next){ setToggle('catchable', false); setToggle('complete', false); el('yac').value='0'; el('air_yards').value='0'; setSegValue('depth_bucket','Behind LOS'); }
           if(id==='throwaway' && next){ setToggle('complete', false); setToggle('catchable', false); el('yac').value='0'; }
-          if(id==='sack' && next){
-            tttStop();
-            el('air_yards').value='0'; el('yac').value='0';
-            setSegValue('depth_bucket','Behind LOS');
-          }
+          if(id==='sack' && next){ tttStop(); el('air_yards').value='0'; el('yac').value='0'; setSegValue('depth_bucket','Behind LOS'); }
           if(id==='complete' && !next){ el('yac').value='0'; }
-
           refreshPathState();
         });
       });
-
-      // defaults
       ['complete','interception','td','sack','throwaway','spike','catchable','drop','contested','pressure_faced_yn']
         .forEach(id=>setToggle(id,false));
     }
-
-    /* =======================
-    * Segmented groups (Depth & L/M/R)
-    * ======================= */
-    function setSegValue(id, val){
-      const hidden = el(id);
-      hidden.value = val;
-      const group = document.querySelector(`.seg[data-target="${id}"]`);
+    function setSegValue(id,val){
+      const hidden=el(id); hidden.value=val;
+      const group=document.querySelector(`.seg[data-target="${id}"]`);
       if(!group) return;
-      group.querySelectorAll('.seg-btn').forEach(btn=>{
-        const isActive = btn.dataset.val === val;
-        btn.setAttribute('aria-pressed', String(isActive));
-      });
+      group.querySelectorAll('.seg-btn').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.val===val)));
     }
     function initSegGroups(){
       document.querySelectorAll('.seg[data-target]').forEach(group=>{
-        if (group.dataset.wired === '1') return;
-        group.dataset.wired = '1';
+        if(group.dataset.wired==='1') return; group.dataset.wired='1';
         group.addEventListener('click', ev=>{
-          const btn = ev.target.closest('.seg-btn'); if(!btn) return;
-          const id = group.dataset.target;
-          setSegValue(id, btn.dataset.val);
+          const btn=ev.target.closest('.seg-btn'); if(!btn) return;
+          setSegValue(group.dataset.target, btn.dataset.val);
         });
       });
     }
 
-    /* =======================
-    * TTT Stopwatch
-    * ======================= */
+    /* ===== TTT Stopwatch ===== */
     let tttTimer=null, tttStartMs=0;
     function showTTT(sec){ el('ttt_display').textContent = sec.toFixed(2); }
-    function tttStart(){ if(tttTimer) return; tttStartMs = performance.now(); tttTimer = setInterval(()=>{ showTTT((performance.now()-tttStartMs)/1000); }, 20); }
+    function tttStart(){ if(tttTimer) return; tttStartMs=performance.now(); tttTimer=setInterval(()=>{ showTTT((performance.now()-tttStartMs)/1000); },20); }
     function tttStop(){ if(!tttTimer) return; clearInterval(tttTimer); tttTimer=null; const s=(performance.now()-tttStartMs)/1000; el('ttt').value=s.toFixed(2); showTTT(s); }
     function tttReset(){ if(tttTimer){clearInterval(tttTimer); tttTimer=null;} showTTT(0); el('ttt').value=''; }
-    el('ttt_start').onclick = tttStart;
-    el('ttt_stop').onclick  = tttStop;
-    el('ttt_reset').onclick = tttReset;
-    document.querySelectorAll('button[data-ttt]').forEach(b=>{
-      b.addEventListener('click',()=>{ el('ttt').value=b.dataset.ttt; showTTT(Number(b.dataset.ttt)); });
-    });
+    document.getElementById('ttt_start').onclick=tttStart;
+    document.getElementById('ttt_stop').onclick=tttStop;
+    document.getElementById('ttt_reset').onclick=tttReset;
+    document.querySelectorAll('button[data-ttt]').forEach(b=>b.addEventListener('click',()=>{ el('ttt').value=b.dataset.ttt; showTTT(Number(b.dataset.ttt)); }));
 
-    /* =======================
-    * Throw logic helpers
-    * ======================= */
+    /* ===== Throw helpers ===== */
     const numVal = v => (v===''||v==null ? '' : Number(v));
     const ynTo01 = v => v==='Yes'?1 : (v==='No'?0 : '');
     function autoDepthFromAir(){
@@ -709,105 +577,61 @@
     }
     el('air_yards').addEventListener('change', autoDepthFromAir);
 
-    // --- path state: enable/disable groups based on outcome ---
     function setGroupDisabled(id, disabled){
-      const g = document.getElementById(id);
-      if(!g) return;
-      g.classList.toggle('is-disabled', !!disabled);
+      const g = document.getElementById(id); if(!g) return; g.classList.toggle('is-disabled', !!disabled);
     }
-
     function refreshPathState(){
       const sackOn  = el('sack').value === 'Yes';
       const spikeOn = el('spike').value === 'Yes';
       const toOn    = el('throwaway').value === 'Yes';
-
-      // Sack → skip flight/target
       setGroupDisabled('path_flight', sackOn);
       setGroupDisabled('path_target', sackOn);
-
       if (sackOn){
-        el('air_yards').value = '0';
-        el('yac').value = '0';
+        el('air_yards').value='0'; el('yac').value='0';
         setSegValue('depth_bucket','Behind LOS');
-        setToggle('complete', false);
-        setToggle('catchable', false);
-        setToggle('drop', false);
-        setToggle('td', false);
-        // leave INT off by default
+        setToggle('complete', false); setToggle('catchable', false); setToggle('drop', false); setToggle('td', false);
       }
-
-      // Spike / Throwaway imply no catchable & no completion
       if (spikeOn || toOn){
-        setToggle('complete', false);
-        setToggle('catchable', false);
-        el('yac').value = '0';
-        if (spikeOn){
-          el('air_yards').value = '0';
-          setSegValue('depth_bucket','Behind LOS');
-        }
+        setToggle('complete', false); setToggle('catchable', false); el('yac').value='0';
+        if (spikeOn){ el('air_yards').value='0'; setSegValue('depth_bucket','Behind LOS'); }
       }
     }
 
-    function wireOutcomeLogic(){
-      // Guard against double-binding
-      document.querySelectorAll('.tgl[data-target]').forEach(btn=>{
-        if (btn.dataset.wiredOutcome === '1') return;
-        btn.dataset.wiredOutcome = '1';
-        btn.addEventListener('click', ()=>{
-          const id = btn.dataset.target;
-          if(id==='interception' && btn.getAttribute('aria-checked')==='true'){ setToggle('complete', false); el('yac').value='0'; }
-          if(id==='drop' && btn.getAttribute('aria-checked')==='true'){ setToggle('complete', false); }
-          refreshPathState();
-        });
-      });
-
-      el('air_yards').addEventListener('change', autoDepthFromAir);
-    }
-
-    /* =======================
-    * Plays lookup (optional)
-    * ======================= */
+    /* ===== Optional: plays lookup ===== */
     async function lookupPlay(){
       try{
-        const pid = el('play_id').value.trim();
-        if(!pid) throw new Error('Enter a Play ID first.');
-        const res = await apiGet({ action:'table', sheet_id: SCHEDULE_SHEET_ID, sheet_name: '20_Fact_Plays' });
+        const pid = el('play_id').value.trim(); if(!pid) throw new Error('Enter a Play ID first.');
+        const res = await apiGet({ action:'table', route: ROUTE_PLAYS });
         if(!res.ok) throw new Error(res.error||'Fetch plays failed');
         const row = (res.rows||[]).find(r => String(r.play_id||'').trim() === pid);
-        if(!row){ log(`Play ${pid} not found in 20_Fact_Plays`, 'error'); return; }
+        if(!row){ log(`Play ${pid} not found in plays.`, 'error'); return; }
         log(`Play ${pid} found (Q${row.quarter||'?'} @ ${row.clock||'??:??'})`, 'success');
       }catch(err){ log(err.message,'error'); }
     }
-    el('lookupPlayBtn').addEventListener('click', lookupPlay);
-    el('newPlayIdBtn').addEventListener('click', async ()=>{
-      try{ const id = await nextId('PLAY'); el('play_id').value = id; log(`New Play ID: ${id}`,'success'); }
+    document.getElementById('lookupPlayBtn').addEventListener('click', lookupPlay);
+    document.getElementById('newPlayIdBtn').addEventListener('click', async ()=>{
+      try{ const res = await apiGet({ action:'next_id', prefix:'PLAY' }); if(!res.ok) throw new Error(res.error||'ID failed'); el('play_id').value = res.id; log(`New Play ID: ${res.id}`,'success'); }
       catch(err){ log(err.message,'error'); }
     });
 
-    /* =======================
-    * SAVE
-    * ======================= */
+    /* ===== Save ===== */
     function ensureGameAndIds(){
-      const game_id = el('game_id').value.trim();
-      if(!game_id) throw new Error('Pick a Game ID from schedule.');
-      if(!scheduleMap[game_id]) throw new Error('Game ID not found in schedule.');
-      const play_id = el('play_id').value.trim();
-      if(!play_id) throw new Error('Enter a Play ID.');
+      const game_id = el('game_id').value.trim(); if(!game_id) throw new Error('Pick a Game ID from schedule.');
+      const play_id = el('play_id').value.trim(); if(!play_id) throw new Error('Enter a Play ID.');
       syncPlayerIds();
-      const passer_id = el('passer_id').value.trim();
-      if(!passer_id) throw new Error('Set Passer (name or ID).');
+      const passer_id = el('passer_id').value.trim(); if(!passer_id) throw new Error('Set Passer (name or ID).');
       return { game_id, play_id, passer_id };
     }
-
-    el('saveBtn').addEventListener('click', async ()=>{
+    async function appendRow(route,row,ensure=[]){
+      const res = await apiPost({ action:'append', route, row, ensure_headers: ensure });
+      if(!res.ok) throw new Error(res.error||'Append failed'); return res;
+    }
+    document.getElementById('saveBtn').addEventListener('click', async ()=>{
       try{
         const { game_id, play_id, passer_id } = ensureGameAndIds();
         const target_id = el('target_id').value.trim();
-
         const row = {
-          play_id,
-          passer_id,
-          target_id,
+          play_id, passer_id, target_id,
           Complete: ynTo01(el('complete').value),
           Interception: ynTo01(el('interception').value),
           Touchdown: ynTo01(el('td').value),
@@ -825,49 +649,41 @@
           'Contested Target': ynTo01(el('contested').value),
           pressure_faced: ynTo01(el('pressure_faced_yn').value)
         };
-
         await appendRow(ROUTE_PASS, row, Object.keys(row));
         log(`Pass detail saved for ${play_id} (QB ${passer_id}).`, 'success');
 
-        // quick clear (keep IDs + pills)
         ['air_yards','yac','ttt','sack_yards'].forEach(id=>el(id).value='');
         ['complete','interception','td','sack','throwaway','spike','catchable','drop','contested','pressure_faced_yn']
           .forEach(id=>setToggle(id,false));
         refreshPathState();
       }catch(err){ log(err.message,'error'); }
     });
-
-    el('clearBtn').addEventListener('click', ()=>{
+    document.getElementById('clearBtn').addEventListener('click', ()=>{
       document.querySelectorAll('input').forEach(n=>{
         if(['game_id','play_id','passer_id','passer_name','target_id','target_name','lmr','depth_bucket','pressure_faced_yn','complete','interception','td','sack','throwaway','spike','catchable','drop','contested'].includes(n.id)) return;
         n.value='';
       });
-      // toggles & pills defaults
       ['complete','interception','td','sack','throwaway','spike','catchable','drop','contested','pressure_faced_yn'].forEach(id=>setToggle(id,false));
-      setSegValue('lmr','Left');
-      setSegValue('depth_bucket','Behind LOS');
-      tttReset();
-      refreshPathState();
+      setSegValue('lmr','Left'); setSegValue('depth_bucket','Behind LOS'); tttReset(); refreshPathState();
     });
 
-    /* =======================
-    * INIT
-    * ======================= */
-    initSegGroups();
-    mountToggles();
-    refreshPathState();
-    wireOutcomeLogic();
-    loadSchedule();
-    loadRoster();
+    /* ===== Init ===== */
+    initSegGroups(); mountToggles(); refreshPathState(); loadSchedule(); loadRoster();
 
-    // Follow context from Primary/Drives if open on same device
     if (window.GameContext){
       GameContext.subscribe(ctx=>{
-        if(ctx.game_id && el('game_id').value!==ctx.game_id){ el('game_id').value=ctx.game_id; el('game_id').dispatchEvent(new Event('change')); }
+        if(ctx.game_id){
+          if (scheduleReady()){
+            el('game_id').value = ctx.game_id;
+            el('game_id').dispatchEvent(new Event('change'));
+          } else {
+            pendingGidFromCtx = ctx.game_id;
+          }
+        }
         if(ctx.play_id && !el('play_id').value){ el('play_id').value = ctx.play_id; }
       });
     }
+  });
   </script>
-
 </body>
 </html>
