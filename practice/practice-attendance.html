@@ -18,27 +18,51 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../style.css"/>
 
-  <!-- Dark ATL skin -->
+  <!-- Light theme (white tiles) -->
   <style>
     :root{
-      --panel-bg: rgba(255,255,255,.06);
-      --bd: rgba(139,92,246,.35);
-      --subtle: rgba(255,255,255,.18);
-      --chip-bg: rgba(255,255,255,.08);
-      --chip-bd: rgba(255,255,255,.22);
+      /* Surface & text */
+      --page-bg: #f5f7fb;
+      --tile: #ffffff;
+      --tile-bd: #e6e9f2;
+      --tile-shadow: 0 10px 22px rgba(9, 14, 34, .08);
+      --text-strong: #111827;
+      --text: #1f2937;
+      --text-subtle: #6b7280;
+
+      /* Accents */
       --accent: #7C4DFF;
       --accent2:#8B5CF6;
-      --text-on-dark: #ECECF3;
 
+      /* Status colors */
       --late:   #F59E0B;
       --present:#22C55E;
-      --excused:#60A5FA;
-      --exlate: #A78BFA;
+      --excused:#3B82F6;
+      --exlate: #8B5CF6;
 
-      --focus-ring: 0 0 0 3px rgba(139,92,246,.35);
-      --shadow-soft:0 10px 30px rgba(17,12,28,.35);
+      /* Chips / misc */
+      --chip-bg: #f3f4f6;
+      --chip-bd: #e5e7eb;
+
+      /* Focus */
+      --focus-ring: 0 0 0 3px rgba(124,77,255,.25);
     }
 
+    /* Page */
+    body{ background:var(--page-bg); color:var(--text); font-family: Manrope, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+    .page-header{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:14px 16px 0 16px; max-width:1100px; margin:0 auto;
+    }
+    .page-header h1{ margin:0; font-weight:800; letter-spacing:.2px; color:var(--text-strong) }
+    .menu-actions{display:flex;gap:.5rem}
+    .menu-btn{
+      display:inline-flex;align-items:center;gap:.4rem;padding:.55rem .85rem;border-radius:10px;
+      background:#fff;border:1px solid var(--tile-bd);box-shadow: var(--tile-shadow);color:var(--text-strong);text-decoration:none;font-weight:700
+    }
+    .menu-btn.secondary{ background:#fafbff }
+
+    /* Layout (mobile first) */
     .container{
       max-width:1100px;margin:0 auto;padding:16px;
       display:grid;gap:16px;
@@ -59,104 +83,116 @@
       }
     }
 
+    /* Cards */
     .card{
-      background:var(--panel-bg);
-      border:1px solid var(--bd);
+      background:var(--tile);
+      border:1px solid var(--tile-bd);
       border-radius:16px;
       padding:16px;
-      color:var(--text-on-dark);
-      box-shadow:var(--shadow-soft);
+      color:var(--text);
+      box-shadow:var(--tile-shadow);
     }
     .section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
-    .section-title h2{margin:0;font-size:1.15rem}
-    .tiny{font-size:.9rem;opacity:.9}
+    .section-title h2{margin:0;font-size:1.15rem;color:var(--text-strong)}
+    .tiny{font-size:.9rem;color:var(--text-subtle)}
 
-    label{display:block;font-size:.9rem;opacity:.92;margin:0 0 .35rem}
+    /* Inputs */
+    label{display:block;font-size:.9rem;color:var(--text-subtle);margin:0 0 .35rem}
     input,select,textarea{
       width:100%;padding:.7rem .85rem;border-radius:12px;
-      border:2px solid rgba(255,255,255,.28);
-      background:rgba(255,255,255,.08);color:#fff;font-size:1rem;
+      border:1px solid #d1d5db;
+      background:#fff;color:var(--text);font-size:1rem;
       transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
     }
-    input::placeholder,textarea::placeholder{color:rgba(236,236,243,.65)}
+    input::placeholder,textarea::placeholder{color:#9ca3af}
     input:focus,select:focus,textarea:focus{
-      outline:none;border-color:#C4B5FD;box-shadow:var(--focus-ring);background:rgba(255,255,255,.12);
+      outline:none;border-color:#a78bfa;box-shadow:var(--focus-ring);background:#fff;
     }
     input[type="number"]{-moz-appearance:textfield;}
     input[type="number"]::-webkit-outer-spin-button,
     input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
 
+    /* Rows */
     .row{display:grid;gap:12px}
     .row.cols-2{grid-template-columns:1fr 1fr}
     .row.cols-3{grid-template-columns:repeat(3,1fr)}
     @media (max-width:680px){ .row.cols-2,.row.cols-3{grid-template-columns:1fr} }
 
+    /* Buttons */
     .btnbar{display:flex;gap:.5rem;flex-wrap:wrap}
     .btn{
       padding:.65rem 1rem;border-radius:999px;border:1px solid transparent;cursor:pointer;
-      background:linear-gradient(135deg,var(--accent) 0%, var(--accent2) 100%);color:#071a12;font-weight:800;
-      box-shadow:0 10px 24px rgba(139,92,246,.25);
+      background:linear-gradient(135deg,var(--accent) 0%, var(--accent2) 100%);color:#fff;font-weight:800;
+      box-shadow:0 10px 24px rgba(124,77,255,.25);
       transition:transform .15s ease,filter .15s ease;
     }
     .btn:hover{transform:translateY(-2px);filter:saturate(1.05)}
-    .btn.subtle{ background:transparent;border-color:rgba(255,255,255,.3);color:#fff;box-shadow:none }
+    .btn.subtle{
+      background:#fff;border-color:#d1d5db;color:var(--text-strong);box-shadow:var(--tile-shadow)
+    }
     .btn.warn{background:#F59E0B;color:#1f1300;border-color:#a66b07}
 
+    /* Toggle pill */
     .toggle{display:flex;align-items:center}
     .toggle-input{position:absolute;opacity:0;pointer-events:none}
     .toggle-btn{
       position:relative;cursor:pointer;
       padding:.55rem .9rem .55rem 2.2rem;border-radius:999px;
-      background:rgba(255,255,255,.06);color:#fff;border:2px solid rgba(255,255,255,.28);
-      font-weight:800;transition:all .15s ease;
+      background:#fff;color:var(--text-strong);border:1px solid #d1d5db;
+      font-weight:800;transition:all .15s ease; box-shadow: var(--tile-shadow);
     }
     .toggle-btn::before{
       content:"";position:absolute;left:.7rem;top:50%;transform:translateY(-50%);
-      width:16px;height:16px;border-radius:50%;background:#fff;opacity:.85;
-      box-shadow:0 0 0 2px rgba(0,0,0,.35) inset;
+      width:16px;height:16px;border-radius:50%;background:#e5e7eb;
     }
     .toggle-input:checked + .toggle-btn{
       background:linear-gradient(90deg,#16A34A,#10B981);border-color:transparent;color:#071a12;
       box-shadow:0 8px 18px rgba(16,185,129,.28);
     }
-    .toggle-input:checked + .toggle-btn::before{content:"✓";display:grid;place-items:center;color:#0c2b1e;font-weight:900;box-shadow:none}
+    .toggle-input:checked + .toggle-btn::before{
+      content:"✓";display:grid;place-items:center;color:#0c2b1e;font-weight:900;background:#fff
+    }
     .toggle-btn:focus-visible{outline:2px solid #93C5FD;outline-offset:2px}
 
+    /* Roster grid */
     .toolbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:.6rem}
     .search{flex:1 1 240px}
     .player-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.6rem}
 
     .plyr{
-      position:relative;border:1px solid var(--subtle);border-radius:12px;padding:.72rem .8rem;
-      background:rgba(255,255,255,.05);cursor:pointer;display:flex;gap:.65rem;align-items:center;min-height:58px;
-      transition:transform .06s ease, border-color .06s ease, background .06s ease, box-shadow .06s ease;user-select:none;color:#fff;
+      position:relative;border:1px solid #e5e7eb;border-radius:12px;padding:.72rem .8rem;
+      background:#ffffff;cursor:pointer;display:flex;gap:.65rem;align-items:center;min-height:58px;
+      transition:transform .06s ease, border-color .06s ease, background .06s ease, box-shadow .06s ease;user-select:none;color:var(--text);
+      box-shadow: var(--tile-shadow);
     }
-    .plyr:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.35);box-shadow:0 10px 24px rgba(0,0,0,.25)}
-    .num{width:36px;height:36px;border-radius:9px;background:rgba(255,255,255,.10);display:grid;place-items:center;font-weight:800}
+    .plyr:hover{transform:translateY(-1px);border-color:#d1d5db}
+    .num{width:36px;height:36px;border-radius:9px;background:#f3f4f6;display:grid;place-items:center;font-weight:800;color:var(--text-strong)}
 
     .plyr .name{min-width:0}
-    .plyr .name > div:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700;letter-spacing:.2px}
-    .plyr .pos{color:#cfd3d8;opacity:.9}
+    .plyr .name > div:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:800;letter-spacing:.2px;color:var(--text-strong)}
+    .plyr .pos{color:var(--text-subtle)}
 
-    .stamp{font-variant-numeric:tabular-nums;font-size:.82rem;color:#E8F3FF;opacity:1;margin-left:auto}
+    .stamp{font-variant-numeric:tabular-nums;font-size:.82rem;color:#455a64;margin-left:auto}
 
     .status{
       position:absolute;right:8px;top:8px;font-size:.72rem;padding:.16rem .48rem;border-radius:999px;
-      border:1px solid var(--chip-bd);background:var(--chip-bg);color:#fff
+      border:1px solid var(--chip-bd);background:var(--chip-bg);color:var(--text-strong)
     }
-    .status.excl{background:rgba(167,139,250,.18);border-color:#a78bfa;color:#EDE9FE}
+    .status.excl{background:#efeafe;border-color:#dcd4ff;color:#4b3ca6}
 
     .saved::after{
       content:'✓';position:absolute;left:-6px;top:-6px;width:18px;height:18px;border-radius:50%;
       background:#22c55e;color:#052e1a;font-size:.75rem;display:grid;place-items:center;border:1px solid #0a7a3a;
     }
 
-    .plyr.state-on  { background: rgba(34,197,94,.14);  border-color: rgba(34,197,94,.6); }
-    .plyr.state-late{ background: rgba(245,158,11,.14); border-color: rgba(245,158,11,.6); }
-    .plyr.state-exc { background: rgba(96,165,250,.14); border-color: rgba(96,165,250,.6); }
-    .plyr.state-excl{ background: rgba(167,139,250,.16); border-color: rgba(167,139,250,.65); }
+    /* State tints (light) */
+    .plyr.state-on  { background: #f0fdf4; border-color: rgba(34,197,94,.4); }
+    .plyr.state-late{ background: #fffbeb; border-color: rgba(245,158,11,.5); }
+    .plyr.state-exc { background: #eff6ff; border-color: rgba(59,130,246,.45); }
+    .plyr.state-excl{ background: #f5f3ff; border-color: rgba(139,92,246,.5); }
 
-    .chip{display:inline-block;padding:.3rem .6rem;border-radius:999px;background:var(--chip-bg);border:1px solid var(--chip-bd);font-size:.85rem}
+    /* Chips / legend */
+    .chip{display:inline-block;padding:.3rem .6rem;border-radius:999px;background:var(--chip-bg);border:1px solid var(--chip-bd);font-size:.85rem;color:var(--text)}
     .legend{display:flex;gap:.5rem;align-items:center}
     .legend .dot{width:12px;height:12px;border-radius:50%}
     .dot.on{background:var(--present)}
@@ -164,37 +200,42 @@
     .dot.exc{background:var(--excused)}
     .dot.excl{background:var(--exlate)}
 
-    #log{max-height:260px;overflow:auto;background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:12px;padding:10px;color:#fff}
+    /* Log */
+    #log{max-height:260px;overflow:auto;background:#fff;border:1px solid var(--tile-bd);border-radius:12px;padding:10px;color:var(--text);box-shadow:var(--tile-shadow)}
 
+    /* Popover */
     .popover{
-      position:fixed;z-index:50;background:#121316;border:1px solid var(--bd);border-radius:12px;padding:.4rem;box-shadow:0 12px 34px rgba(0,0,0,.35)
+      position:fixed;z-index:50;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:.4rem;box-shadow:0 12px 34px rgba(0,0,0,.12)
     }
-    .popover button{display:block;width:100%;text-align:left;padding:.5rem .7rem;border-radius:8px;border:1px solid transparent;background:transparent;color:#fff}
-    .popover button:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15)}
+    .popover button{display:block;width:100%;text-align:left;padding:.5rem .7rem;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--text)}
+    .popover button:hover{background:#f3f4f6;border-color:#e5e7eb}
     .hidden{display:none}
 
-    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:saturate(120%) blur(4px);display:none;align-items:center;justify-content:center;z-index:60}
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:saturate(120%) blur(3px);display:none;align-items:center;justify-content:center;z-index:60}
     .modal-backdrop.open{display:flex}
-    .modal{background:#15161a;color:#e7e7f1;border:1px solid var(--bd);border-radius:14px;padding:16px;max-width:520px;width:92%;box-shadow:0 20px 40px rgba(0,0,0,.45)}
-    .modal h3{margin:.2rem 0 .6rem 0}
+    .modal{background:#ffffff;color:var(--text);border:1px solid var(--tile-bd);border-radius:14px;padding:16px;max-width:520px;width:92%;box-shadow:0 20px 40px rgba(0,0,0,.18)}
+    .modal h3{margin:.2rem 0 .6rem 0;color:var(--text-strong)}
     .row-tight{display:flex;gap:.6rem;flex-wrap:wrap}
     .row-tight > *{flex:1 1 160px}
     .modal-backdrop.hidden{display:none !important}
 
+    /* Filters (chips) */
     .filters{display:flex;flex-direction:column;gap:.35rem;margin:4px 0 10px}
     .chipbar{display:flex;gap:.4rem;overflow:auto;padding:.2rem 0;-webkit-overflow-scrolling:touch}
     .filter-chip{
       cursor:pointer;user-select:none;white-space:nowrap;
-      background:var(--chip-bg);border:1px solid var(--chip-bd);color:#fff;
+      background:var(--chip-bg);border:1px solid var(--chip-bd);color:var(--text);
       font-weight:800;border-radius:999px;padding:.42rem .8rem;
       transition:background .15s ease,border-color .15s ease,box-shadow .15s ease,transform .15s ease;
     }
     .filter-chip[aria-pressed="true"]{
       background:linear-gradient(90deg,var(--accent),var(--accent2));
-      color:#081018;border-color:transparent;box-shadow:0 8px 18px rgba(139,92,246,.28)
+      color:#fff;border-color:transparent;box-shadow:0 8px 18px rgba(139,92,246,.28)
     }
     .filter-chip:focus-visible{outline:2px solid #93C5FD;outline-offset:2px}
 
+    /* Mobile tweaks */
     @media (max-width:700px){
       .container{padding:12px}
       .player-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.5rem}
@@ -217,7 +258,7 @@
   </style>
 </head>
 
-<body class="theme-atl practice-page">
+<body class="practice-page">
   <header class="page-header">
     <h1>Practice Attendance</h1>
     <nav class="menu-actions">
@@ -271,7 +312,7 @@
           <button class="btn subtle" id="reloadRosterBtn">Reload Roster</button>
           <button class="btn subtle" id="addPlayerBtn">Add to Roster</button>
         </div>
-        <div class="tiny" style="margin-top:.5rem;opacity:.9">
+        <div class="tiny" style="margin-top:.5rem;">
           Tip: tap = On time/Late (auto). Long-press or right-click a card for <strong>Excused</strong>, <strong>Excused Late</strong>, or to switch status.
         </div>
       </section>
@@ -325,7 +366,7 @@
     <button data-action="late">Late</button>
     <button data-action="excused">Excused</button>
     <button data-action="excused_late">Excused Late</button>
-    <hr style="border:none;border-top:1px solid var(--bd);margin:.3rem 0"/>
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:.3rem 0"/>
     <button data-action="clear">Clear</button>
   </div>
 
@@ -360,7 +401,9 @@
     </div>
   </div>
 
-  <footer class="site-footer"><p>&copy; 2025 Game Speed Data Systems</p></footer>
+  <footer class="site-footer" style="max-width:1100px;margin:24px auto;padding:0 16px;">
+    <p class="tiny">&copy; 2025 Game Speed Data Systems</p>
+  </footer>
 
   <!-- JS -->
   <script>
@@ -389,8 +432,8 @@
     const logBox = el('log');
     const log = (msg, type='')=>{
       const row = document.createElement('div');
-      if(type==='success') row.style.color='#7CFC98';
-      if(type==='error') row.style.color='#ff6b6b';
+      if(type==='success') row.style.color='#047857';
+      if(type==='error') row.style.color='#b91c1c';
       row.textContent = '['+new Date().toLocaleTimeString()+'] '+msg;
       logBox.prepend(row);
       const st = document.getElementById('status'); if(st) st.textContent = (type==='error'?'Error':'Ready');
@@ -403,7 +446,6 @@
     // Session persistence
     const SESSION_KEY = 'ATTEND_SESS_V1';
     function sessionSnapshot(){
-      // convert Map -> plain object
       const att = {};
       attendance.forEach((v, k)=>{ att[k] = v; });
       return {
@@ -417,9 +459,7 @@
       };
     }
     function saveSession(){
-      try {
-        localStorage.setItem(SESSION_KEY, JSON.stringify(sessionSnapshot()));
-      } catch(e) { /* ignore storage errors */ }
+      try { localStorage.setItem(SESSION_KEY, JSON.stringify(sessionSnapshot())); } catch(e){}
     }
     function clearSession(){
       try { localStorage.removeItem(SESSION_KEY); } catch(e){}
@@ -496,7 +536,7 @@
         roster = normalizeRoster(res.roster||[]);
         playersById.clear(); roster.forEach(p=>playersById.set(p.id,p));
         buildPosChips();
-        restoreFromSession(); // <- restore after roster available
+        restoreFromSession(); // restore after roster available
         renderGrid();
         log(`Roster loaded (${roster.length} people).`, 'success');
       }catch(err){ log(err.message,'error'); }
@@ -713,7 +753,7 @@
       const row = buildRow(p, rec);
       await appendRowTable(ATTEND_SHEET_ID, ATTEND_TAB, row, ATTEND_HEADERS);
       rec.saved = true; attendance.set(pId, rec);
-      saveSession();          // persist after save
+      saveSession();
       renderGrid();
     }
     async function saveAllUnsaved(){
@@ -730,27 +770,42 @@
       renderGrid();
       log(`Saved ${ops.length} attendance rows.`, 'success');
     }
+
+    function resetSetupToNow(){
+      const now = new Date();
+      el('prac_date').value = now.toISOString().slice(0,10);
+      const hh = String(now.getHours()).padStart(2,'0');
+      const mm = String(now.getMinutes()).padStart(2,'0');
+      el('prac_time').value = `${hh}:${mm}`;
+      el('prac_grace').value = 0;
+      saveSession();
+    }
+
     async function finalizeAbsent(){
       const absentees = roster.filter(p=>!attendance.has(p.id));
-      if(!absentees.length){ log('No absentees to mark.'); return; }
-      const ops = absentees.map(p=>({
-        sheet_id: ATTEND_SHEET_ID, sheet_name: ATTEND_TAB,
-        row: {
-          timestamp: toLocalT(new Date()),
-          date: el('prac_date').value || '',
-          practice_start: (()=>{ const ms=practiceStartMs(); return ms? toLocalT(ms) : '';})(),
-          grace_minutes: Number(el('prac_grace').value||0),
-          player_id: p.id, player_name: p.name, position: p.pos||'', jersey_number: p.num||'',
-          status: 'Absent', arrived_at: '', minutes_late: ''
-        },
-        ensure_headers: ATTEND_HEADERS
-      }));
-      await batchAppend(ops);
-      log(`Finalized: marked ${ops.length} absent.`, 'success');
+      if(!absentees.length){ 
+        log('No absentees to mark.'); 
+      } else {
+        const ops = absentees.map(p=>({
+          sheet_id: ATTEND_SHEET_ID, sheet_name: ATTEND_TAB,
+          row: {
+            timestamp: toLocalT(new Date()),
+            date: el('prac_date').value || '',
+            practice_start: (()=>{ const ms=practiceStartMs(); return ms? toLocalT(ms) : '';})(),
+            grace_minutes: Number(el('prac_grace').value||0),
+            player_id: p.id, player_name: p.name, position: p.pos||'', jersey_number: p.num||'',
+            status: 'Absent', arrived_at: '', minutes_late: ''
+          },
+          ensure_headers: ATTEND_HEADERS
+        }));
+        await batchAppend(ops);
+        log(`Finalized: marked ${ops.length} absent.`, 'success');
+      }
 
       // mark session finalized & clear
       clearSession();
       attendance.clear();
+      resetSetupToNow();
       renderGrid();
     }
 
@@ -886,7 +941,6 @@
       if(!pos){ log('Position / group required','error'); return; }
 
       const row = { player_id: pid || '', player_name: name, position: pos, jersey_number: num };
-
       const idPrefix = pid ? null : (isCoach ? 'CO' : 'PLYR');
 
       if(idPrefix){
@@ -918,7 +972,6 @@
       if(ss.attendance && typeof ss.attendance === 'object'){
         Object.keys(ss.attendance).forEach(pid=>{
           const rec = ss.attendance[pid];
-          // basic shape guard
           if(rec && typeof rec==='object' && ('status' in rec)){
             attendance.set(pid, rec);
           }
@@ -933,7 +986,7 @@
      * ======================= */
     (function seedStart(){
       const now = new Date();
-      if(!loadSession()){ // don't overwrite if we will restore
+      if(!loadSession()){
         el('prac_date').value = now.toISOString().slice(0,10);
         el('prac_time').value = '16:00';
       }

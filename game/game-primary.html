@@ -20,7 +20,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../style.css"/>
 
-  <!-- Page-local light UI styles (unchanged) -->
+  <!-- Page-local styles (tidy grids + mobile) -->
   <style>
     :root{
       --card-bg:#fff; --card-br:#E7E9F2; --ink:#0f172a; --ink-2:#334155; --muted:#64748b;
@@ -35,26 +35,32 @@
       .container{ gap:18px; grid-template-columns: 1fr 1fr;
         grid-template-areas: "ctx clock" "drive play" "summary summary" "log log"; }
     }
+
     .card{ background:var(--card-bg); border:1px solid var(--card-br); border-radius:18px; padding:18px;
       box-shadow:0 10px 24px rgba(2,8,23,.06); color:var(--ink);}
     .area-ctx{grid-area:ctx}.area-clock{grid-area:clock}.area-drive{grid-area:drive}
     .area-play{grid-area:play}.area-summary{grid-area:summary}.area-log{grid-area:log}
+
     .section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
     .section-title h2{margin:0;font-size:1.25rem;line-height:1.15}
     .tiny{font-size:.9rem;color:var(--muted)}
     .chip{display:inline-block;padding:.35rem .7rem;border-radius:999px;background:#f3f4f7;border:1px solid #e5e7ef;font-weight:600;color:#4b5563}
+
     label{display:block;font-size:.95rem;color:var(--ink-2);margin:0 0 .35rem}
-    input,select,textarea{ width:100%; padding:.72rem .85rem; border-radius:12px; border:2px solid #cfd6ea; background:#fff; color:var(--ink);
+    input,select,textarea{ width:100%; padding:.72rem .85rem; border-radius:12px; border:2px solid #cfd6ea; background:#fff; color:#0f172a;
       box-shadow:0 1px 0 rgba(0,0,0,.02) inset; transition:border-color .15s, box-shadow .15s, background .15s; font-size:1rem; }
     input::placeholder, textarea::placeholder{ color:#9aa3b2 }
-    input:focus,select:focus,textarea:focus{ outline:none; border-color:#a36bff; box-shadow:0 0 0 4px var(--focus); background:#fff; }
-    input[type="number"]{-moz-appearance:textfield; border-color:#c0c9e3} input[type="number"]::-webkit-outer-spin-button,
-    input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+    input:focus,select:focus,textarea:focus{ outline:none; border-color:#a36bff; box-shadow:0 0 0 4px var(--focus); }
     input[disabled], select[disabled], textarea[disabled]{ background:#f6f7fb; color:#94a3b8; border-color:#e2e8f0; }
+
+    /* tidy grid helpers */
     .row{display:grid; gap:12px}
-    .row.cols-2{grid-template-columns:1fr 1fr}.row.cols-3{grid-template-columns:repeat(3,1fr)}
-    .row.cols-4{grid-template-columns:repeat(4,1fr)}.row.cols-5{grid-template-columns:repeat(5,1fr)}
+    .row.cols-2{grid-template-columns:1fr 1fr}
+    .row.cols-3{grid-template-columns:repeat(3,1fr)}
+    .row.cols-4{grid-template-columns:repeat(4,1fr)}
+    .row.cols-5{grid-template-columns:repeat(5,1fr)}
     @media (max-width:680px){ .row.cols-2,.row.cols-3,.row.cols-4,.row.cols-5{grid-template-columns:1fr} }
+
     .btnbar{display:flex;flex-wrap:wrap;gap:.5rem}
     .btn{appearance:none;border:1px solid var(--pill);background:var(--pill);color:#fff;cursor:pointer;
       padding:.65rem 1rem;border-radius:999px;font-weight:700;transition:transform .15s, box-shadow .15s, background .15s, border-color .15s}
@@ -63,21 +69,28 @@
     .btn.warn{ background:#fde9d6; color:#7a3b01; border-color:#f5c899 }
     .btn.ghost{ background:#fff; color:#111827; border-color:#e5e7ef }
     .btn.small{ padding:.45rem .7rem; font-weight:700 }
+
     .clock-wrap{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center}
     .clock-face{font-variant-numeric:tabular-nums;font-size:2.2rem;letter-spacing:.6px}
     .clock-keys{display:flex;flex-wrap:wrap;gap:.5rem}
+
     .toggle{ display:flex; flex-wrap:wrap; gap:.6rem; }
     .toggle-input{ position:absolute; opacity:0; pointer-events:none; }
     .toggle-btn{ position:relative; padding:.55rem .9rem .55rem 2.2rem; border-radius:999px; border:2px solid #e2e8f0;
-      background:#fff; color:#111827; font-weight:800; cursor:pointer; transition: transform .15s, box-shadow .15s, background .15s, border-color .15s, color .15s}
+      background:#fff; color:#111827; font-weight:800; cursor:pointer; transition:.15s}
     .toggle-btn::before{ content:""; position:absolute; left:.8rem; top:50%; transform:translateY(-50%);
       width:14px; height:14px; border-radius:50%; border:2px solid #cbd5e1; background:#fff; transition:all .15s }
     .toggle-input:checked + .toggle-btn{ background:linear-gradient(90deg, var(--pill), var(--pill-2)); color:#fff; border-color:transparent; box-shadow:0 8px 18px rgba(163,107,255,.24) }
     .toggle-input:checked + .toggle-btn::before{ content:"✓"; width:18px; height:18px; display:grid; place-items:center; border:none; background:#ffffff; color:#3a1660; font-size:.8rem; font-weight:900 }
-    .toggle-btn:focus-visible{ outline:2px solid #a36bff; outline-offset:2px; }
+
     .kpi{ display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
     #log{ max-height:260px; overflow:auto; background:#fbfbfe; border:1px solid #eef1f8; border-radius:12px; padding:10px; color:#1f2937 }
-    .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.4rem;margin-top:.6rem}
+
+    /* Mobile thumb bar */
+    .thumbbar{position:sticky;bottom:0;left:0;right:0;z-index:40;background:#0b0914cc;
+      backdrop-filter:blur(6px);display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:10px}
+    .thumbbar .btn{font-size:1.05rem;padding:.9rem 0;border-radius:14px}
+    @media (min-width:980px){ .thumbbar{display:none} }
   </style>
 </head>
 
@@ -86,6 +99,7 @@
     <h1>Primary / Drives</h1>
     <nav class="menu-actions" aria-label="Header navigation">
       <a href="game-day.html" class="menu-btn">Game Day</a>
+      <a href="game-st.html" class="menu-btn">Special Teams</a>
       <a href="../index.html" class="menu-btn">Home</a>
     </nav>
   </header>
@@ -102,28 +116,45 @@
           <span id="status" class="tiny">Ready</span>
         </div>
 
+        <!-- Row 1: choose by date OR by Game ID -->
         <div class="row cols-3">
           <div>
-            <label>Game ID <span class="tiny" style="color:var(--muted)">(from schedule)</span></label>
+            <label>Pick by Date</label>
+            <input id="game_date" type="date" placeholder="YYYY-MM-DD"/>
+          </div>
+          <div>
+            <label>Or: Game ID (from schedule)</label>
             <input id="game_id" list="list_game_ids" placeholder="e.g. G2025-01"/>
             <datalist id="list_game_ids"></datalist>
           </div>
-          <div><label>Our Team Label</label><input id="our_team" placeholder="Us" value="Us"/></div>
-          <div><label>Opponent Label</label><input id="opp_team" placeholder="Opponent" value="Opponent"/></div>
+          <div>
+            <label>Week</label>
+            <input id="game_week" placeholder="—" disabled/>
+          </div>
         </div>
 
-        <div id="game_meta" class="meta" aria-live="polite" style="display:none">
+        <!-- Row 2: labels auto-filled from schedule -->
+        <div class="row cols-3" style="margin-top:.4rem">
+          <div><label>Our Team Label</label><input id="our_team" placeholder="Us" disabled/></div>
+          <div><label>Opponent Label</label><input id="opp_team" placeholder="Opponent" disabled/></div>
+          <div><label>Venue</label><input id="meta_ha_input" placeholder="H/A" disabled/></div>
+        </div>
+
+        <!-- Row 3: meta chips shown and editable weather preview -->
+        <div class="row cols-2" style="margin-top:.4rem">
+          <div><label>Weather (from schedule)</label><input id="meta_weather_input" placeholder="—" disabled/></div>
+          <div class="btnbar" style="align-items:flex-end">
+            <button class="btn subtle" id="pickNextBtn" type="button">Pick Next on Schedule</button>
+            <span class="chip">Date or ID → Autofill teams</span>
+          </div>
+        </div>
+
+        <div id="game_meta" class="row cols-3" aria-live="polite" style="margin-top:.6rem;display:none">
           <span class="chip" id="meta_date"></span>
           <span class="chip" id="meta_week"></span>
           <span class="chip" id="meta_opp"></span>
           <span class="chip" id="meta_ha"></span>
           <span class="chip" id="meta_weather"></span>
-        </div>
-
-        <div class="btnbar" style="margin-top:.6rem">
-          <button class="btn subtle" id="setDefaultsBtn">Set Defaults</button>
-          <button class="btn subtle" id="pickNextBtn">Pick Next on Schedule</button>
-          <span class="chip">Schedule drives the Game ID</span>
         </div>
       </section>
 
@@ -332,6 +363,14 @@
         <div id="log"></div>
       </section>
     </div>
+
+    <!-- Mobile thumb bar -->
+    <div class="thumbbar" aria-label="Quick actions">
+      <button class="btn subtle" id="tb_snap">Snap</button>
+      <button class="btn" id="tb_new">New Play</button>
+      <button class="btn pill-dark" id="tb_save">Save</button>
+      <button class="btn ghost" id="tb_undo">Undo</button>
+    </div>
   </main>
 
   <footer><p>&copy; 2025 Game Speed Data Systems</p></footer>
@@ -351,6 +390,7 @@
     /* ========= Config & constants ========= */
     const DICT_SHEET_ID   = '1oHO-5gM9l3PTSjUxwQlYzFaAMTtlco2VZj8l315Uk1c'; // Master Data / dictionaries
     const PLAYBOOK_TAB    = 'Playbook_Dictionary';
+    const EP_TAB          = 'EP_Table'; // optional
     const SCHEDULE_SHEET  = '1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI';
     const SCHEDULE_TAB    = '01_Dim_Schedule';
     const ROUTE_DRIVES    = 'drives';
@@ -358,7 +398,10 @@
     const ROUTE_SUM       = 'game_summary';
     const QUARTER_LEN     = 15*60, OT_LEN = 10*60;
 
-    /* ========= Local log helper (UI only) ========= */
+    // your preferred label for "Our Team" (auto-appended with H/A)
+    const OUR_TEAM_LABEL_DEFAULT = localStorage.getItem('our_team_label') || 'Us';
+
+    /* ========= Log helper ========= */
     const el = id => document.getElementById(id);
     const logBox = el('log');
     function log(msg, type=''){
@@ -377,18 +420,43 @@
     let lastSnap = null;
 
     let playbook = [], playMap = {};
-    let schedule = [], scheduleMap = {};
+    let schedule = [], scheduleMap = {}, scheduleByDate = {};
 
     const options = {
       playTypes: ['Run','Pass','Sack','Kneel','Spike','Penalty only'],
       formations: [], personnel: [], motions: []
     };
 
-    /* ========= Helpers (API wrappers) ========= */
-    async function appendRow(route, row, ensure=[]){
-      const res = await apiPost({ action:'append', route, row, ensure_headers: ensure });
-      if(!res.ok) throw new Error(res.error||'Append failed'); return res;
+    /* ========= Idempotent append + offline queue + undo ========= */
+    const pendingKey = 'pendingWrites_v1';
+    const undoStack = [];
+    async function appendRow(route, row, ensure=[], idemKey=''){
+      const payload = { action:'append', route, row, ensure_headers: ensure, idempotency_key: idemKey || row.play_id || row.drive_id || '' };
+      try{
+        const res = await apiPost(payload);
+        if(!res.ok && res.error==='DUPLICATE'){ log('Duplicate ignored (idempotent).','success'); return res; }
+        if(!res.ok) throw new Error(res.error||'Append failed');
+        undoStack.push({route, key: row.play_id||row.drive_id||'', row});
+        return res;
+      }catch(err){
+        const q = JSON.parse(localStorage.getItem(pendingKey)||'[]');
+        q.push({route,row,ensure,idem:payload.idempotency_key,ts:Date.now()});
+        localStorage.setItem(pendingKey, JSON.stringify(q));
+        log('Offline: queued write.', 'error');
+        return {ok:false, queued:true};
+      }
     }
+    setInterval(async ()=>{
+      const q = JSON.parse(localStorage.getItem(pendingKey)||'[]');
+      if(!q.length) return;
+      try{
+        const {route,row,ensure,idem} = q[0];
+        const res = await apiPost({ action:'append', route, row, ensure_headers: ensure, idempotency_key: idem });
+        if(res && res.ok){ q.shift(); localStorage.setItem(pendingKey, JSON.stringify(q)); log('Queued write flushed.','success'); }
+      }catch(e){}
+    }, 8000);
+
+    /* ========= Helpers ========= */
     async function nextId(prefix){
       const res = await apiGet({ action:'next_id', prefix });
       if(!res.ok) throw new Error(res.error||'ID failed'); return res.id;
@@ -440,7 +508,6 @@
         lastSnap = { q, secLeft };
       }
     }
-    // Wire clock
     el('clk_start').onclick=startClock; el('clk_pause').onclick=pauseClock; el('clk_reset').onclick=resetQuarter;
     el('clk_snap').onclick=snapToPlay; document.querySelectorAll('.clock-keys .btn[data-dt]')
       .forEach(b=>b.addEventListener('click',()=>nudgeSeconds(parseInt(b.dataset.dt,10))));
@@ -492,8 +559,13 @@
         const res = await apiGet({ action:'table', sheet_id: SCHEDULE_SHEET, sheet_name: SCHEDULE_TAB });
         if(!res.ok) throw new Error(res.error || 'Schedule fetch failed');
         schedule = (res.rows || []).filter(r => r.game_id);
-        scheduleMap = {}; const ids=[];
-        schedule.forEach(r=>{ const gid=String(r.game_id).trim(); if(!gid) return; scheduleMap[gid]=r; ids.push(gid); });
+        scheduleMap = {}; scheduleByDate = {};
+        const ids=[];
+        schedule.forEach(r=>{
+          const gid=String(r.game_id).trim(); if(!gid) return;
+          scheduleMap[gid]=r; ids.push(gid);
+          const d=(r.date||'').toString().slice(0,10); if(d) scheduleByDate[d]=r;
+        });
         ids.sort((a,b)=>{
           const ra=scheduleMap[a], rb=scheduleMap[b];
           const da=(ra.date||''), db=(rb.date||'');
@@ -507,48 +579,106 @@
         // hydrate from GameContext if set elsewhere
         const ctx = GameContext.get();
         if (ctx.game_id && scheduleMap[ctx.game_id]) {
-          el('game_id').value = ctx.game_id;
-          el('game_id').dispatchEvent(new Event('change'));
+          applyGameRow(scheduleMap[ctx.game_id]);
         }
       } catch(err){ log(err.message, 'error'); }
     }
-    function renderGameMeta(gid){
-      const box = el('game_meta'); const r = scheduleMap[gid];
-      if(!r){ box.style.display='none'; return; }
+
+    function applyGameRow(r){
+      if(!r) return;
+      const gid = String(r.game_id).trim();
+      el('game_id').value = gid;
+      el('game_date').value = (r.date||'').toString().slice(0,10);
+      el('game_week').value = r.week || '';
+
+      // labels auto from schedule
+      const ha = (r.home_away||'').toString().trim(); // H/A
+      el('our_team').value = OUR_TEAM_LABEL_DEFAULT + (ha ? ` (${ha})` : '');
+      el('opp_team').value = r.opponent || 'Opponent';
+
+      // meta chips + mirrored inputs
       el('meta_date').textContent    = r.date ? `Date: ${r.date}` : 'Date: —';
       el('meta_week').textContent    = r.week ? `Week: ${r.week}` : 'Week: —';
       el('meta_opp').textContent     = r.opponent ? `Opponent: ${r.opponent}` : 'Opponent: —';
-      el('meta_ha').textContent      = r.home_away ? `Venue: ${r.home_away}` : 'Venue: —';
+      el('meta_ha').textContent      = ha ? `Venue: ${ha}` : 'Venue: —';
       el('meta_weather').textContent = r.weather_conditions ? `Weather: ${r.weather_conditions}` : 'Weather: —';
-      box.style.display='grid';
+      el('meta_ha_input').value      = ha || '';
+      el('meta_weather_input').value = r.weather_conditions || '';
+      el('game_meta').style.display='grid';
+
+      GameContext.setGame(gid);
+      log(`Game selected: ${gid} vs ${r.opponent||'—'}`, 'success');
     }
+
+    // Pick by Game ID
     el('game_id').addEventListener('change', ()=>{
       const gid = el('game_id').value.trim(); if(!gid) return;
-      if(!scheduleMap[gid]){ log(`Game ID "${gid}" not found in schedule.`, 'error'); renderGameMeta(''); return; }
-      renderGameMeta(gid);
-      const opp = scheduleMap[gid].opponent || 'Opponent';
-      el('opp_team').placeholder = opp;
-      log(`Game selected: ${gid} vs ${opp}`, 'success');
-      GameContext.setGame(gid);
+      const r = scheduleMap[gid];
+      if(!r){ log(`Game ID "${gid}" not found in schedule.`, 'error'); return; }
+      applyGameRow(r);
     });
+
+    // Pick by Date
+    el('game_date').addEventListener('change', ()=>{
+      const d = el('game_date').value;
+      const r = scheduleByDate[d];
+      if(!r){ log(`No game on ${d} found in schedule.`, 'error'); return; }
+      applyGameRow(r);
+    });
+
+    // Next game helper
     el('pickNextBtn').addEventListener('click', ()=>{
       if(!schedule.length) return;
       const today = new Date().toISOString().slice(0,10);
-      const next = schedule.find(r => (r.date||'') >= today)?.game_id || schedule[0].game_id;
-      el('game_id').value = next; el('game_id').dispatchEvent(new Event('change'));
+      const nextRow = schedule.find(r => (String(r.date||'').slice(0,10)) >= today) || schedule[0];
+      applyGameRow(nextRow);
     });
 
-    /* ========= QoL defaults ========= */
-    el('setDefaultsBtn').addEventListener('click', ()=>{
-      if(!el('our_team').value) el('our_team').value = 'Us';
-      if(!el('opp_team').value) el('opp_team').value = 'Opponent';
-      el('drive_poss').value = 'Us';
-      el('play_offense').value = 'Us';
-      log('Defaults applied.', 'success');
-    });
+    /* ========= QoL: mirror drive→play offense ========= */
     el('drive_poss').addEventListener('change', ()=>{
       if(el('auto_offense_from_drive').checked) el('play_offense').value = el('drive_poss').value;
     });
+
+    /* ========= EP/EPA helpers (optional table) ========= */
+    let EPIndex = null, epReady = false;
+    const binDist = d => (Number(d)<=3 ? 'S' : Number(d)<=7 ? 'M' : 'L');
+    const clamp01 = (x,min,max)=>Math.max(min,Math.min(max,x));
+    const toAbsYL = yl => clamp01(50 + Number(yl||0), 0, 100);
+    const binYL   = yl => Math.round(toAbsYL(yl)/5)*5;
+    function autoExplosive(type, yards){ const y=Number(yards||0); return (type==='Run' && y>=10) || (type==='Pass' && y>=20) ? 1 : 0; }
+    function autoRZ(yl){ return Number(yl||0) >= 20 ? 1 : 0; }
+    function yardsToGoal(yl){ return 100 - toAbsYL(yl); }
+    function autoG2G(yl, dist){ const ytg=yardsToGoal(yl); return (ytg && dist) ? (Number(ytg)===Number(dist) ? 1 : 0) : 0; }
+    function autoTwoMin(q, mmss){
+      if(q==='2' || q==='4'){ const [m,s]=(mmss||'0:00').split(':').map(Number); return (m<2 || (m===2&&s===0)) ? 1 : 0; }
+      return 0;
+    }
+    function computeNextDnD(down, dist, resultYds){
+      let d=Number(down), t=Number(dist), y=Number(resultYds);
+      if([d,t].some(n=>isNaN(n))) return {down:'',dist:''};
+      if(y >= t) return {down:1, dist:10};
+      return {down: Math.min(4,d+1), dist: Math.max(1, t-y)};
+    }
+    function getUnit(){ return (el('drive_poss').value === 'Us') ? 'Offense' : 'Defense'; }
+
+    async function loadEPTable(){
+      try{
+        const res = await apiGet({ action:'table', sheet_id: DICT_SHEET_ID, sheet_name: EP_TAB });
+        if(!res.ok) throw new Error(res.error||'EP table fetch failed');
+        EPIndex = {};
+        (res.rows||[]).forEach(r=>{
+          const k = `${r.down}|${String(r.dist_bin||'').toUpperCase()}|${Number(r.yl_bin)}`;
+          EPIndex[k] = Number(r.ep||0);
+        });
+        epReady = Object.keys(EPIndex).length>0;
+        log(`EP table loaded (${Object.keys(EPIndex).length} keys).`,'success');
+      }catch(e){ /* optional */ }
+    }
+    function epLookup(down, dist, yl){
+      if(!epReady) return '';
+      const key = `${down}|${binDist(Number(dist||0))}|${binYL(yl)}`;
+      return (EPIndex[key] ?? '');
+    }
 
     /* ========= DRIVES ========= */
     el('newDriveBtn').addEventListener('click', async ()=>{
@@ -584,6 +714,7 @@
         const row = {
           game_id,
           drive_id: activeDriveId,
+          unit: getUnit(),
           'Team In Possession': el('drive_poss').value,
           'Start Yardline': numVal(el('drive_start').value),
           'End Yardline':   numVal(el('drive_end').value),
@@ -593,8 +724,12 @@
           'Result': el('drive_result').value,
           'Scoring Type': el('drive_scoretype').value
         };
-        await appendRow(ROUTE_DRIVES, row, Object.keys(row));
+        await appendRow(ROUTE_DRIVES, row, Object.keys(row), activeDriveId);
         log(`Drive saved: ${activeDriveId}`, 'success');
+
+        // handoff to ST page for Punt/FG
+        const res = el('drive_result').value;
+        if(res==='Punt' || res==='FG'){ setTimeout(()=>{ window.location.href='game-st.html'; }, 400); }
 
         el('driveBadge').textContent = 'No active drive';
         el('endDriveBtn').disabled = true;
@@ -625,13 +760,10 @@
         if(el('auto_offense_from_drive').checked){
           el('play_offense').value = el('drive_poss').value;
         }
-        if(el('auto_epa').checked){
-          const epb = el('ep_before').value, epaft = el('ep_after').value;
-          if(epb!=='' && epaft!==''){ el('epa').value = (Number(epaft) - Number(epb)).toFixed(2); }
-        }
 
         const row = {
           play_id, drive_id, game_id,
+          unit: getUnit(),
           'Offense Team': el('play_offense').value,
           Quarter: el('play_qtr').value,
           Clock: el('play_clock').value,
@@ -643,17 +775,45 @@
           Personnel: el('play_pers').value,
           Motion: el('play_motion').value,
           'Result Yards': numVal(el('play_yards').value),
-          'Explosive Flag': boolVal(el('flag_explosive').checked),
-          'Red Zone Flag': boolVal(el('flag_rz').checked),
-          'Goal-to-Go Flag': boolVal(el('flag_g2g').checked),
-          'Two-Minute Flag': boolVal(el('flag_2min').checked),
-          'EP Before': numVal(el('ep_before').value),
-          'EP After':  numVal(el('ep_after').value),
-          EPA: numVal(el('epa').value),
-          'Success Flag': boolVal(el('flag_success').checked)
+          'Explosive Flag': 0,
+          'Red Zone Flag': 0,
+          'Goal-to-Go Flag': 0,
+          'Two-Minute Flag': 0,
+          'EP Before': '',
+          'EP After':  '',
+          EPA: '',
+          'Success Flag': 0,
+          for_us_epa: '',
+          for_us_success: 0
         };
 
-        await appendRow(ROUTE_PLAYS, row, Object.keys(row));
+        // auto flags
+        row['Explosive Flag'] = (el('flag_explosive').checked) ? 1 : (function(t,y){const n=Number(y||0);return (t==='Run'&&n>=10)||(t==='Pass'&&n>=20)?1:0;})(row['Play Type'],row['Result Yards']);
+        row['Red Zone Flag']  = (el('flag_rz').checked) || (Number(row['Yard Line']||0)>=20) ? 1 : 0;
+        row['Goal-to-Go Flag']= (el('flag_g2g').checked) || (function(yl,dist){ const ytg=100 - (50 + Number(yl||0)); return (ytg && dist) ? (Number(ytg)===Number(dist) ? 1 : 0) : 0; })(row['Yard Line'], row['Distance']);
+        row['Two-Minute Flag']= (el('flag_2min').checked) ? 1 : (function(q,mmss){ if(q==='2'||q==='4'){ const [m,s]=(mmss||'0:00').split(':').map(Number); return (m<2|| (m===2&&s===0))?1:0;} return 0; })(row.Quarter,row.Clock);
+
+        // EP/EPA (if EP table present)
+        if(epReady && row.Down && row.Distance!=='' && row['Yard Line']!==''){
+          const epb = epLookup(row.Down, row.Distance, row['Yard Line']);
+          const next = (function(down,dist,y){ let d=Number(down),t=Number(dist),z=Number(y); if(z>=t) return {down:1,dist:10}; return {down:Math.min(4,d+1),dist:Math.max(1,t-z)}; })(row.Down,row.Distance,row['Result Yards']);
+          const nextYL = (el('auto_next_yardline').checked && el('play_yardline').value!=='' && el('play_yards').value!=='')
+                         ? Number(el('play_yardline').value) + Number(el('play_yards').value)
+                         : row['Yard Line'];
+          const epaft = (next.down && next.dist) ? epLookup(next.down, next.dist, nextYL) : '';
+          if(epb!=='' && epaft!==''){
+            row['EP Before'] = Number(epb.toFixed ? epb.toFixed(2) : epb);
+            row['EP After']  = Number(epaft.toFixed ? epaft.toFixed(2) : epaft);
+            row.EPA          = Number((row['EP After'] - row['EP Before']).toFixed(2));
+            row['Success Flag'] = row.EPA>0 ? 1 : 0;
+          }
+        }
+
+        const offenseUs = row['Offense Team'] === 'Us';
+        row.for_us_success = offenseUs ? row['Success Flag'] : (row['Success Flag'] ? 0 : 1);
+        row.for_us_epa     = (row.EPA==='' ? '' : (offenseUs ? row.EPA : -Number(row.EPA)));
+
+        await appendRow(ROUTE_PLAYS, row, Object.keys(row), play_id);
         log(`Play saved: ${play_id}`, 'success');
 
         if(activeDriveId) drivePlayCount++;
@@ -664,10 +824,13 @@
 
         GameContext.setPlay(play_id);
 
-        // reset for next play
+        const next = (function(down,dist,y){ let d=Number(down),t=Number(dist),z=Number(y); if(z>=t) return {down:1,dist:10}; return {down:Math.min(4,d+1),dist:Math.max(1,t-z)}; })(row.Down,row.Distance,row['Result Yards']);
+        if(next.down) el('play_down').value = String(next.down);
+        if(next.dist) el('play_dist').value = String(next.dist);
+
         el('play_id').value = ''; el('playBadge').textContent = 'No play ID yet';
-        ['play_yards','play_dist','ep_before','ep_after','epa'].forEach(i=>el(i).value='');
-        ['flag_explosive','flag_rz','flag_g2g','flag_2min','flag_success'].forEach(i=>el(i).checked=false);
+        ['play_yards','ep_before','ep_after','epa'].forEach(i=>{ if(el(i)) el(i).value=''; });
+        ['flag_explosive','flag_rz','flag_g2g','flag_2min','flag_success'].forEach(i=>{ if(el(i)) el(i).checked=false; });
         refreshToggleStates();
       } catch(err){ log(err.message, 'error'); }
     });
@@ -690,7 +853,7 @@
           'game_control_minutes': numVal(el('sum_gcmin').value),
           'snap_count_total': numVal(el('sum_snaps').value)
         };
-        await appendRow(ROUTE_SUM, row, Object.keys(row));
+        await appendRow(ROUTE_SUM, row, Object.keys(row), `${game_id}|summary`);
         log('Game summary updated.', 'success');
       } catch(err){ log(err.message, 'error'); }
     });
@@ -716,9 +879,23 @@
       });
     }
 
+    // Thumb bar actions + Undo
+    el('tb_snap').onclick = ()=> el('clk_snap').click();
+    el('tb_new').onclick  = ()=> el('newPlayIdBtn').click();
+    el('tb_save').onclick = ()=> el('addPlayBtn').click();
+    el('tb_undo').onclick = async ()=>{
+      const last = undoStack.pop(); if(!last){ log('Nothing to undo.'); return; }
+      try{
+        const res = await apiPost({ action:'delete_last', route:last.route, key:last.key });
+        if(!res.ok) throw new Error(res.error||'Undo failed');
+        log('Last entry undone.','success');
+      }catch(e){ log(e.message,'error'); }
+    };
+
     wireToggles();
     loadPlaybook();
     loadSchedule();
+    loadEPTable();
     if (el('game_id').value.trim()) GameContext.setGame(el('game_id').value.trim());
   </script>
 </body>
