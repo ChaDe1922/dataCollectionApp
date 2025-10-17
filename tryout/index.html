@@ -46,7 +46,17 @@
     }
     .tryout-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top: 10px; }
 
+    /* Two-column submenu grid even on mobile */
+    .sub-nav{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(140px, 1fr));
+      gap:10px;
+      margin-top:10px;
+    }
     .sub-nav .nav-button{
+      display:block;
+      text-align:center;
+      padding:12px 14px;
       border-radius: 16px !important;
       color: var(--atl-purple-dark);
       border: 2px solid var(--atl-purple-dark);
@@ -81,7 +91,7 @@
         <div class="tryout-grid" style="margin-bottom:6px">
           <div class="form-group">
             <label for="ctx_tryout">Tryout ID</label>
-            <input id="ctx_tryout" type="text" class="form-input" placeholder="e.g., TRYOUT-2025-10-12"/>
+            <input id="ctx_tryout" type="text" class="form-input" placeholder="e.g., NTD2025-ATL-01"/>
           </div>
 
           <div class="form-group">
@@ -105,20 +115,20 @@
         Pick a station or position module to begin collecting tryout data.
       </p>
 
-      <!-- Sub-menu grid -->
+      <!-- Sub-menu grid (2 columns always) -->
       <nav class="sub-nav" aria-label="Tryout modules">
-        <a href="agility.html" class="nav-button">Agility</a>
-        <a href="tryout-qb.html"      class="nav-button">QB Station</a>
-        <a href="tryout-rb.html"      class="nav-button">RB Station</a>
-        <a href="tryout-wr.html"      class="nav-button">WR Station</a>
-        <a href="tryout-ol.html"      class="nav-button">OL Station</a>
-        <a href="tryout-dl.html"      class="nav-button">DL Station</a>
-        <a href="tryout-lb.html"      class="nav-button">LB Station</a>
-        <a href="tryout-db.html"      class="nav-button">DB Station</a>
-        <a href="tryout-1v1.html"     class="nav-button">1 v 1</a>
-        <a href="tryout-team.html"    class="nav-button">Team</a>
-        <a href="tryout-roster.html"  class="nav-button">Roster</a>
-        <a href="tryout-report.html"  class="nav-button">Report</a>
+        <a href="agility.html"      class="nav-button">Agility</a>
+        <a href="tryout-qb.html"    class="nav-button">QB Station</a>
+        <a href="tryout-rb.html"    class="nav-button">RB Station</a>
+        <a href="tryout-wr.html"    class="nav-button">WR Station</a>
+        <a href="tryout-ol.html"    class="nav-button">OL Station</a>
+        <a href="tryout-dl.html"    class="nav-button">DL Station</a>
+        <a href="tryout-lb.html"    class="nav-button">LB Station</a>
+        <a href="tryout-db.html"    class="nav-button">DB Station</a>
+        <a href="tryout-1v1.html"   class="nav-button">1 v 1</a>
+        <a href="tryout-team.html"  class="nav-button">Team</a>
+        <a href="tryout-roster.html"class="nav-button">Roster</a>
+        <a href="tryout-report.html"class="nav-button">Report</a>
       </nav>
 
     </div>
@@ -164,21 +174,90 @@
 
     // Helpers
     function norm(s){ return (s||'').toString().trim(); }
-    function asDate(t){
-      if (t instanceof Date) return t;
+
+    /**
+     * asTodaysTime(t)
+     * Convert any "time-ish" value into *today's* Date at that time.
+     * Accepts:
+     *  - "9:30", "9:30 AM", "10:05:00 pm"
+     *  - ISO like "2025-10-17T09:30:00" (ignores the date portion)
+     *  - Date objects (uses only the time portion)
+     */
+    function asTodaysTime(t){
       const now = new Date();
       const base = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0,0,0,0);
-      if (/^\d{1,2}:\d{2}(\s*[ap]m)?$/i.test(String(t))) {
-        const str = String(t).toUpperCase().replace(/\s+/g,'');
-        let [hh, mm] = str.replace(/[AP]M/,'').split(':').map(n=>parseInt(n,10));
-        const ampm = /PM$/.test(str) ? 'PM' : (/AM$/.test(str) ? 'AM' : null);
-        if (ampm === 'PM' && hh < 12) hh += 12;
-        if (ampm === 'AM' && hh === 12) hh = 0;
-        base.setHours(hh, mm, 0, 0);
+
+      if (t instanceof Date) {
+        base.setHours(t.getHours(), t.getMinutes(), t.getSeconds()||0, 0);
         return base;
       }
-      const d = new Date(t);
-      return isNaN(+d) ? now : d;
+
+      const s = String(t||'').trim();
+
+      // HH:MM[:SS] [AM|PM]
+      let m = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AP]M)?$/i);
+      if (m) {
+        let hh = +m[1], mm = +m[2], ss = +(m[3]||0);
+        const ampm = (m[4]||'').toUpperCase();
+        if (ampm === 'PM' && hh < 12) hh += 12;
+        if (ampm === 'AM' && hh === 12) hh = 0;
+        base.setHours(hh, mm, ss, 0);
+        return base;
+      }
+
+      // ISO date with time — use time part only
+      m = s.match(/T(\d{2}):(\d{2})(?::(\d{2}))?/);
+      if (m) {
+        base.setHours(+m[1], +m[2], +(m[3]||0), 0);
+        return base;
+      }
+
+      // Fallback: parseable date — use its time portion
+      const d = new Date(s);
+      if (!isNaN(+d)) {
+        base.setHours(d.getHours(), d.getMinutes(), d.getSeconds()||0, 0);
+        return base;
+      }
+      return now;
+    }
+
+    // ===== Start-time based selection + auto-forwarding =====
+    function getPeriodList(){
+      try { return JSON.parse(selPeriod.dataset.periodJson || '[]'); }
+      catch(e){ return []; }
+    }
+
+    /** Pick the active period by start times only:
+     *  choose the last period whose start <= now; if none, choose the first.
+     */
+    function pickByStartTime(list, now=new Date()){
+      if (!list.length) return null;
+      const n = now.getTime();
+      const sorted = list.map(p => ({ ...p, s: asTodaysTime(p.start).getTime() }))
+                         .sort((a,b)=>a.s - b.s);
+
+      for (let i = sorted.length - 1; i >= 0; i--){
+        if (n >= sorted[i].s) return sorted[i];
+      }
+      return sorted[0];
+    }
+
+    function autoDetectPeriod(now = new Date()){
+      const list = getPeriodList();
+      const active = pickByStartTime(list, now);
+      if (active && selPeriod.value !== active.code){
+        selPeriod.value = active.code;
+        GameContext.setPeriod(active.code);
+      }
+      return active;
+    }
+
+    let _autoFwdTimer = null;
+    function startAutoForwarding(){
+      if (_autoFwdTimer) clearInterval(_autoFwdTimer);
+      // Check every 15s so we advance right at new start times without churn
+      _autoFwdTimer = setInterval(() => { autoDetectPeriod(); }, 15000);
+      autoDetectPeriod(); // immediate sync
     }
 
     async function loadPeriods(){
@@ -214,29 +293,9 @@
         document.getElementById('ctx_tryout').value = ids[0];
         GameContext.setTryoutId(ids[0]);
       }
-    }
 
-    function autoDetectPeriod(now = new Date()){
-      const raw = selPeriod.dataset.periodJson ? JSON.parse(selPeriod.dataset.periodJson) : [];
-      if (!raw.length) return null;
-      const n = now.getTime();
-
-      let active = raw.find(p => {
-        const s = asDate(p.start).getTime();
-        const e = asDate(p.end).getTime();
-        return n >= s && n <= e;
-      });
-      if (!active){
-        const upcoming = raw.map(p => ({ p, s: asDate(p.start).getTime() }))
-                            .filter(x => x.s >= n)
-                            .sort((a,b)=>a.s-b.s);
-        active = upcoming.length ? upcoming[0].p : raw[raw.length-1];
-      }
-      if (active){
-        selPeriod.value = active.code;
-        GameContext.setPeriod(active.code);
-      }
-      return active;
+      // Start auto-forwarding watcher
+      startAutoForwarding();
     }
 
     // Wire controls
@@ -265,7 +324,7 @@
 
       await loadPeriods();
 
-      // If no period yet, auto-detect
+      // If no period yet, auto-detect once at boot
       if (!GameContext.get().period_code) autoDetectPeriod();
     })();
   </script>
