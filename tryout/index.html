@@ -167,9 +167,21 @@
     const btnAuto   = document.getElementById('btnAutoPeriod');
     const btnSave   = document.getElementById('btnSaveCtx');
 
-    // Immediately reflect manual period changes in the banner/context
+    // Immediately reflect manual period changes in the banner/context + broadcast
     selPeriod.addEventListener('change', () => {
-      GameContext.setPeriod((selPeriod.value || '').trim());
+      const prev = (GameContext.get().period_code || '').trim();
+      const next = (selPeriod.value || '').trim();
+      GameContext.setPeriod(next);
+
+      if (next && next !== prev) {
+        const list  = getPeriodList();
+        const found = list.find(p => p.code === next);
+        const label = found ? (found.label || '') : '';
+        const msg = `Now entering ${next}` + (label ? ` — ${label}` : '');
+        try { if (window.NoticeScheduler && NoticeScheduler.broadcastNotice) {
+          NoticeScheduler.broadcastNotice(msg);
+        } } catch(e){}
+      }
     });
 
     // Helpers
@@ -248,6 +260,12 @@
       if (active && selPeriod.value !== active.code){
         selPeriod.value = active.code;
         GameContext.setPeriod(active.code);
+
+        // System-wide “Now entering …” notice on auto-forward
+        const msg = `Now entering ${active.code}` + (active.label ? ` — ${active.label}` : '');
+        try { if (window.NoticeScheduler && NoticeScheduler.broadcastNotice) {
+          NoticeScheduler.broadcastNotice(msg);
+        } } catch(e){}
       }
       return active;
     }
@@ -294,8 +312,13 @@
         GameContext.setTryoutId(ids[0]);
       }
 
-      // Start auto-forwarding watcher
+      // Kick the auto-forward watcher
       startAutoForwarding();
+
+      // Ask the system-wide scheduler to refresh (optional, safe no-op if missing)
+      try { if (window.NoticeScheduler && NoticeScheduler.refreshFromDictionary) {
+        NoticeScheduler.refreshFromDictionary();
+      } } catch(e){}
     }
 
     // Wire controls
