@@ -25,30 +25,43 @@
   <link rel="stylesheet" href="../style.css"/>
 
   <style>
+    /* ========== Mobile-first layout ========== */
+    :root { --gap:12px; }
     .container{ max-width:1100px; margin:0 auto; padding:16px; }
-    .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-    @media (max-width:900px){ .grid-2{ grid-template-columns:1fr; } }
-
+    .stack{ display:flex; flex-direction:column; gap:var(--gap); }
     .card{ background: rgba(255,255,255,.05); border:1px solid var(--border);
-           border-radius:16px; padding:16px; box-shadow: var(--shadow-soft, 0 8px 24px rgba(0,0,0,.18)); }
-    .toolbar{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+           border-radius:16px; padding:14px; box-shadow: var(--shadow-soft, 0 8px 24px rgba(0,0,0,.18)); }
+
+    .toolbar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
     .chip{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px;
            border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.06); font-weight:700; }
     .chip.badge{ background:linear-gradient(135deg,#7C4DFF,#8B5CF6); color:#071018; border:0; }
     .chip.ghost{ background:transparent; }
+    .chip.tiny{ font-size:.8rem; padding:4px 8px; }
 
-    .assign{ display:flex; align-items:center; gap:8px; margin-left:auto; }
+    /* Segmented control */
     .seg{ display:inline-flex; background:rgba(255,255,255,.06); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
     .seg button{ appearance:none; border:0; padding:6px 10px; font-weight:800; color:#fff; background:transparent; cursor:pointer; }
     .seg button[aria-pressed="true"]{ background:#8B5CF6; color:#071018; }
 
-    .field{ margin:10px 0; }
     .label{ font-weight:800; font-size:.95rem; opacity:.9; margin-bottom:6px; display:block; }
     .form-input, .form-select{ width:100%; padding:.68rem .8rem; border-radius:12px; border:1px solid rgba(255,255,255,.28);
       background:rgba(255,255,255,.08); color:#fff; }
-    .row{ display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; }
-    .row3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; }
+    .row{ display:grid; grid-template-columns:1fr; gap:10px; }
+    @media (min-width:720px){ .row{ grid-template-columns: repeat(2, 1fr); } }
 
+    /* Two lane cards */
+    .grid-2{ display:grid; grid-template-columns:1fr; gap:12px; }
+    @media (min-width:900px){ .grid-2{ grid-template-columns:1fr 1fr; } }
+
+    .lane-title{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-weight:900; letter-spacing:.04em; opacity:.9; }
+    .lane-chip{ display:inline-flex; align-items:center; gap:8px; padding:4px 8px; border-radius:999px;
+                border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); font-weight:800; font-size:.9rem; }
+    .lane-chip .x{ opacity:.7; cursor:pointer; padding:0 .25rem; }
+    .lane-card{ transition: box-shadow .15s ease, border-color .15s ease; }
+    .lane-card.lane-active{ border-color:#8B5CF6; box-shadow:0 0 0 2px rgba(139,92,246,.35) inset; }
+
+    .row3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
     .timer{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
     .time{ font-variant-numeric:tabular-nums; font-weight:900; font-size:1.25rem; min-width:82px; text-align:right; }
 
@@ -60,20 +73,12 @@
     .btn.ghost{ background:transparent; }
     .btn:disabled{ opacity:.55; cursor:not-allowed; }
 
-    /* Save indicator */
+    /* Save indicator (uses @keyframes spin defined below) */
     .btn.loading{ position:relative; pointer-events:none; }
     .btn.loading .spin{ width:14px; height:14px; border:2px solid rgba(255,255,255,.45);
                         border-top-color:#fff; border-radius:50%; display:inline-block;
                         margin-right:8px; vertical-align:-2px; animation:spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    .lane-title{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-weight:900; letter-spacing:.04em; opacity:.9; }
-    .lane-chip{ display:inline-flex; align-items:center; gap:8px; padding:4px 8px; border-radius:999px;
-                border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); font-weight:800; font-size:.9rem; }
-    .lane-chip .x{ opacity:.7; cursor:pointer; padding:0 .25rem; }
-
-    .lane-card{ transition: box-shadow .15s ease, border-color .15s ease; }
-    .lane-card.lane-active{ border-color:#8B5CF6; box-shadow:0 0 0 2px rgba(139,92,246,.35) inset; }
 
     .small{ font-size:.85rem; opacity:.8; }
     .status{ margin-top:8px; font-weight:700; }
@@ -84,20 +89,25 @@
     .best{ color:#34D399; font-weight:900; }
 
     .muted{ opacity:.75; }
-
-    /* Hide TryoutUI's built-in log so we can show ours at the bottom */
-    .tu-log{ display:none !important; }
-
-    /* Make the drill select fit nicely on the toolbar */
-    .toolbar .select-wrap{ min-width: 260px; }
-    .toolbar .select-wrap .form-select{ width: 100%; }
-
-    /* Rating badges (like QB) */
-    .rating-above{ background:linear-gradient(135deg,#16A34A,#10B981); color:#061710; padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; }
-    .rating-avg{ background:linear-gradient(135deg,#8B5CF6,#A78BFA); color:#071018; padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; }
-    .rating-below{ background:linear-gradient(135deg,#DC2626,#EF4444); color:#fff; padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; }
-
     .measure-help{ font-size:11px; opacity:.7; font-weight:500; margin-top:2px; font-style:italic; }
+
+    /* DO NOT hide the TryoutUI roster — we want the cards */
+    /* .tu-roster { display:none !important; } */
+    .tu-log{ display:none !important; } /* still hide TryoutUI’s log so our page log is the only one */
+
+    /* ===== Shared TryoutUI loading + start-hidden ===== */
+    .shared-wrap{ position:relative; }
+    .tu-loading{
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      gap:10px; background:rgba(0,0,0,.35); border:1px solid var(--border); border-radius:14px;
+      z-index:10; font-weight:800; letter-spacing:.02em;
+    }
+    .tu-loading .ring{
+      width:28px; height:28px; border:3px solid rgba(255,255,255,.35);
+      border-top-color:#fff; border-radius:50%; animation:spin .9s linear infinite;
+    }
+    .tu-wrap.hide-roster .tu-roster{ display:none; }
+    .tu-hint{ padding:10px 12px; border:1px dashed rgba(255,255,255,.18); border-radius:12px; opacity:.85; }
   </style>
 </head>
 
@@ -111,29 +121,35 @@
   </header>
 
   <main>
-    <div class="container">
+    <div class="container stack">
 
-      <!-- Shared context bar, filter chips, roster chips -->
-      <div id="tryout-shared" style="margin-bottom:12px"></div>
+      Shared: context banner + TryoutUI (shows roster cards w/ number-band filters)
+      <div id="ctxBanner" class="chip tiny" aria-live="polite">Loading context…</div>
 
-      <!-- Top control bar -->
-      <section class="card" style="margin-bottom:14px">
+      <!-- Shared roster mount + spinner -->
+      <div class="shared-wrap">
+        <div id="tryout-shared"></div>
+        <div id="tryout-loading" class="tu-loading" aria-live="polite" aria-busy="true">
+          <span class="ring" aria-hidden="true"></span>
+          <span>Loading roster…</span>
+        </div>
+      </div>
+
+      <!-- Drill selection -->
+      <section class="card" aria-labelledby="drillHdr">
         <div class="toolbar">
           <span class="chip">Station: <strong>Agility</strong></span>
 
-          <!-- Drill dropdown fed from dictionary -->
-          <div class="select-wrap">
-            <label for="drillSelect" class="label" style="margin:0">Drill</label>
+          <div class="select-wrap" style="min-width:240px">
+            <label id="drillHdr" for="drillSelect" class="label" style="margin:0">Drill</label>
             <select id="drillSelect" class="form-select"></select>
             <div id="drillHint" class="small muted" style="margin-top:6px"></div>
           </div>
 
-          <!-- Prominent selected drill badge -->
           <span id="drillBadge" class="chip badge">Drill: —</span>
 
-          <!-- Assign selection to lane -->
-          <div class="assign" style="margin-left:auto">
-            <span class="chip ghost small">Assign selection to:</span>
+          <div style="margin-left:auto">
+            <span class="chip ghost small">Assign selection to</span>
             <div class="seg" role="tablist" aria-label="Active lane">
               <button id="segA" role="tab" aria-pressed="true">Lane A</button>
               <button id="segB" role="tab" aria-pressed="false">Lane B</button>
@@ -141,10 +157,10 @@
           </div>
         </div>
 
-        <!-- Picker -->
+        <!-- Manual picker + notes -->
         <div class="row" style="margin-top:10px">
           <div>
-            <label class="label">Player (search by number or name)</label>
+            <label class="label">Player (search number or name)</label>
             <input id="playerPicker" class="form-input" list="ag_roster" placeholder="e.g., 55 • Cam Johnson"/>
             <datalist id="ag_roster"></datalist>
           </div>
@@ -162,7 +178,7 @@
         </div>
       </section>
 
-      <!-- Two lanes -->
+      <!-- Lanes -->
       <section class="grid-2">
         <!-- LANE A -->
         <div id="laneA" class="card lane-card lane-active">
@@ -171,7 +187,7 @@
             <span id="laneAWho" class="lane-chip" style="display:none"></span>
           </div>
 
-          <div class="row3 field">
+          <div class="row3" style="margin-top:8px">
             <div>
               <label class="label">Attempt</label>
               <select id="aAttempt" class="form-select">
@@ -188,10 +204,10 @@
             </div>
           </div>
 
-          <div class="field">
+          <div class="field" style="margin-top:8px">
             <label class="label">Timer — <span id="aPrimaryLabel">Time (sec)</span></label>
             <div class="measure-help" id="aPrimaryHelp"></div>
-            <div class="timer">
+            <div class="timer" style="margin-top:6px">
               <span class="time" id="aTime">0.00</span><span class="small muted">sec</span>
               <button class="btn" id="aToggle" aria-pressed="false">Start</button>
               <button class="btn ghost" id="aReset">Reset</button>
@@ -214,7 +230,7 @@
             <span id="laneBWho" class="lane-chip" style="display:none"></span>
           </div>
 
-          <div class="row3 field">
+          <div class="row3" style="margin-top:8px">
             <div>
               <label class="label">Attempt</label>
               <select id="bAttempt" class="form-select">
@@ -231,10 +247,10 @@
             </div>
           </div>
 
-          <div class="field">
+          <div class="field" style="margin-top:8px">
             <label class="label">Timer — <span id="bPrimaryLabel">Time (sec)</span></label>
             <div class="measure-help" id="bPrimaryHelp"></div>
-            <div class="timer">
+            <div class="timer" style="margin-top:6px">
               <span class="time" id="bTime">0.00</span><span class="small muted">sec</span>
               <button class="btn" id="bToggle" aria-pressed="false">Start</button>
               <button class="btn ghost" id="bReset">Reset</button>
@@ -251,15 +267,15 @@
         </div>
       </section>
 
-      <!-- Start both (below lanes, above writes) -->
-      <section class="card" style="margin-top:8px">
+      <!-- Start both -->
+      <section class="card">
         <div class="toolbar" style="justify-content:center">
-          <button id="bothStart" class="btn primary">Start Both</button>
+          <button id="bothStart" class="btn primary" style="min-width:180px">Start Both</button>
         </div>
       </section>
 
-      <!-- Recent writes (bottom) -->
-      <section class="card" style="margin-top:14px">
+      <!-- Recent writes -->
+      <section class="card">
         <div class="toolbar">
           <button id="toggleRecent" class="btn ghost">Recent Writes ▾</button>
           <span id="recentCount" class="small muted"></span>
@@ -279,7 +295,7 @@
   <!-- libs -->
   <script src="../js/api.js"></script>
   <script src="../js/rules.js"></script>
-  <script src="../js/context.js"></script>
+  <script src="../js/context.js"></script> <!-- includes NoticeScheduler -->
   <script src="../js/tryout-ui.js"></script>
 
   <script>
@@ -288,27 +304,119 @@
       const meta = document.querySelector('meta[name="gsds-api-base"]');
       window.API_BASE = (window.API_BASE || (meta && meta.content) || '').trim();
     })();
+
+    // Live server ctx + hub-style banner
     GameContext.configure({ apiBase: window.API_BASE, server: true, pollMs: 1000 });
-    TryoutUI?.init?.('#tryout-shared', { showGroup:false, filterMode:'numberBands', allowPresence:false });
+    GameContext.mountBanner('#ctxBanner');
+
+    // Show the shared TryoutUI roster (number bands) — this renders the player cards
+    TryoutUI.init('#tryout-shared', { showGroup:false, filterMode:'numberBands', allowPresence:false });
+
+    /* ==== Make "ALL" behave as Clear + keep roster hidden until a true filter/search ==== */
+    (function wireClearAndSpinner(){
+      const mount   = document.getElementById('tryout-shared');
+      const overlay = document.getElementById('tryout-loading');
+
+      function getWrap(){ return mount.querySelector('.tu-wrap') || mount; }
+      function getRosterBox(){ return mount.querySelector('#tuRoster') || mount.querySelector('.tu-roster'); }
+      function getChipsWrap(){ return mount.querySelector('#tuChips') || mount.querySelector('.tu-chips'); }
+      function getSearch(){ return mount.querySelector('#tuSearch') || mount.querySelector('input[type="search"]'); }
+      function anyChipPressed(){
+        const cw = getChipsWrap();
+        return !!cw && !!cw.querySelector('.tu-chip[aria-pressed="true"]');
+      }
+
+      const mo = new MutationObserver(() => {
+        const wrap = getWrap();
+        const chipsWrap = getChipsWrap();
+        const rosterBox = getRosterBox();
+
+        if (!wrap || !chipsWrap || !rosterBox) return;
+
+        // Spinner off once the shell appears
+        if (overlay) overlay.style.display = 'none';
+
+        // Start hidden (no cards until a filter/search)
+        wrap.classList.add('hide-roster');
+
+        // Rename ALL -> Clear (if present)
+        const allChip = chipsWrap.querySelector('[data-band="ALL"]') || [...chipsWrap.querySelectorAll('.tu-chip')].find(b => (b.textContent||'').trim().toUpperCase()==='ALL');
+        if (allChip) allChip.textContent = 'Clear';
+
+        // Bind once
+        if (!chipsWrap.dataset.boundClear) {
+          chipsWrap.dataset.boundClear = '1';
+
+          // Intercept clicks in capture so we win before TryoutUI's own handler
+          chipsWrap.addEventListener('click', (ev) => {
+            const btn = ev.target.closest('.tu-chip');
+            if (!btn) return;
+
+            const band = btn.getAttribute('data-band') || (btn.textContent||'').trim().toUpperCase();
+            const isClear = band === 'ALL' || band === 'CLEAR';
+
+            if (isClear) {
+              ev.stopImmediatePropagation();
+              ev.preventDefault();
+
+              // De-select any chips
+              chipsWrap.querySelectorAll('.tu-chip').forEach(x => x.removeAttribute('aria-pressed'));
+
+              // Clear the search box
+              const search = getSearch();
+              if (search) { search.value = ''; search.dispatchEvent(new Event('input', { bubbles:true })); }
+
+              // Hide roster and show a small hint
+              wrap.classList.add('hide-roster');
+              const box = getRosterBox();
+              if (box) box.innerHTML = `<div class="tu-hint">Use number bands or search to show players.</div>`;
+            } else {
+              // Any real band shows filtered set
+              wrap.classList.remove('hide-roster');
+            }
+          }, true);
+        }
+
+        // Show roster when searching; hide if cleared and no chip selected
+        const search = getSearch();
+        if (search && !search.dataset.boundShow) {
+          search.dataset.boundShow = '1';
+          search.addEventListener('input', () => {
+            const val = (search.value || '').trim();
+            if (val) {
+              wrap.classList.remove('hide-roster');
+            } else if (!anyChipPressed()) {
+              wrap.classList.add('hide-roster');
+            }
+          });
+        }
+
+        mo.disconnect();
+      });
+
+      mo.observe(mount, { childList:true, subtree:true });
+
+      // If TryoutUI emits a ready event, hide spinner as well (safe if not present)
+      window.addEventListener('tryoutui:ready', () => { if (overlay) overlay.style.display = 'none'; }, { once:true });
+    })();
 
     // ---------- Agility logic ----------
-    const STATION_ID = 'AGY';                // write payload station id
-    const STATION_FILTER = ['AGILITY','AGY']; // dictionary filter
-
+    const STATION_ID = 'AGY';
+    const STATION_FILTER = ['AGILITY','AGY'];
     const AFTER_SAVE = { clearLane:false, markDone:true };
 
-    let roster = [];
-    const groupLatest = new Map();    // pid -> latest group_code
-    const attemptStore = new Map();   // key (pid|tryout_num)::drill -> attempts
+    let roster = [];                        // built from 01_Dim_Tryout_Roster via API.tryout.read.roster()
+    const groupLatest = new Map();          // pid -> latest group_code
+    const attemptStore = new Map();         // (pid|#)::drill -> [{time,dnf,attempt}]
     const pageLog = [];
     const PAGE_LOG_LIMIT = 12;
 
-    let drills = [];                  // dictionary rows for this station
-    let drillMap = new Map();         // id -> row
+    let drills = [];
+    let drillMap = new Map();
 
     const lanePlayers = { A:null, B:null };
     let activeLane = 'A';
-    const timers = new Map();         // 'a'|'b' -> timer
+    const timers = new Map();
 
     // ------- helpers -------
     const qs  = (s,p=document)=>p.querySelector(s);
@@ -318,7 +426,7 @@
     const idKeyForPlayer = (p)=> String(p?.player_id || `#${p?.tryout_num||''}`).trim();
     const fmtTime = (d)=>{ const pad=n=>String(n).padStart(2,'0'); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
 
-    // ----- threshold parsing/evaluation (same pattern as QB) -----
+    /* ----- Threshold parsing & rating ----- */
     function parseThreshold(str) {
       if (!str) return null;
       const s = String(str).trim();
@@ -341,11 +449,10 @@
       }
       return null;
     }
-    function evaluateDrill(drill, primaryVal, secondaryVal){
-      // Prefer Rules.evaluateRep if provided so we stay centralized
+    function evaluateDrill(drill, primaryVal){
       try {
         if (window.Rules?.evaluateRep){
-          const res = Rules.evaluateRep(drill, primaryVal, secondaryVal);
+          const res = Rules.evaluateRep(drill, primaryVal, null);
           if (res && typeof res.is_success==='boolean'){
             return {
               rating: res.is_success ? 'above' : (res.is_failure ? 'below' : 'average'),
@@ -354,33 +461,17 @@
             };
           }
         }
-      } catch(e){ /* fall through to local parser */ }
-
+      } catch(e){}
       const suc = parseThreshold(drill.success_threshold);
       const fail= parseThreshold(drill.failure_threshold);
       const sucOK = meetsThreshold(suc, primaryVal);
       const failHit = meetsThreshold(fail, primaryVal);
-
       if (sucOK) return { rating:'above', ratingText:'Above Average', ratingClass:'rating-above' };
       if (failHit) return { rating:'below', ratingText:'Below Average', ratingClass:'rating-below' };
       return { rating:'average', ratingText:'Average', ratingClass:'rating-avg' };
     }
 
-    // timers
-    function makeTimer(timeEl, onState){
-      let running=false, t0=0, acc=0, raf=null;
-      const fmt = ms => (ms/1000).toFixed(2);
-      const tick = ()=>{ const now=performance.now(); const ms=acc + (running ? (now-t0) : 0); timeEl.textContent = fmt(ms); if(running) raf=requestAnimationFrame(tick); };
-      const start = ()=>{ if(running) return; running=true; t0=performance.now(); tick(); onState?.(true); };
-      const stop  = ()=>{ if(!running) return; running=false; acc += performance.now()-t0; cancelAnimationFrame(raf); tick(); onState?.(false); };
-      const reset = ()=>{ running=false; acc=0; cancelAnimationFrame(raf); tick(); onState?.(false); };
-      const toggle= ()=> running ? stop() : start();
-      const read  = ()=> parseFloat(timeEl.textContent||'0');
-      tick();
-      return { start, stop, reset, toggle, read, isRunning:()=>running };
-    }
-
-    /* ---- Drill dictionary ---- */
+    /* ----- Drill dictionary ----- */
     async function loadDrills(){
       let rows = [];
       try{
@@ -389,28 +480,22 @@
           if (!Array.isArray(rows) || !rows.length) rows = await Rules.getByStation('AGY');
         } else {
           const res = await API.tryout.read.drills();
-          if (res?.ok) {
-            rows = (res.rows || res.drills || []).filter(d => STATION_FILTER.includes(String(d.station_id||'').toUpperCase()));
-          }
+          if (res?.ok) rows = (res.rows || res.drills || []).filter(d => STATION_FILTER.includes(String(d.station_id||'').toUpperCase()));
         }
-      }catch(e){ /* noop */ }
-
+      }catch(e){}
       if (!Array.isArray(rows) || !rows.length) {
         rows = [
-          { drill_id:'AG01', drill_name:'3 Cone Drill',      station_id:'AGILITY', primary_measurement:'time', measurement_unit:'sec', success_threshold:'<=7.80', failure_threshold:'>=9.00' },
+          { drill_id:'AG01', drill_name:'3 Cone Drill',        station_id:'AGILITY', primary_measurement:'time', measurement_unit:'sec', success_threshold:'<=7.80', failure_threshold:'>=9.00' },
           { drill_id:'AG02', drill_name:'20 Yard Shuttle Run', station_id:'AGILITY', primary_measurement:'time', measurement_unit:'sec', success_threshold:'<=4.70', failure_threshold:'>=5.50' }
         ];
       }
-
       drills = rows;
       drillMap = new Map(drills.map(d => [String(d.drill_id), d]));
-
       const sel = document.getElementById('drillSelect');
       sel.innerHTML = drills.map(d => `<option value="${d.drill_id}">${d.drill_name || d.name || d.drill_id}</option>`).join('');
       if (!sel.value && drills[0]) sel.value = drills[0].drill_id;
       updateDrillUI();
     }
-
     function currentDrill(){
       const sel = document.getElementById('drillSelect');
       const id  = sel?.value || '';
@@ -419,28 +504,50 @@
       const name = sel?.selectedOptions?.[0]?.textContent || id || '—';
       return { drill_id:id||'AG01', drill_name:name, primary_measurement:'time', measurement_unit:'sec' };
     }
+    function drillHintParts(d){
+      const parts = [];
+      if (d.drill_category) parts.push(d.drill_category);
+      if (d.success_threshold) parts.push(`Above Avg: ${d.success_threshold}`);
+      if (d.failure_threshold) parts.push(`Below Avg: ${d.failure_threshold}`);
+      return parts;
+    }
+    function updateDrillUI(){
+      const d = currentDrill();
+      const name = d.drill_name || d.name || d.drill_id || '—';
+      document.getElementById('drillBadge').textContent = `Drill: ${name}`;
+      document.getElementById('drillHint').textContent = drillHintParts(d).join(' • ');
+      const primLabel = `${d.primary_measurement || 'Time'} (${d.measurement_unit || 'sec'})`;
+      document.getElementById('aPrimaryLabel').textContent = primLabel;
+      document.getElementById('bPrimaryLabel').textContent = primLabel;
+      const primHelpTxt = [];
+      if (d.success_threshold) primHelpTxt.push(`Above Avg: ${d.success_threshold}`);
+      if (d.failure_threshold) primHelpTxt.push(`Below Avg: ${d.failure_threshold}`);
+      document.getElementById('aPrimaryHelp').textContent = primHelpTxt.join(' • ');
+      document.getElementById('bPrimaryHelp').textContent = primHelpTxt.join(' • ');
+      ['a','b'].forEach(p=>{
+        document.getElementById(p+'Time').textContent='0.00';
+        document.getElementById(p+'Status').textContent='';
+        const t = timers.get(p); t && t.reset();
+      });
+    }
+    document.getElementById('drillSelect').addEventListener('change', updateDrillUI);
 
-    // roster datalist
+    /* ----- Roster (01_Dim_Tryout_Roster) for manual picker + latest groups for group_code ----- */
     async function loadRoster(){
-      const res = await API.tryout.read.roster();
+      const res = await API.tryout.read.roster(); // backed by 01_Dim_Tryout_Roster
       if(!res?.ok) return;
       const tid = ctx().tryout_id || '';
-      roster = (res.roster||[]).filter(r => !tid || String(r.tryout_id||'')===String(tid));
+      roster = (res.roster||res.rows||[]).filter(r => !tid || String(r.tryout_id||'')===String(tid)).map(r => ({
+        player_id:    r.player_id || r.id || '',
+        display_name: r.display_name || r.player_name || r.name || '',
+        primary_pos:  r.primary_pos || r.position || '',
+        tryout_num:   r.tryout_num || r.jersey_number || r.number || '',
+        group_code:   r.group_code || r.primary_pos || '',
+        tryout_id:    r.tryout_id || r.tryout || r.session_id || ''
+      })).sort((a,b)=> (parseInt(a.tryout_num,10)||0) - (parseInt(b.tryout_num,10)||0));
+
       const dl = document.getElementById('ag_roster');
-      dl.innerHTML = '';
-      roster.forEach(r=>{
-        const rec = {
-          player_id: r.player_id || '',
-          display_name: r.display_name || r.player_name || '',
-          primary_pos: r.primary_pos || r.position || '',
-          tryout_num: r.tryout_num || r.jersey_number || '',
-          group_code: r.group_code || r.primary_pos || ''
-        };
-        const opt = document.createElement('option');
-        opt.value = labelFor(rec);
-        opt.dataset.pid = rec.player_id;
-        dl.appendChild(opt);
-      });
+      dl.innerHTML = roster.map(rec => `<option value="${labelFor(rec)}" data-pid="${rec.player_id}"></option>`).join('');
     }
     async function loadLatestGroups(){
       const res = await API.tryout.read.groupsLatest(ctx().tryout_id);
@@ -458,7 +565,7 @@
       return rec?.group_code || rec?.primary_pos || fallback || '';
     }
 
-    // Active lane highlight
+    // Active lane highlight + assign
     function setActiveLane(l){
       activeLane = (l==='B') ? 'B' : 'A';
       document.getElementById('segA').setAttribute('aria-pressed', activeLane==='A' ? 'true':'false');
@@ -471,7 +578,6 @@
     qs('#laneA').addEventListener('click', ()=> setActiveLane('A'));
     qs('#laneB').addEventListener('click', ()=> setActiveLane('B'));
 
-    // Resets
     function softResetLane(lane){
       const p = lane==='A' ? 'a' : 'b';
       qs(`#${p}Cone`).value = '0';
@@ -522,8 +628,6 @@
       document.querySelectorAll('[data-clear="A"]').forEach(x=> x.onclick = ()=>{ lanePlayers.A = null; renderLaneChips(); hardResetLane('A'); });
       document.querySelectorAll('[data-clear="B"]').forEach(x=> x.onclick = ()=>{ lanePlayers.B = null; renderLaneChips(); hardResetLane('B'); });
     }
-
-    // Assign to active lane
     function assignToActiveLane(rec){
       lanePlayers[activeLane] = rec;
       document.getElementById('playerPicker').value = labelFor(rec);
@@ -531,11 +635,11 @@
       hardResetLane(activeLane);
     }
 
-    // Selection sources
+    // Selection sources: TryoutUI roster cards + manual picker
     window.addEventListener('tryoutui:select', (e)=>{
       const d = e?.detail?.player; if(!d) return;
-      const hit = roster.find(r => r.player_id===d.player_id) || d;
-      assignToActiveLane(hit);
+      const hit = roster.find(r => String(r.player_id)===String(d.player_id)) || d;
+      if (hit) assignToActiveLane(hit);
     });
     document.getElementById('playerPicker').addEventListener('change', (e)=>{
       const txt = (e.target.value||'').toLowerCase();
@@ -545,59 +649,20 @@
       if(hit) assignToActiveLane(hit);
     });
 
-    // Drill UI + hinting
-    function drillHintParts(d){
-      const parts = [];
-      if (d.drill_category) parts.push(d.drill_category);
-      if (d.success_threshold) parts.push(`Above Avg: ${d.success_threshold}`);
-      if (d.failure_threshold) parts.push(`Below Avg: ${d.failure_threshold}`);
-      return parts;
+    /* ----- Timers & saving ----- */
+    function makeTimer(timeEl, onState){
+      let running=false, t0=0, acc=0, raf=null;
+      const fmt = ms => (ms/1000).toFixed(2);
+      const tick = ()=>{ const now=performance.now(); const ms=acc + (running ? (now-t0) : 0); timeEl.textContent = fmt(ms); if(running) raf=requestAnimationFrame(tick); };
+      const start = ()=>{ if(running) return; running=true; t0=performance.now(); tick(); onState?.(true); };
+      const stop  = ()=>{ if(!running) return; running=false; acc += performance.now()-t0; cancelAnimationFrame(raf); tick(); onState?.(false); };
+      const reset = ()=>{ running=false; acc=0; cancelAnimationFrame(raf); tick(); onState?.(false); };
+      const toggle= ()=> running ? stop() : start();
+      const read  = ()=> parseFloat(timeEl.textContent||'0');
+      tick();
+      return { start, stop, reset, toggle, read, isRunning:()=>running };
     }
 
-    function updateDrillUI(){
-      const d = currentDrill();
-      const name = d.drill_name || d.name || d.drill_id || '—';
-      document.getElementById('drillBadge').textContent = `Drill: ${name}`;
-      const help = document.getElementById('drillHint');
-      help.textContent = drillHintParts(d).join(' • ');
-
-      const primLabel = `${d.primary_measurement || 'Time'} (${d.measurement_unit || 'sec'})`;
-      document.getElementById('aPrimaryLabel').textContent = primLabel;
-      document.getElementById('bPrimaryLabel').textContent = primLabel;
-
-      const primHelpTxt = [];
-      if (d.success_threshold) primHelpTxt.push(`Above Avg: ${d.success_threshold}`);
-      if (d.failure_threshold) primHelpTxt.push(`Below Avg: ${d.failure_threshold}`);
-      document.getElementById('aPrimaryHelp').textContent = primHelpTxt.join(' • ');
-      document.getElementById('bPrimaryHelp').textContent = primHelpTxt.join(' • ');
-
-      // switching drill: soft reset (keep attempts)
-      ['a','b'].forEach(p=>{
-        document.getElementById(p+'Time').textContent='0.00';
-        document.getElementById(p+'Status').textContent='';
-        const t = timers.get(p); t && t.reset();
-      });
-    }
-    document.getElementById('drillSelect').addEventListener('change', updateDrillUI);
-
-    // attempt/best helpers
-    function keyFor(idKey, drillId){ return `${idKey}::${drillId}`; }
-    function computeBestFlag(idKey, drillId, newTime, isDNF){
-      if (isDNF || newTime==null || isNaN(newTime)) return false;
-      const k = keyFor(idKey, drillId);
-      const arr = attemptStore.get(k) || [];
-      const bestSoFar = arr
-        .map(a => (a.dnf ? null : a.time))
-        .filter(v => v!=null && !isNaN(v))
-        .reduce((m,v)=> (m==null || v<m) ? v : m, null);
-      return bestSoFar==null ? true : (newTime < bestSoFar);
-    }
-    function demoteOldBest(logTbody, drillId){
-      logTbody.querySelectorAll(`tr[data-drill="${drillId}"] .best`)
-        .forEach(el => el.replaceWith(document.createTextNode('')));
-    }
-
-    /* -------- Saving indicator helpers -------- */
     function setSaving(lane, saving){
       const p = (lane==='A') ? 'a' : 'b';
       const saveBtn = document.getElementById(p+'Save');
@@ -621,7 +686,22 @@
       }
     }
 
-    // ----- Recent writes (bottom) -----
+    function keyFor(idKey, drillId){ return `${idKey}::${drillId}`; }
+    function computeBestFlag(idKey, drillId, newTime, isDNF){
+      if (isDNF || newTime==null || isNaN(newTime)) return false;
+      const k = keyFor(idKey, drillId);
+      const arr = attemptStore.get(k) || [];
+      const bestSoFar = arr
+        .map(a => (a.dnf ? null : a.time))
+        .filter(v => v!=null && !isNaN(v))
+        .reduce((m,v)=> (m==null || v<m) ? v : m, null);
+      return bestSoFar==null ? true : (newTime < bestSoFar);
+    }
+    function demoteOldBest(logTbody, drillId){
+      logTbody.querySelectorAll(`tr[data-drill="${drillId}"] .best`)
+        .forEach(el => el.replaceWith(document.createTextNode('')));
+    }
+
     function addRecent(route, summary){
       pageLog.unshift({ ts:new Date(), route, summary });
       pageLog.splice(PAGE_LOG_LIMIT);
@@ -662,8 +742,8 @@
       }
 
       // If timer running, stop it before saving
-      const t = timers.get(lane==='A' ? 'a' : 'b');
-      if (t?.isRunning()) t.stop();
+      const tmr = timers.get(lane==='A' ? 'a' : 'b');
+      if (tmr?.isRunning()) tmr.stop();
 
       const drill = currentDrill();
       const drillId = drill.drill_id || drill.id || 'AG01';
@@ -681,11 +761,9 @@
       const row = {
         tryout_id:   c.tryout_id || '',
         period_code: c.period_code || '',
-        // identifiers
         tryout_num:  String(player.tryout_num || '').trim(),
         player_id:   String(player.player_id || '').trim(),
         group_code:  resolveGroupCode(player.player_id, '', player) || '',
-        // metrics
         station_id:  STATION_ID,
         drill_id:    drillId,
         lane:        lane,
@@ -708,20 +786,16 @@
         return;
       }
 
-      // local best continuity index (by idKey + drill)
       const k = keyFor(idKey, drillId);
       const arr = attemptStore.get(k) || [];
       arr.push({ time: time_sec, dnf, lane, attempt });
       attemptStore.set(k, arr);
 
-      // Evaluate rating (PASS / AVG / FAIL)
       const evalRes = dnf ? { rating:'below', ratingText:'Below Average', ratingClass:'rating-below' }
                           : evaluateDrill(drill, time_sec, null);
 
-      // If this save is best for this player+drill, demote old "Best" in the lane table
       if (row.best_flag) demoteOldBest(logTbody, drillId);
 
-      // Show in lane log
       const tr = document.createElement('tr');
       tr.setAttribute('data-drill', drillId);
       tr.innerHTML = `
@@ -735,26 +809,21 @@
       logTbody.prepend(tr);
       while(logTbody.children.length > 8) logTbody.removeChild(logTbody.lastChild);
 
-      // Recent Writes
       addRecent('agility', `Write → agility :: ${player.tryout_num || player.player_id || '—'} • ${drillName} • ${(time_sec || (dnf?'DNF':'—'))} ${time_sec?'sec':''} (Att ${attempt})`);
 
-      // Keep player; prep next attempt
       const next = (attempt % 3) + 1;
       attSel.value = String(next);
       softResetLane(lane);
 
-      // Final status message
       statusEl.textContent = `Saved ✔ · ${evalRes.ratingText}${dnf ? ' (DNF)' : ''}`;
-      statusEl.className = 'status ' + (dnf ? 'err' : (evalRes.rating==='above' ? 'ok' : evalRes.rating==='below' ? 'warn' : 'avg'));
+      statusEl.className = 'status ' + (dnf ? 'err' : (evalRes.rating==='above' ? 'ok' : (evalRes.rating==='below' ? 'warn' : 'avg')));
 
-      // Mark roster ✓ if available
       if (AFTER_SAVE.markDone) {
         try { TryoutUI?.markDone?.(player.player_id || player.tryout_num); } catch {}
         try { window.dispatchEvent(new CustomEvent('tryoutui:done', { detail:{ player_id: player.player_id, tryout_num: player.tryout_num } })); } catch {}
       }
     }
 
-    // wire lanes (with Start/Stop toggle)
     function wireLane(prefix){
       const toggleBtn = document.getElementById(prefix+'Toggle');
       const timeEl = document.getElementById(prefix+'Time');
@@ -777,15 +846,11 @@
       });
     }
 
-    // Start both timers (single button)
     function wireBothStart(){
       const a = () => timers.get('a');
       const b = () => timers.get('b');
       const btn = document.getElementById('bothStart');
-      if (!btn) return;
-      btn.addEventListener('click', ()=>{
-        a()?.start(); b()?.start();
-      });
+      btn.addEventListener('click', ()=>{ a()?.start(); b()?.start(); });
     }
 
     // init
@@ -797,11 +862,25 @@
 
       await Promise.all([loadDrills(), loadRoster(), loadLatestGroups()]);
 
-      // If TryoutUI has an active selection, use it
-      if (window.TryoutUI?.getSelectedPlayers) {
-        const cur = TryoutUI.getSelectedPlayers();
-        if (Array.isArray(cur) && cur[0]) { assignToActiveLane(cur[0]); }
-      }
+      // Honor current TryoutUI selection, if any
+      try {
+        if (window.TryoutUI?.getSelectedPlayers) {
+          const cur = TryoutUI.getSelectedPlayers();
+          if (Array.isArray(cur) && cur[0]) { assignToActiveLane(cur[0]); }
+        }
+      } catch {}
+
+      // Keep roster + groups in sync on tryout change
+      let lastTid = (ctx().tryout_id||'');
+      GameContext.subscribe((c)=>{
+        const tid = (c?.tryout_id||'');
+        if (tid !== lastTid){
+          lastTid = tid;
+          loadRoster();
+          loadLatestGroups();
+          try { window.NoticeScheduler?.refreshFromDictionary?.(); } catch {}
+        }
+      });
     })();
   </script>
 </body>
