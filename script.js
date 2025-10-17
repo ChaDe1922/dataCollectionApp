@@ -40,7 +40,7 @@ function handleWellnessSubmit(e) {
     }
     delete data.injury_location_other; // Clean up the extra field
 
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbxNNNwRFe_5BF7g8j-bL6arA4td8DpXv8qfkOwF2DfAXK4hjbIgxResiQbLyF5d-pwDuA/exec';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbzoJ6e2OtWYIJCuIezqoUasJM-S9mebV9LC88nQvN_FYMf7biQouHmBwC1etF9uFKkuDw/exec';
 
     const submitButton = form.querySelector('button[type="submit"]');
     submitButton.textContent = 'Submitting...';

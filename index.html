@@ -5,57 +5,279 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Football Data Tracker</title>
 
-  <!-- Fonts + theme stylesheet -->
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css"/>
 
-  <!-- Login overlay styles (updated to match the new theme) -->
   <style>
-    /* === Login overlay === */
-    #loginOverlay {
-      position: fixed; inset: 0; z-index: 9999;
-      display: none; /* shown by JS if not authenticated */
-      align-items: center; justify-content: center;
-      background: rgba(0,0,0,.55); backdrop-filter: blur(6px) saturate(120%);
+    /* === CSS Variables === */
+    :root {
+      --atl-purple-dark: #3a1660;
+      --atl-purple: #6a1b9a;
+      --atl-lavender-1: #a36bff;
+      --atl-lavender-2: #c58dff;
+      --bg-dark: #0a0514;
+      --bg-card: rgba(255,255,255,.05);
+      --border: rgba(255,255,255,.12);
+      --shadow: 0 4px 12px rgba(0,0,0,.3);
+      --shadow-hover: 0 8px 20px rgba(163,107,255,.45);
     }
+
+    /* === Reset & Base === */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Manrope", system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #0a0514 0%, #1a0b2e 100%);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* === Hero Header === */
+    .hero {
+      text-align: center;
+      padding: 1.5rem 1rem;
+      background: linear-gradient(180deg, rgba(58,22,96,.3) 0%, transparent 100%);
+    }
+
+    .hero-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .hero-logo {
+      width: 60px;
+      height: auto;
+      margin-bottom: 0.75rem;
+    }
+
+    .hero-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.02em;
+    }
+
+    .hero-sub {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      font-weight: 400;
+    }
+
+    /* === Main Content === */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    /* === Mobile-First Button Grid === */
+    .main-menu {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.875rem;
+      width: 100%;
+      max-width: 400px;
+      padding: 0 0.5rem;
+    }
+
+    .main-menu-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      color: var(--atl-purple-dark);
+      border: 2px solid var(--atl-purple-dark);
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      font-size: 1.125rem;
+      font-weight: 800;
+      text-decoration: none;
+      box-shadow: var(--shadow);
+      transition: all 0.25s ease;
+      min-height: 64px;
+    }
+
+    .main-menu-btn:active {
+      transform: scale(0.98);
+    }
+
+    .main-menu-btn:hover {
+      background: linear-gradient(90deg, var(--atl-lavender-1), var(--atl-lavender-2));
+      color: #fff;
+      border-color: transparent;
+      box-shadow: var(--shadow-hover);
+      transform: translateY(-2px);
+    }
+
+    /* === Footer === */
+    .site-footer {
+      text-align: center;
+      padding: 1.5rem 1rem;
+      font-size: 0.85rem;
+      opacity: 0.7;
+    }
+
+    /* === Login Overlay === */
+    #loginOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(6px) saturate(120%);
+      padding: 1rem;
+    }
+
     #loginCard {
-      width: min(420px, 92vw);
+      width: 100%;
+      max-width: 400px;
       background: rgba(255,255,255,.06);
       color: #fff;
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 22px; padding: 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1.5rem;
       box-shadow: 0 14px 34px rgba(0,0,0,.35);
-      font-family: "Manrope", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
-    #loginCard h2 { margin: 0 0 .85rem 0; font-size: 1.25rem; font-weight:800; }
-    #loginCard label { font-size: .9rem; opacity: .9; display:block; margin:.5rem 0 .35rem; }
+
+    #loginCard h2 {
+      margin: 0 0 1rem 0;
+      font-size: 1.375rem;
+      font-weight: 800;
+    }
+
+    #loginCard label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+      display: block;
+      margin: 0.75rem 0 0.35rem;
+    }
+
     #loginCard input {
-      width:100%; padding:.7rem .8rem; border-radius:12px;
-      border:1px solid rgba(255,255,255,.20);
-      background:rgba(255,255,255,.10); color:#fff;
+      width: 100%;
+      padding: 0.875rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.20);
+      background: rgba(255,255,255,.10);
+      color: #fff;
+      font-size: 1rem;
     }
-    #loginActions { display:flex; gap:.6rem; margin-top:.9rem; }
+
+    #loginCard input::placeholder {
+      color: rgba(255,255,255,.5);
+    }
+
+    #loginActions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.25rem;
+    }
+
     #loginBtn {
-      padding:.7rem 1rem; border-radius:30px; border:2px solid #3a1660; /* dark purple */
-      background:#fff; color:#3a1660; cursor:pointer; flex:1; font-weight:800;
-      transition: all .25s ease; letter-spacing:.2px;
+      width: 100%;
+      padding: 0.875rem 1.25rem;
+      border-radius: 30px;
+      border: 2px solid var(--atl-purple-dark);
+      background: #fff;
+      color: var(--atl-purple-dark);
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 1rem;
+      transition: all 0.25s ease;
     }
-    #loginBtn:hover{
-      background:linear-gradient(90deg, #a36bff, #c58dff); /* lighter purples on hover */
-      color:#fff; border-color:transparent;
+
+    #loginBtn:hover {
+      background: linear-gradient(90deg, var(--atl-lavender-1), var(--atl-lavender-2));
+      color: #fff;
+      border-color: transparent;
       transform: translateY(-2px);
-      box-shadow:0 8px 20px rgba(163,107,255,.45);
+      box-shadow: var(--shadow-hover);
     }
-    #loginMsg { margin-top:.6rem; font-size:.9rem; min-height:1.2em; }
-    #loginMsg.error { color:#ff6b6b; }
-    #loginMsg.ok { color:#7CFC98; }
+
+    #loginMsg {
+      margin-top: 0.75rem;
+      font-size: 0.9rem;
+      min-height: 1.2em;
+      text-align: center;
+    }
+
+    #loginMsg.error { color: #ff6b6b; }
+    #loginMsg.ok { color: #7CFC98; }
+
+    /* === Tablet (2 columns) === */
+    @media (min-width: 560px) {
+      .hero-logo {
+        width: 80px;
+      }
+
+      .hero-title {
+        font-size: 2rem;
+      }
+
+      .hero-sub {
+        font-size: 1rem;
+      }
+
+      .main-menu {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 600px;
+        gap: 1rem;
+      }
+
+      .main-menu-btn {
+        padding: 1.5rem;
+        font-size: 1.25rem;
+        min-height: 80px;
+      }
+    }
+
+    /* === Desktop (larger 2x2 grid) === */
+    @media (min-width: 900px) {
+      .hero {
+        padding: 2.5rem 1rem;
+      }
+
+      .hero-logo {
+        width: 100px;
+      }
+
+      .hero-title {
+        font-size: 2.5rem;
+      }
+
+      .main-menu {
+        max-width: 700px;
+        gap: 1.25rem;
+      }
+
+      .main-menu-btn {
+        padding: 2rem;
+        font-size: 1.375rem;
+        min-height: 120px;
+        border-radius: 20px;
+      }
+
+      #loginCard {
+        max-width: 420px;
+        padding: 2rem;
+      }
+    }
   </style>
 </head>
 
-<body class="theme-atl">
-  <!-- Hero with centered logo + title (styled in style.css) -->
+<body>
+  <!-- Hero Header -->
   <header class="hero">
     <div class="hero-inner">
       <img class="hero-logo" src="assets/images/owl-logo.png" alt="ATL Truth Owl Logo">
@@ -64,26 +286,28 @@
     </div>
   </header>
 
+  <!-- Main Menu -->
   <main>
     <nav class="main-menu">
-      <!-- White pill buttons w/ purple text; light‑purple gradient on hover -->
+      <a href="tryout/index.html" class="main-menu-btn">Tryouts</a>
       <a href="game/game-day.html" class="main-menu-btn">Game Day</a>
       <a href="practice/practice.html" class="main-menu-btn">Practice</a>
       <a href="wellness/wellness.html" class="main-menu-btn">Wellness</a>
     </nav>
   </main>
 
+  <!-- Footer -->
   <footer class="site-footer">
     <p>&copy; 2025 Game Speed Data Systems</p>
   </footer>
 
-  <!-- Full-page login overlay -->
+  <!-- Login Overlay -->
   <div id="loginOverlay" aria-modal="true" role="dialog">
     <div id="loginCard">
       <h2>Sign in</h2>
       <form id="loginForm" autocomplete="off">
         <label for="loginUser">Username</label>
-        <input id="loginUser" name="username" required>
+        <input id="loginUser" name="username" type="text" required>
 
         <label for="loginPass">Password</label>
         <input id="loginPass" name="password" type="password" required>
@@ -96,29 +320,27 @@
     </div>
   </div>
 
-  <!-- Auth script -->
+  <!-- Auth Script -->
   <script>
-    // ===== Your Apps Script Web App endpoint (same one you use elsewhere) =====
     const API_BASE = 'https://script.google.com/macros/s/AKfycbwueIg8spHArqPBOhJnOxCvij8tiTC1nIWc9GY4RnaOUNNaCgaLnsJSEx3Dq1gvAd3rHw/exec';
-
-    // ===== Auth sheet location =====
     const AUTH_SHEET_ID = '1PcHHdLAJMSV2R_5-uwax172FM7RMnMgA1p9n4VW24lk';
-    const AUTH_TAB      = 'Auth_Users'; // rename if your tab is different
+    const AUTH_TAB = 'Auth_Users';
 
-    // --- tiny helpers ---
     const $ = id => document.getElementById(id);
+
     function authIsValid(){
       const ok = localStorage.getItem('auth_ok') === '1';
       const exp = Number(localStorage.getItem('auth_until') || 0);
       return ok && Date.now() < exp;
     }
+
     function setAuth(landing, username){
-      // 12h session window
       localStorage.setItem('auth_ok','1');
       localStorage.setItem('auth_user', username || '');
       localStorage.setItem('auth_landing', landing || 'index.html');
       localStorage.setItem('auth_until', String(Date.now() + 12*60*60*1000));
     }
+
     function clearAuth(){
       ['auth_ok','auth_user','auth_landing','auth_until'].forEach(k=>localStorage.removeItem(k));
     }
@@ -134,7 +356,6 @@
       return r.json();
     }
 
-    // Mount login overlay on index
     (function initLoginOverlay(){
       const ov = $('loginOverlay');
       const frm = $('loginForm');
@@ -154,9 +375,6 @@
 
           setAuth(res.landing, u);
 
-          // landing rules:
-          // - 'index' creds: hide overlay & stay here
-          // - 'wellness' creds: push to wellness page
           if (/wellness\.html$/i.test(res.landing)) {
             window.location.href = 'wellness/wellness.html';
           } else {
@@ -170,7 +388,6 @@
 
       frm.addEventListener('submit', handleSubmit);
 
-      // Show overlay if not authed
       if(window.location.hash === '#logout'){ clearAuth(); }
       if(!authIsValid()){
         clearAuth();

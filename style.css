@@ -3,6 +3,7 @@
    - Deep, animated purple background (optional .theme-atl)
    - White pill main-menu buttons w/ dark purple text
    - Light purple gradient on hover
+   - Optional light theme: .theme-atl-light
    - Drop-in: keeps all original class names
    ======================================================= */
 
@@ -682,3 +683,316 @@ a:focus,button:focus,input:focus,select:focus{
 .page-intro{
   margin-top: 20px;
 }
+
+/* Group filter chips (optional) */
+.group-filter { display:flex; flex-wrap:wrap; gap:8px; padding:8px 12px; margin:8px 16px; }
+.chip{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:8px 12px; border-radius:999px; font-weight:700; font-size:12px;
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.20); color:#fff; cursor:pointer;
+  transition:transform .15s ease, background .15s ease, border-color .15s ease;
+}
+.chip:hover{ transform:translateY(-1px); background:rgba(255,255,255,.12); }
+.chip[aria-pressed="true"]{ background:#43b581; color:#071a12; border-color:#43b581; }
+.chip .dot{ width:10px; height:10px; border-radius:50%; background:#a78bfa; }
+.chip.rb-a .dot{ background:#60a5fa }    /* example group colors */
+.chip.rb-b .dot{ background:#f472b6 }
+.chip.wr-a .dot{ background:#34d399 }
+.chip.db-a .dot{ background:#fbbf24 }
+
+/* ===== Home: 2x2 main menu grid ===== */
+.main-menu.main-menu-grid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 18px;
+  max-width: 720px;
+  margin: 44px auto 0;
+  padding: 0 16px;
+}
+
+.main-menu.main-menu-grid .main-menu-btn{
+  width: 100%;
+  min-height: 86px;              /* consistent tile height */
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+}
+
+/* Stack to 1 column on narrow screens */
+@media (max-width: 560px){
+  .main-menu.main-menu-grid{
+    grid-template-columns: 1fr;
+    max-width: 560px;
+  }
+}
+
+/* ===== Home: 2×2 grid with lightly rounded SQUARE tiles ===== */
+.main-menu.main-menu-grid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap:18px;
+  max-width:720px;
+  margin:44px auto 0;
+  padding:0 16px;
+}
+
+/* Override the pill style for the home tiles only */
+.main-menu.main-menu-grid .main-menu-btn{
+  /* square tile */
+  aspect-ratio: 1 / 1;              /* perfect square */
+  min-height: 140px;                /* keeps presence on larger screens */
+  display:flex; align-items:center; justify-content:center;
+  text-align:center;
+
+  /* light rounding (not pills) */
+  border-radius:16px !important;
+
+  /* keep your white theme */
+  background:#fff;
+  color:var(--atl-purple-dark);
+  border:1.5px solid var(--atl-purple-dark);
+  box-shadow:0 6px 14px rgba(0,0,0,.16);
+  font-weight:800;
+  transition:transform .25s ease, box-shadow .25s ease, background .25s ease, color .25s ease, border-color .25s ease;
+  padding:0;                        /* removes pill padding bias */
+}
+
+.main-menu.main-menu-grid .main-menu-btn:hover{
+  background:linear-gradient(90deg,var(--atl-lavender-1),var(--atl-lavender-2));
+  color:#fff;
+  border-color:transparent;
+  transform:translateY(-2px);
+  box-shadow:var(--shadow-hover);
+}
+
+/* Stack to 1 column on very narrow screens; keep tiles square but smaller */
+@media (max-width:560px){
+  .main-menu.main-menu-grid{
+    grid-template-columns: 1fr;
+    max-width: 560px;
+  }
+  .main-menu.main-menu-grid .main-menu-btn{
+    min-height: 104px;              /* smaller square on phones */
+  }
+}
+
+/* ======= Practice pages use the wide layout ======= */
+.practice-page .container{ max-width:1100px; }
+
+/* ======= Fallback seg styles (pages use .seg > button) ======= */
+.seg{
+  display:inline-flex; background:rgba(255,255,255,.06);
+  border:1px solid var(--border); border-radius:10px; overflow:hidden;
+}
+.seg button{
+  appearance:none; border:0; padding:6px 10px; font-weight:800;
+  color:#fff; background:transparent; cursor:pointer;
+}
+.seg button[aria-pressed="true"]{
+  background:#43b581; color:#071a12; border-color:#43b581;
+}
+
+/* ======= Toggle alias for legacy markup (.toggle-switch) ======= */
+.toggle-switch{ display:inline-flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
+.toggle-switch input[type="checkbox"]{ position:absolute; opacity:0; width:0; height:0; }
+.toggle-switch .toggle-slider{
+  position:relative; width:52px; height:28px; border-radius:999px;
+  background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); display:block;
+}
+.toggle-switch .toggle-slider::before{
+  content:''; position:absolute; top:3px; left:4px; width:20px; height:20px;
+  border-radius:999px; background:#fff; transition:transform .2s;
+}
+.toggle-switch input:checked + .toggle-slider{
+  background:linear-gradient(135deg,#16A34A,#10B981); border-color:#16A34A;
+}
+.toggle-switch input:checked + .toggle-slider::before{ transform:translateX(24px); }
+
+/* ======= Roster list: perfectly aligned grid rows ======= */
+.roster{ display:grid; row-gap:10px; }
+.roster-row{
+  display:grid;
+  grid-template-columns:
+    72px                 /* # */
+    minmax(220px,1fr)    /* name */
+    120px                /* position group */
+    160px                /* check-in toggle */
+    180px                /* registered at */
+    minmax(160px,1fr);   /* notes */
+  gap:12px; align-items:center;
+  padding:12px; border:1px solid var(--border);
+  border-radius:12px; background:rgba(255,255,255,.04);
+}
+.roster-num{ font-weight:900; text-align:right; font-variant-numeric:tabular-nums; }
+.roster-name{ display:flex; align-items:center; gap:8px; min-width:0; }
+.roster-name > .truncate{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.roster-pos{ opacity:.85; }
+.roster-toggle{ display:flex; align-items:center; }
+.roster-time{ opacity:.85; font-variant-numeric:tabular-nums; }
+.roster-notes input{ width:100%; }
+
+/* Keep switches consistent height so rows don't jiggle */
+.switch .track{ height:28px; } /* matches your theme’s switch height */
+
+/* =======================================================
+   Notice banner (non-blocking reminders)
+   ======================================================= */
+.notice-banner{
+  position:fixed; top:56px; left:50%; transform:translateX(-50%);
+  background:rgba(17,24,39,.92);
+  border:1px solid var(--border);
+  color:#fff; font-weight:800; font-size:14px;
+  padding:6px 12px; border-radius:999px; z-index:900;
+  display:none; pointer-events:none;
+}
+.notice-banner.show{ display:block; animation:bannerFade 8s ease forwards; }
+@keyframes bannerFade{
+  0%{opacity:0;transform:translateX(-50%) translateY(-6px)}
+  8%{opacity:1;transform:translateX(-50%) translateY(0)}
+  85%{opacity:1}
+  100%{opacity:0}
+}
+
+/* =======================================================
+   LIGHT THEME (apply via <body class="theme-atl-light">)
+   ======================================================= */
+.theme-atl-light{
+  --bg: #f8f7fb;                      /* page background */
+  --surface: #ffffff;                 /* cards / panels */
+  --text: #17151f;                    /* primary text (deep neutral) */
+  --muted: #5e6072;                   /* secondary text */
+  --divider: rgba(15,12,25,.10);      /* hairlines */
+  --tbl-header: #ffffff;              /* sticky table head */
+  --brand: #4a1c82;                   /* primary */
+  --brand-2: #cd3da4;                 /* secondary accent */
+  --accent: #ffe342;                  /* highlight */
+  --success-bg: #e9fbf0; --success: #16794f;
+  --danger-bg:  #fdeef2; --danger:  #b43350;
+  --chip: #f1effa;                    /* tag/chip bg */
+  color: var(--text);
+  background: radial-gradient(1200px 600px at 10% -5%, #ffffff 0%, #f4f2f9 55%, #efeef7 100%);
+  font-family: "Montserrat",system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+
+/* Page header */
+.theme-atl-light .page-header{
+  background: linear-gradient(90deg, #4a1c82, #cd3da4);
+  color:#fff; padding: 18px 0; box-shadow: 0 1px 0 var(--divider);
+}
+.theme-atl-light .page-header h1{
+  letter-spacing:.02em; font-weight:800; margin:0;
+}
+
+/* Cards / panels */
+.theme-atl-light .roster-card,
+.theme-atl-light .card,
+.theme-atl-light .info-card,
+.theme-atl-light .form-section{
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(20,16,32,.06), 0 4px 8px rgba(20,16,32,.08);
+}
+
+/* KPI pills */
+.theme-atl-light .kpi{ background:#fff; border-color:var(--divider); box-shadow: 0 1px 2px rgba(20,16,32,.06); }
+.theme-atl-light .kpi .label{ color: var(--muted); }
+.theme-atl-light .kpi .val{ color: var(--text); }
+
+/* Inputs */
+.theme-atl-light .form-input,
+.theme-atl-light .input,
+.theme-atl-light .select,
+.theme-atl-light input[type="text"],
+.theme-atl-light input[type="number"],
+.theme-atl-light select{
+  background:#fff; color: var(--text);
+  border:1px solid var(--divider); border-radius: 10px;
+  padding:10px 12px; outline: none; transition: border-color .15s, box-shadow .15s;
+}
+.theme-atl-light .form-input:focus,
+.theme-atl-light .input:focus,
+.theme-atl-light .select:focus,
+.theme-atl-light input[type="text"]:focus,
+.theme-atl-light input[type="number"]:focus,
+.theme-atl-light select:focus{
+  box-shadow: 0 0 0 3px rgba(205,61,164,.18), 0 0 0 1px #cd3da4; border-color: #cd3da4;
+}
+
+/* Buttons */
+.theme-atl-light .btn{ font-weight:700; border-radius: 10px; padding:10px 14px; cursor:pointer; }
+.theme-atl-light .btn-primary{ background:#4a1c82; border:1px solid #4a1c82; }
+.theme-atl-light .btn-neutral{ background:#fff; color:#17151f; border:1px solid var(--divider); }
+.theme-atl-light .btn-success{ background:#16794f; }
+.theme-atl-light .btn-danger{ background:#b43350; }
+
+/* Switch & badges */
+.theme-atl-light .switch input{ background:#e9e8f3; border:1px solid #d9d6e8; }
+.theme-atl-light .switch input:checked{ background:#e8ddff; border-color:#cdbaf6; }
+.theme-atl-light .badge{ border:1px solid var(--divider); }
+.theme-atl-light .good{ background: var(--success-bg); color: var(--success); border-color: rgba(22,121,79,.25); }
+.theme-atl-light .bad{ background: var(--danger-bg); color: var(--danger); border-color: rgba(180,51,80,.25); }
+
+/* Tables */
+.theme-atl-light .grid-table thead{ background: var(--tbl-header); box-shadow: 0 1px 0 var(--divider); }
+.theme-atl-light .grid-table tbody tr{
+  background:#fff; border:1px solid var(--divider);
+  border-radius:12px; box-shadow: 0 1px 2px rgba(20,16,32,.06);
+}
+.theme-atl-light .muted{ color: var(--muted); }
+
+/* Chips / banners */
+.theme-atl-light .chip{ background: var(--chip); color: #4a1c82; border:1px solid rgba(74,28,130,.18); }
+.theme-atl-light .info-title{ color: #4a1c82; }
+
+/* Toast */
+.theme-atl-light .toast{
+  background:#1f1030; color:#fff; border:1px solid rgba(255,255,255,.12);
+  box-shadow: 0 6px 16px rgba(20,16,32,.10);
+}
+
+/* Loading overlay (light) */
+.theme-atl-light .loading-overlay{
+  background: rgba(255,255,255,.65); backdrop-filter: blur(4px);
+}
+.theme-atl-light .spinner{
+  border-color: rgba(0,0,0,.08); border-top-color: #4a1c82;
+}
+.theme-atl-light .loading-text{ color: #17151f; }
+
+/* Error banner (light) */
+.theme-atl-light .error-banner{
+  background: var(--danger-bg);
+  border: 1px solid rgba(180,51,80,.35);
+  color: var(--danger);
+}
+
+/* Notice banner in light theme */
+.theme-atl-light .notice-banner{
+  background: #17151f; color:#fff; border-color: var(--divider);
+}
+
+
+
+/* --- Global notice banner (top of every page) --- */
+#noticeHost{
+  position:fixed; inset:auto 0 0 0;      /* stick to top without shifting layout */
+  top:8px; left:0; right:0;
+  display:flex; justify-content:center; pointer-events:none; z-index:9999;
+}
+.notice-banner{
+  pointer-events:auto;
+  background: linear-gradient(90deg,#7c4dff,#8b5cf6);
+  color:#fff; font-weight:800; letter-spacing:.02em;
+  padding:10px 14px; border-radius:16px; border:1px solid rgba(139,92,246,.45);
+  box-shadow:0 10px 26px rgba(17,12,28,.25);
+}
+
+/* 4-sided purple “Home” button under hero */
+.nav-home{
+  background: linear-gradient(90deg,#7c4dff,#8b5cf6);
+  color:#fff !important; border: none !important;
+  border-radius:16px !important;          /* square-ish, not pill */
+  padding:10px 16px; font-weight:800;
+  box-shadow:0 8px 18px rgba(99,102,241,.25);
+}
+.nav-home:hover{ filter:saturate(1.06); transform:translateY(-1px); }

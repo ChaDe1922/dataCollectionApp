@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <!-- Apps Script base -->
+  <meta name="gsds-api-base" content="https://script.google.com/macros/s/AKfycbzoJ6e2OtWYIJCuIezqoUasJM-S9mebV9LC88nQvN_FYMf7biQouHmBwC1etF9uFKkuDw/exec">
+
+  <title>Agility — Tryouts</title>
+
+  <!-- Simple auth guard -->
+  <script>
+    (function () {
+      const ok = localStorage.getItem('auth_ok') === '1' &&
+                 Number(localStorage.getItem('auth_until') || 0) > Date.now();
+      if (!ok) location.href = '../index.html#login';
+    })();
+  </script>
+
+  <!-- Theme + fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css"/>
+
+  <style>
+    .container{ max-width:1100px; margin:0 auto; padding:16px; }
+    .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    @media (max-width:900px){ .grid-2{ grid-template-columns:1fr; } }
+
+    .card{ background: rgba(255,255,255,.05); border:1px solid var(--border);
+           border-radius:16px; padding:16px; box-shadow: var(--shadow-soft, 0 8px 24px rgba(0,0,0,.18)); }
+    .toolbar{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    .chip{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px;
+           border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.06); font-weight:700; }
+    .chip.badge{ background:linear-gradient(135deg,#7C4DFF,#8B5CF6); color:#071018; border:0; }
+    .chip.ghost{ background:transparent; }
+
+    .assign{ display:flex; align-items:center; gap:8px; margin-left:auto; }
+    .seg{ display:inline-flex; background:rgba(255,255,255,.06); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+    .seg button{ appearance:none; border:0; padding:6px 10px; font-weight:800; color:#fff; background:transparent; cursor:pointer; }
+    .seg button[aria-pressed="true"]{ background:#8B5CF6; color:#071018; }
+
+    .field{ margin:10px 0; }
+    .label{ font-weight:800; font-size:.95rem; opacity:.9; margin-bottom:6px; display:block; }
+    .form-input, .form-select{ width:100%; padding:.68rem .8rem; border-radius:12px; border:1px solid rgba(255,255,255,.28);
+      background:rgba(255,255,255,.08); color:#fff; }
+    .row{ display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; }
+    .row3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; }
+
+    .timer{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .time{ font-variant-numeric:tabular-nums; font-weight:900; font-size:1.25rem; min-width:82px; text-align:right; }
+
+    .btn{ appearance:none; border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08); color:#fff;
+          padding:.55rem .8rem; border-radius:10px; font-weight:800; cursor:pointer; transition:.2s ease; }
+    .btn.primary{ background:linear-gradient(135deg,#7C4DFF,#8B5CF6); color:#071018; border:0; }
+    .btn.success{ background:linear-gradient(135deg,#16A34A,#10B981); color:#061710; border:0; }
+    .btn.warn{ background:linear-gradient(135deg,#F59E0B,#F59E0B); color:#2A1400; border:0; }
+    .btn.ghost{ background:transparent; }
+    .btn:disabled{ opacity:.55; cursor:not-allowed; }
+
+    /* Save indicator */
+    .btn.loading{ position:relative; pointer-events:none; }
+    .btn.loading .spin{ width:14px; height:14px; border:2px solid rgba(255,255,255,.45);
+                        border-top-color:#fff; border-radius:50%; display:inline-block;
+                        margin-right:8px; vertical-align:-2px; animation:spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .lane-title{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-weight:900; letter-spacing:.04em; opacity:.9; }
+    .lane-chip{ display:inline-flex; align-items:center; gap:8px; padding:4px 8px; border-radius:999px;
+                border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); font-weight:800; font-size:.9rem; }
+    .lane-chip .x{ opacity:.7; cursor:pointer; padding:0 .25rem; }
+
+    .lane-card{ transition: box-shadow .15s ease, border-color .15s ease; }
+    .lane-card.lane-active{ border-color:#8B5CF6; box-shadow:0 0 0 2px rgba(139,92,246,.35) inset; }
+
+    .small{ font-size:.85rem; opacity:.8; }
+    .status{ margin-top:8px; font-weight:700; }
+    .status.ok{ color:#34D399; } .status.err{ color:#F87171; } .status.warn{ color:#F59E0B; } .status.avg{ color:#8B5CF6; }
+
+    .table{ width:100%; border-collapse:collapse; font-size:.95rem; }
+    .table th,.table td{ padding:6px 8px; border-bottom:1px solid rgba(255,255,255,.12); text-align:left; }
+    .best{ color:#34D399; font-weight:900; }
+
+    .muted{ opacity:.75; }
+
+    /* Hide TryoutUI's built-in log so we can show ours at the bottom */
+    .tu-log{ display:none !important; }
+
+    /* Make the drill select fit nicely on the toolbar */
+    .toolbar .select-wrap{ min-width: 260px; }
+    .toolbar .select-wrap .form-select{ width: 100%; }
+
+    /* Rating badges (like QB) */
+    .rating-above{ background:linear-gradient(135deg,#16A34A,#10B981); color:#061710; padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; }
+    .rating-avg{ background:linear-gradient(135deg,#8B5CF6,#A78BFA); color:#071018; padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; }
+    .rating-below{ background:linear-gradient(135deg,#DC2626,#EF4444); color:#fff; padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; }
+
+    .measure-help{ font-size:11px; opacity:.7; font-weight:500; margin-top:2px; font-style:italic; }
+  </style>
+</head>
+
+<body class="theme-atl practice-page">
+  <header class="page-header">
+    <h1>Agility</h1>
+    <nav class="menu-actions">
+      <a href="../index.html" class="menu-btn">Home</a>
+      <a href="../tryout/index.html" class="menu-btn">Tryout Hub</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="container">
+
+      <!-- Shared context bar, filter chips, roster chips -->
+      <div id="tryout-shared" style="margin-bottom:12px"></div>
+
+      <!-- Top control bar -->
+      <section class="card" style="margin-bottom:14px">
+        <div class="toolbar">
+          <span class="chip">Station: <strong>Agility</strong></span>
+
+          <!-- Drill dropdown fed from dictionary -->
+          <div class="select-wrap">
+            <label for="drillSelect" class="label" style="margin:0">Drill</label>
+            <select id="drillSelect" class="form-select"></select>
+            <div id="drillHint" class="small muted" style="margin-top:6px"></div>
+          </div>
+
+          <!-- Prominent selected drill badge -->
+          <span id="drillBadge" class="chip badge">Drill: —</span>
+
+          <!-- Assign selection to lane -->
+          <div class="assign" style="margin-left:auto">
+            <span class="chip ghost small">Assign selection to:</span>
+            <div class="seg" role="tablist" aria-label="Active lane">
+              <button id="segA" role="tab" aria-pressed="true">Lane A</button>
+              <button id="segB" role="tab" aria-pressed="false">Lane B</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Picker -->
+        <div class="row" style="margin-top:10px">
+          <div>
+            <label class="label">Player (search by number or name)</label>
+            <input id="playerPicker" class="form-input" list="ag_roster" placeholder="e.g., 55 • Cam Johnson"/>
+            <datalist id="ag_roster"></datalist>
+          </div>
+          <div>
+            <label class="label">Notes (optional, applies to next save)</label>
+            <input id="sharedNotes" class="form-input" placeholder="wind, slip, false start, etc."/>
+          </div>
+        </div>
+
+        <!-- Current lane assignments -->
+        <div class="toolbar" style="margin-top:10px;gap:12px">
+          <span id="chipLaneA" class="lane-chip" style="display:none"></span>
+          <span id="chipLaneB" class="lane-chip" style="display:none"></span>
+          <span class="small muted">Tip: timers are per-lane; attempts auto-increment (1 → 3), best time auto-flags. DNF = Did Not Finish.</span>
+        </div>
+      </section>
+
+      <!-- Two lanes -->
+      <section class="grid-2">
+        <!-- LANE A -->
+        <div id="laneA" class="card lane-card lane-active">
+          <div class="lane-title">
+            <span>Lane A</span>
+            <span id="laneAWho" class="lane-chip" style="display:none"></span>
+          </div>
+
+          <div class="row3 field">
+            <div>
+              <label class="label">Attempt</label>
+              <select id="aAttempt" class="form-select">
+                <option>1</option><option>2</option><option>3</option>
+              </select>
+            </div>
+            <div>
+              <label class="label">Cone Hit?</label>
+              <select id="aCone" class="form-select"><option value="0" selected>No</option><option value="1">Yes</option></select>
+            </div>
+            <div>
+              <label class="label">DNF?</label>
+              <select id="aDnf" class="form-select"><option value="0" selected>No</option><option value="1">Yes</option></select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">Timer — <span id="aPrimaryLabel">Time (sec)</span></label>
+            <div class="measure-help" id="aPrimaryHelp"></div>
+            <div class="timer">
+              <span class="time" id="aTime">0.00</span><span class="small muted">sec</span>
+              <button class="btn" id="aToggle" aria-pressed="false">Start</button>
+              <button class="btn ghost" id="aReset">Reset</button>
+              <button class="btn success" id="aSave" disabled>Save Attempt (A)</button>
+            </div>
+          </div>
+
+          <div class="status" id="aStatus"></div>
+
+          <table class="table" style="margin-top:10px">
+            <thead><tr><th>Drill</th><th>Att</th><th>Time (s)</th><th>Cone</th><th>DNF</th><th>Best</th><th>Rating</th></tr></thead>
+            <tbody id="aLog"></tbody>
+          </table>
+        </div>
+
+        <!-- LANE B -->
+        <div id="laneB" class="card lane-card">
+          <div class="lane-title">
+            <span>Lane B</span>
+            <span id="laneBWho" class="lane-chip" style="display:none"></span>
+          </div>
+
+          <div class="row3 field">
+            <div>
+              <label class="label">Attempt</label>
+              <select id="bAttempt" class="form-select">
+                <option>1</option><option>2</option><option>3</option>
+              </select>
+            </div>
+            <div>
+              <label class="label">Cone Hit?</label>
+              <select id="bCone" class="form-select"><option value="0" selected>No</option><option value="1">Yes</option></select>
+            </div>
+            <div>
+              <label class="label">DNF?</label>
+              <select id="bDnf" class="form-select"><option value="0" selected>No</option><option value="1">Yes</option></select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">Timer — <span id="bPrimaryLabel">Time (sec)</span></label>
+            <div class="measure-help" id="bPrimaryHelp"></div>
+            <div class="timer">
+              <span class="time" id="bTime">0.00</span><span class="small muted">sec</span>
+              <button class="btn" id="bToggle" aria-pressed="false">Start</button>
+              <button class="btn ghost" id="bReset">Reset</button>
+              <button class="btn success" id="bSave" disabled>Save Attempt (B)</button>
+            </div>
+          </div>
+
+          <div class="status" id="bStatus"></div>
+
+          <table class="table" style="margin-top:10px">
+            <thead><tr><th>Drill</th><th>Att</th><th>Time (s)</th><th>Cone</th><th>DNF</th><th>Best</th><th>Rating</th></tr></thead>
+            <tbody id="bLog"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Start both (below lanes, above writes) -->
+      <section class="card" style="margin-top:8px">
+        <div class="toolbar" style="justify-content:center">
+          <button id="bothStart" class="btn primary">Start Both</button>
+        </div>
+      </section>
+
+      <!-- Recent writes (bottom) -->
+      <section class="card" style="margin-top:14px">
+        <div class="toolbar">
+          <button id="toggleRecent" class="btn ghost">Recent Writes ▾</button>
+          <span id="recentCount" class="small muted"></span>
+        </div>
+        <div id="recentPanel" style="display:none; margin-top:8px">
+          <ul id="recentList" style="margin:0; padding-left:18px"></ul>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 2025 Game Speed Data Systems</p>
+  </footer>
+
+  <!-- libs -->
+  <script src="../js/api.js"></script>
+  <script src="../js/rules.js"></script>
+  <script src="../js/context.js"></script>
+  <script src="../js/tryout-ui.js"></script>
+
+  <script>
+    // ---------- Boot shared context/UI ----------
+    (function(){
+      const meta = document.querySelector('meta[name="gsds-api-base"]');
+      window.API_BASE = (window.API_BASE || (meta && meta.content) || '').trim();
+    })();
+    GameContext.configure({ apiBase: window.API_BASE, server: true, pollMs: 1000 });
+    TryoutUI?.init?.('#tryout-shared', { showGroup:false, filterMode:'numberBands', allowPresence:false });
+
+    // ---------- Agility logic ----------
+    const STATION_ID = 'AGY';                // write payload station id
+    const STATION_FILTER = ['AGILITY','AGY']; // dictionary filter
+
+    const AFTER_SAVE = { clearLane:false, markDone:true };
+
+    let roster = [];
+    const groupLatest = new Map();    // pid -> latest group_code
+    const attemptStore = new Map();   // key (pid|tryout_num)::drill -> attempts
+    const pageLog = [];
+    const PAGE_LOG_LIMIT = 12;
+
+    let drills = [];                  // dictionary rows for this station
+    let drillMap = new Map();         // id -> row
+
+    const lanePlayers = { A:null, B:null };
+    let activeLane = 'A';
+    const timers = new Map();         // 'a'|'b' -> timer
+
+    // ------- helpers -------
+    const qs  = (s,p=document)=>p.querySelector(s);
+    const qsa = (s,p=document)=>[...p.querySelectorAll(s)];
+    const labelFor = (r)=> [r.tryout_num, '•', r.display_name, r.primary_pos?`(${r.primary_pos})`:'' ].filter(Boolean).join(' ');
+    function ctx(){ return GameContext.get ? GameContext.get() : {}; }
+    const idKeyForPlayer = (p)=> String(p?.player_id || `#${p?.tryout_num||''}`).trim();
+    const fmtTime = (d)=>{ const pad=n=>String(n).padStart(2,'0'); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
+
+    // ----- threshold parsing/evaluation (same pattern as QB) -----
+    function parseThreshold(str) {
+      if (!str) return null;
+      const s = String(str).trim();
+      if (/^(yes|true)$/i.test(s)) return { type:'bool', value:true };
+      if (/^(no|false)$/i.test(s)) return { type:'bool', value:false };
+      const range = s.match(/^(-?\d+(?:\.\d+)?)\s*[-–]\s*(-?\d+(?:\.\d+)?)$/);
+      if (range) return { type:'range', min:+range[1], max:+range[2] };
+      const comp  = s.match(/^(<=|>=|<|>|=|≤|≥)\s*(-?\d+(?:\.\d+)?)$/);
+      if (comp) return { type:'comp', op: comp[1].replace('≤','<=').replace('≥','>='), value:+comp[2] };
+      if (!isNaN(+s)) return { type:'comp', op:'>=', value:+s };
+      return null;
+    }
+    function meetsThreshold(th, value){
+      if (!th || value==null) return null;
+      if (th.type==='bool') return (!!value)===th.value;
+      if (th.type==='range') return value>=th.min && value<=th.max;
+      if (th.type==='comp'){
+        switch(th.op){ case '<=': return value<=th.value; case '>=': return value>=th.value;
+          case '<': return value<th.value; case '>': return value>th.value; case '=': return value===th.value; }
+      }
+      return null;
+    }
+    function evaluateDrill(drill, primaryVal, secondaryVal){
+      // Prefer Rules.evaluateRep if provided so we stay centralized
+      try {
+        if (window.Rules?.evaluateRep){
+          const res = Rules.evaluateRep(drill, primaryVal, secondaryVal);
+          if (res && typeof res.is_success==='boolean'){
+            return {
+              rating: res.is_success ? 'above' : (res.is_failure ? 'below' : 'average'),
+              ratingText: res.is_success ? 'Above Average' : (res.is_failure ? 'Below Average' : 'Average'),
+              ratingClass: res.is_success ? 'rating-above' : (res.is_failure ? 'rating-below' : 'rating-avg')
+            };
+          }
+        }
+      } catch(e){ /* fall through to local parser */ }
+
+      const suc = parseThreshold(drill.success_threshold);
+      const fail= parseThreshold(drill.failure_threshold);
+      const sucOK = meetsThreshold(suc, primaryVal);
+      const failHit = meetsThreshold(fail, primaryVal);
+
+      if (sucOK) return { rating:'above', ratingText:'Above Average', ratingClass:'rating-above' };
+      if (failHit) return { rating:'below', ratingText:'Below Average', ratingClass:'rating-below' };
+      return { rating:'average', ratingText:'Average', ratingClass:'rating-avg' };
+    }
+
+    // timers
+    function makeTimer(timeEl, onState){
+      let running=false, t0=0, acc=0, raf=null;
+      const fmt = ms => (ms/1000).toFixed(2);
+      const tick = ()=>{ const now=performance.now(); const ms=acc + (running ? (now-t0) : 0); timeEl.textContent = fmt(ms); if(running) raf=requestAnimationFrame(tick); };
+      const start = ()=>{ if(running) return; running=true; t0=performance.now(); tick(); onState?.(true); };
+      const stop  = ()=>{ if(!running) return; running=false; acc += performance.now()-t0; cancelAnimationFrame(raf); tick(); onState?.(false); };
+      const reset = ()=>{ running=false; acc=0; cancelAnimationFrame(raf); tick(); onState?.(false); };
+      const toggle= ()=> running ? stop() : start();
+      const read  = ()=> parseFloat(timeEl.textContent||'0');
+      tick();
+      return { start, stop, reset, toggle, read, isRunning:()=>running };
+    }
+
+    /* ---- Drill dictionary ---- */
+    async function loadDrills(){
+      let rows = [];
+      try{
+        if (window.Rules?.getByStation) {
+          rows = await Rules.getByStation('AGILITY');
+          if (!Array.isArray(rows) || !rows.length) rows = await Rules.getByStation('AGY');
+        } else {
+          const res = await API.tryout.read.drills();
+          if (res?.ok) {
+            rows = (res.rows || res.drills || []).filter(d => STATION_FILTER.includes(String(d.station_id||'').toUpperCase()));
+          }
+        }
+      }catch(e){ /* noop */ }
+
+      if (!Array.isArray(rows) || !rows.length) {
+        rows = [
+          { drill_id:'AG01', drill_name:'3 Cone Drill',      station_id:'AGILITY', primary_measurement:'time', measurement_unit:'sec', success_threshold:'<=7.80', failure_threshold:'>=9.00' },
+          { drill_id:'AG02', drill_name:'20 Yard Shuttle Run', station_id:'AGILITY', primary_measurement:'time', measurement_unit:'sec', success_threshold:'<=4.70', failure_threshold:'>=5.50' }
+        ];
+      }
+
+      drills = rows;
+      drillMap = new Map(drills.map(d => [String(d.drill_id), d]));
+
+      const sel = document.getElementById('drillSelect');
+      sel.innerHTML = drills.map(d => `<option value="${d.drill_id}">${d.drill_name || d.name || d.drill_id}</option>`).join('');
+      if (!sel.value && drills[0]) sel.value = drills[0].drill_id;
+      updateDrillUI();
+    }
+
+    function currentDrill(){
+      const sel = document.getElementById('drillSelect');
+      const id  = sel?.value || '';
+      const d   = drillMap.get(id);
+      if (d) return d;
+      const name = sel?.selectedOptions?.[0]?.textContent || id || '—';
+      return { drill_id:id||'AG01', drill_name:name, primary_measurement:'time', measurement_unit:'sec' };
+    }
+
+    // roster datalist
+    async function loadRoster(){
+      const res = await API.tryout.read.roster();
+      if(!res?.ok) return;
+      const tid = ctx().tryout_id || '';
+      roster = (res.roster||[]).filter(r => !tid || String(r.tryout_id||'')===String(tid));
+      const dl = document.getElementById('ag_roster');
+      dl.innerHTML = '';
+      roster.forEach(r=>{
+        const rec = {
+          player_id: r.player_id || '',
+          display_name: r.display_name || r.player_name || '',
+          primary_pos: r.primary_pos || r.position || '',
+          tryout_num: r.tryout_num || r.jersey_number || '',
+          group_code: r.group_code || r.primary_pos || ''
+        };
+        const opt = document.createElement('option');
+        opt.value = labelFor(rec);
+        opt.dataset.pid = rec.player_id;
+        dl.appendChild(opt);
+      });
+    }
+    async function loadLatestGroups(){
+      const res = await API.tryout.read.groupsLatest(ctx().tryout_id);
+      if(!res?.ok || !Array.isArray(res.latest)) return;
+      groupLatest.clear();
+      res.latest.forEach(row => { if(row.player_id && row.group_code) groupLatest.set(String(row.player_id).trim(), String(row.group_code).trim()); });
+    }
+    function resolveGroupCode(pid, fallback, rec){
+      if (pid) {
+        const direct = groupLatest.get(String(pid).trim());
+        if (direct) return direct;
+        const r = roster.find(x => String(x.player_id).trim() === String(pid).trim());
+        return r?.group_code || r?.primary_pos || fallback || '';
+      }
+      return rec?.group_code || rec?.primary_pos || fallback || '';
+    }
+
+    // Active lane highlight
+    function setActiveLane(l){
+      activeLane = (l==='B') ? 'B' : 'A';
+      document.getElementById('segA').setAttribute('aria-pressed', activeLane==='A' ? 'true':'false');
+      document.getElementById('segB').setAttribute('aria-pressed', activeLane==='B' ? 'true':'false');
+      qs('#laneA').classList.toggle('lane-active', activeLane==='A');
+      qs('#laneB').classList.toggle('lane-active', activeLane==='B');
+    }
+    document.getElementById('segA').addEventListener('click', ()=> setActiveLane('A'));
+    document.getElementById('segB').addEventListener('click', ()=> setActiveLane('B'));
+    qs('#laneA').addEventListener('click', ()=> setActiveLane('A'));
+    qs('#laneB').addEventListener('click', ()=> setActiveLane('B'));
+
+    // Resets
+    function softResetLane(lane){
+      const p = lane==='A' ? 'a' : 'b';
+      qs(`#${p}Cone`).value = '0';
+      qs(`#${p}Dnf`).value  = '0';
+      qs(`#${p}Time`).textContent = '0.00';
+      qs(`#${p}Status`).textContent = '';
+      const t = timers.get(p); t && t.reset();
+    }
+    function hardResetLane(lane){
+      const p = lane==='A' ? 'a' : 'b';
+      qs(`#${p}Attempt`).value = '1';
+      qs(`#${p}Log`).innerHTML = '';
+      qs(`#${p}Cone`).value = '0';
+      qs(`#${p}Dnf`).value  = '0';
+      qs(`#${p}Time`).textContent = '0.00';
+      qs(`#${p}Status`).textContent = '';
+      const t = timers.get(p); t && t.reset();
+    }
+
+    function renderLaneChips(){
+      const a = lanePlayers.A, b = lanePlayers.B;
+      const aEl = document.getElementById('laneAWho');
+      const bEl = document.getElementById('laneBWho');
+      const topA= document.getElementById('chipLaneA');
+      const topB= document.getElementById('chipLaneB');
+
+      if(a){
+        const txt = `${a.tryout_num||''} • ${a.display_name||a.player_id}${a.primary_pos?` (${a.primary_pos})`:''}`;
+        aEl.innerHTML = `${txt} <span class="x" title="Clear" aria-label="Clear" data-clear="A">✕</span>`;
+        aEl.style.display = '';
+        topA.textContent = `Lane A: ${txt}`; topA.style.display = '';
+        document.getElementById('aSave').disabled = false;
+      } else {
+        aEl.style.display = 'none'; topA.style.display = 'none';
+        document.getElementById('aSave').disabled = true;
+      }
+      if(b){
+        const txt = `${b.tryout_num||''} • ${b.display_name||b.player_id}${b.primary_pos?` (${b.primary_pos})`:''}`;
+        bEl.innerHTML = `${txt} <span class="x" title="Clear" aria-label="Clear" data-clear="B">✕</span>`;
+        bEl.style.display = '';
+        topB.textContent = `Lane B: ${txt}`; topB.style.display = '';
+        document.getElementById('bSave').disabled = false;
+      } else {
+        bEl.style.display = 'none'; topB.style.display = 'none';
+        document.getElementById('bSave').disabled = true;
+      }
+
+      document.querySelectorAll('[data-clear="A"]').forEach(x=> x.onclick = ()=>{ lanePlayers.A = null; renderLaneChips(); hardResetLane('A'); });
+      document.querySelectorAll('[data-clear="B"]').forEach(x=> x.onclick = ()=>{ lanePlayers.B = null; renderLaneChips(); hardResetLane('B'); });
+    }
+
+    // Assign to active lane
+    function assignToActiveLane(rec){
+      lanePlayers[activeLane] = rec;
+      document.getElementById('playerPicker').value = labelFor(rec);
+      renderLaneChips();
+      hardResetLane(activeLane);
+    }
+
+    // Selection sources
+    window.addEventListener('tryoutui:select', (e)=>{
+      const d = e?.detail?.player; if(!d) return;
+      const hit = roster.find(r => r.player_id===d.player_id) || d;
+      assignToActiveLane(hit);
+    });
+    document.getElementById('playerPicker').addEventListener('change', (e)=>{
+      const txt = (e.target.value||'').toLowerCase();
+      const hit = roster.find(r => labelFor(r).toLowerCase() === txt) ||
+                  roster.find(r => String(r.tryout_num||'').toLowerCase() === txt) ||
+                  roster.find(r => String(r.display_name||'').toLowerCase() === txt);
+      if(hit) assignToActiveLane(hit);
+    });
+
+    // Drill UI + hinting
+    function drillHintParts(d){
+      const parts = [];
+      if (d.drill_category) parts.push(d.drill_category);
+      if (d.success_threshold) parts.push(`Above Avg: ${d.success_threshold}`);
+      if (d.failure_threshold) parts.push(`Below Avg: ${d.failure_threshold}`);
+      return parts;
+    }
+
+    function updateDrillUI(){
+      const d = currentDrill();
+      const name = d.drill_name || d.name || d.drill_id || '—';
+      document.getElementById('drillBadge').textContent = `Drill: ${name}`;
+      const help = document.getElementById('drillHint');
+      help.textContent = drillHintParts(d).join(' • ');
+
+      const primLabel = `${d.primary_measurement || 'Time'} (${d.measurement_unit || 'sec'})`;
+      document.getElementById('aPrimaryLabel').textContent = primLabel;
+      document.getElementById('bPrimaryLabel').textContent = primLabel;
+
+      const primHelpTxt = [];
+      if (d.success_threshold) primHelpTxt.push(`Above Avg: ${d.success_threshold}`);
+      if (d.failure_threshold) primHelpTxt.push(`Below Avg: ${d.failure_threshold}`);
+      document.getElementById('aPrimaryHelp').textContent = primHelpTxt.join(' • ');
+      document.getElementById('bPrimaryHelp').textContent = primHelpTxt.join(' • ');
+
+      // switching drill: soft reset (keep attempts)
+      ['a','b'].forEach(p=>{
+        document.getElementById(p+'Time').textContent='0.00';
+        document.getElementById(p+'Status').textContent='';
+        const t = timers.get(p); t && t.reset();
+      });
+    }
+    document.getElementById('drillSelect').addEventListener('change', updateDrillUI);
+
+    // attempt/best helpers
+    function keyFor(idKey, drillId){ return `${idKey}::${drillId}`; }
+    function computeBestFlag(idKey, drillId, newTime, isDNF){
+      if (isDNF || newTime==null || isNaN(newTime)) return false;
+      const k = keyFor(idKey, drillId);
+      const arr = attemptStore.get(k) || [];
+      const bestSoFar = arr
+        .map(a => (a.dnf ? null : a.time))
+        .filter(v => v!=null && !isNaN(v))
+        .reduce((m,v)=> (m==null || v<m) ? v : m, null);
+      return bestSoFar==null ? true : (newTime < bestSoFar);
+    }
+    function demoteOldBest(logTbody, drillId){
+      logTbody.querySelectorAll(`tr[data-drill="${drillId}"] .best`)
+        .forEach(el => el.replaceWith(document.createTextNode('')));
+    }
+
+    /* -------- Saving indicator helpers -------- */
+    function setSaving(lane, saving){
+      const p = (lane==='A') ? 'a' : 'b';
+      const saveBtn = document.getElementById(p+'Save');
+      const toggleBtn = document.getElementById(p+'Toggle');
+      const resetBtn = document.getElementById(p+'Reset');
+
+      if (!saveBtn.dataset.label) saveBtn.dataset.label = saveBtn.textContent;
+
+      if (saving){
+        saveBtn.classList.add('loading');
+        saveBtn.disabled = true;
+        toggleBtn.disabled = true;
+        resetBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spin"></span>Saving…';
+      } else {
+        saveBtn.classList.remove('loading');
+        saveBtn.disabled = (lane==='A' ? !lanePlayers.A : !lanePlayers.B);
+        toggleBtn.disabled = false;
+        resetBtn.disabled = false;
+        saveBtn.textContent = saveBtn.dataset.label || 'Save';
+      }
+    }
+
+    // ----- Recent writes (bottom) -----
+    function addRecent(route, summary){
+      pageLog.unshift({ ts:new Date(), route, summary });
+      pageLog.splice(PAGE_LOG_LIMIT);
+      renderRecent();
+    }
+    function renderRecent(){
+      const ul = qs('#recentList');
+      const cnt = qs('#recentCount');
+      if (!ul) return;
+      ul.innerHTML = pageLog.map(it => `<li><strong>${fmtTime(it.ts)}</strong> — ${it.summary}</li>`).join('');
+      cnt.textContent = pageLog.length ? `${pageLog.length} item${pageLog.length===1?'':'s'}` : '';
+    }
+    qs('#toggleRecent').addEventListener('click', ()=>{
+      const p = qs('#recentPanel');
+      const open = p.style.display !== 'none';
+      p.style.display = open ? 'none' : '';
+      qs('#toggleRecent').textContent = open ? 'Recent Writes ▾' : 'Recent Writes ▴';
+    });
+
+    async function saveAttempt({ lane }){
+      const statusEl = document.getElementById(lane==='A' ? 'aStatus' : 'bStatus');
+      const timeEl   = document.getElementById(lane==='A' ? 'aTime'   : 'bTime');
+      const attSel   = document.getElementById(lane==='A' ? 'aAttempt': 'bAttempt');
+      const coneSel  = document.getElementById(lane==='A' ? 'aCone'   : 'bCone');
+      const dnfSel   = document.getElementById(lane==='A' ? 'aDnf'    : 'bDnf');
+      const logTbody = document.getElementById(lane==='A' ? 'aLog'    : 'bLog');
+
+      statusEl.textContent = '';
+
+      const c = ctx();
+      if(!c.tryout_id){ statusEl.textContent='Set a Tryout ID first.'; statusEl.className='status warn'; return; }
+
+      const player = lanePlayers[lane];
+      if(!(player?.tryout_num || player?.player_id)){
+        statusEl.textContent=`Assign a player (number or ID) to Lane ${lane}.`;
+        statusEl.className='status warn';
+        return;
+      }
+
+      // If timer running, stop it before saving
+      const t = timers.get(lane==='A' ? 'a' : 'b');
+      if (t?.isRunning()) t.stop();
+
+      const drill = currentDrill();
+      const drillId = drill.drill_id || drill.id || 'AG01';
+      const drillName = drill.drill_name || drill.name || drillId;
+
+      const attempt = Number(attSel.value||1);
+      const cone_hit = Number(coneSel.value||0) === 1;
+      const dnf = Number(dnfSel.value||0) === 1;
+      const tVal = parseFloat(timeEl.textContent||'0');
+      const time_sec = dnf ? '' : (isNaN(tVal) ? '' : tVal);
+
+      const idKey = idKeyForPlayer(player);
+      const willBeBest = computeBestFlag(idKey, drillId, time_sec, dnf);
+
+      const row = {
+        tryout_id:   c.tryout_id || '',
+        period_code: c.period_code || '',
+        // identifiers
+        tryout_num:  String(player.tryout_num || '').trim(),
+        player_id:   String(player.player_id || '').trim(),
+        group_code:  resolveGroupCode(player.player_id, '', player) || '',
+        // metrics
+        station_id:  STATION_ID,
+        drill_id:    drillId,
+        lane:        lane,
+        attempt:     attempt,
+        time_sec:    time_sec,
+        cone_hit:    cone_hit ? 1 : 0,
+        dnf:         dnf ? 1 : 0,
+        best_flag:   willBeBest ? 1 : 0,
+        notes:       (document.getElementById('sharedNotes').value||'').trim()
+      };
+
+      setSaving(lane, true);
+      let res;
+      try { res = await API.tryout.write.agility(row); }
+      finally { setSaving(lane, false); }
+
+      if(!res?.ok){
+        statusEl.textContent = res?.error || 'Save failed.';
+        statusEl.className = 'status err';
+        return;
+      }
+
+      // local best continuity index (by idKey + drill)
+      const k = keyFor(idKey, drillId);
+      const arr = attemptStore.get(k) || [];
+      arr.push({ time: time_sec, dnf, lane, attempt });
+      attemptStore.set(k, arr);
+
+      // Evaluate rating (PASS / AVG / FAIL)
+      const evalRes = dnf ? { rating:'below', ratingText:'Below Average', ratingClass:'rating-below' }
+                          : evaluateDrill(drill, time_sec, null);
+
+      // If this save is best for this player+drill, demote old "Best" in the lane table
+      if (row.best_flag) demoteOldBest(logTbody, drillId);
+
+      // Show in lane log
+      const tr = document.createElement('tr');
+      tr.setAttribute('data-drill', drillId);
+      tr.innerHTML = `
+        <td>${drillName}</td>
+        <td>${attempt}</td>
+        <td>${time_sec || '—'}</td>
+        <td>${cone_hit?'Yes':'No'}</td>
+        <td>${dnf?'Yes':'No'}</td>
+        <td>${row.best_flag?'<span class="best">Best</span>':''}</td>
+        <td><span class="${evalRes.ratingClass}">${evalRes.ratingText}</span></td>`;
+      logTbody.prepend(tr);
+      while(logTbody.children.length > 8) logTbody.removeChild(logTbody.lastChild);
+
+      // Recent Writes
+      addRecent('agility', `Write → agility :: ${player.tryout_num || player.player_id || '—'} • ${drillName} • ${(time_sec || (dnf?'DNF':'—'))} ${time_sec?'sec':''} (Att ${attempt})`);
+
+      // Keep player; prep next attempt
+      const next = (attempt % 3) + 1;
+      attSel.value = String(next);
+      softResetLane(lane);
+
+      // Final status message
+      statusEl.textContent = `Saved ✔ · ${evalRes.ratingText}${dnf ? ' (DNF)' : ''}`;
+      statusEl.className = 'status ' + (dnf ? 'err' : (evalRes.rating==='above' ? 'ok' : evalRes.rating==='below' ? 'warn' : 'avg'));
+
+      // Mark roster ✓ if available
+      if (AFTER_SAVE.markDone) {
+        try { TryoutUI?.markDone?.(player.player_id || player.tryout_num); } catch {}
+        try { window.dispatchEvent(new CustomEvent('tryoutui:done', { detail:{ player_id: player.player_id, tryout_num: player.tryout_num } })); } catch {}
+      }
+    }
+
+    // wire lanes (with Start/Stop toggle)
+    function wireLane(prefix){
+      const toggleBtn = document.getElementById(prefix+'Toggle');
+      const timeEl = document.getElementById(prefix+'Time');
+      const statusEl = document.getElementById(prefix+'Status');
+
+      const t = makeTimer(timeEl, (running)=>{
+        toggleBtn.textContent = running ? 'Stop' : 'Start';
+        toggleBtn.setAttribute('aria-pressed', running ? 'true' : 'false');
+        toggleBtn.classList.toggle('warn', running);
+        if (!running) statusEl.textContent = '';
+      });
+      timers.set(prefix, t);
+
+      toggleBtn.addEventListener('click', t.toggle);
+      document.getElementById(prefix+'Reset').addEventListener('click', ()=>{
+        t.reset(); statusEl.textContent='';
+      });
+      document.getElementById(prefix+'Save').addEventListener('click', ()=>{
+        saveAttempt({ lane: (prefix==='a'?'A':'B') });
+      });
+    }
+
+    // Start both timers (single button)
+    function wireBothStart(){
+      const a = () => timers.get('a');
+      const b = () => timers.get('b');
+      const btn = document.getElementById('bothStart');
+      if (!btn) return;
+      btn.addEventListener('click', ()=>{
+        a()?.start(); b()?.start();
+      });
+    }
+
+    // init
+    (async function init(){
+      wireLane('a');
+      wireLane('b');
+      wireBothStart();
+      setActiveLane('A');
+
+      await Promise.all([loadDrills(), loadRoster(), loadLatestGroups()]);
+
+      // If TryoutUI has an active selection, use it
+      if (window.TryoutUI?.getSelectedPlayers) {
+        const cur = TryoutUI.getSelectedPlayers();
+        if (Array.isArray(cur) && cur[0]) { assignToActiveLane(cur[0]); }
+      }
+    })();
+  </script>
+</body>
+</html>

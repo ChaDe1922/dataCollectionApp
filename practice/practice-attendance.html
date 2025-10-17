@@ -756,6 +756,15 @@
       saveSession();
       renderGrid();
     }
+
+    // --- Helper: autosave only when autosave is ON, and not for Clear ---
+    function maybeAutosave(id, action){
+      if (!el('autosave').checked) return;  // only when toggle is ON
+      if (action === 'clear') return;       // never write on Clear
+      if (!attendance.has(id)) return;      // nothing to write
+      saveOne(id).catch(err=>log(String(err),'error'));
+    }
+
     async function saveAllUnsaved(){
       const ops = [];
       attendance.forEach((rec, pId)=>{
@@ -818,9 +827,11 @@
       attendance.set(id, { arrivedAt: now, status, minutesLate, saved: false });
       saveSession();
     }
+
     function setStatus(id, type){
-      if(type==='on'){ presentNow(id); }
-      else if(type==='late'){
+      if(type==='on'){
+        presentNow(id);
+      } else if(type==='late'){
         const now = Date.now();
         const base = classifyArrival(now);
         const minutesLate = Math.max(1, base.minutesLate || 1);
@@ -836,7 +847,7 @@
         attendance.set(id, { arrivedAt: null, status:'Excused Late', minutesLate, saved:false });
         saveSession();
       } else if(type==='clear'){
-        attendance.delete(id);
+        attendance.delete(id); // skip write
         saveSession();
       }
       renderGrid();
@@ -858,21 +869,30 @@
 
     function clickPlayer(ev){
       const btn = ev.target.closest('.plyr'); if(!btn) return;
-      const id = btn.dataset.id; const rec = attendance.get(id);
+      const id = btn.dataset.id;
+      const rec = attendance.get(id);
 
-      if(rec && (rec.status==='Excused' || rec.status==='Excused Late')){
+      if (rec && (rec.status==='Excused' || rec.status==='Excused Late')){
+        // Quick-tap on an excused record → mark present now
         presentNow(id);
-      } else if(rec){
+        renderGrid();
+        maybeAutosave(id, 'on');   // save On time/Late as appropriate
+        return;
+      }
+
+      if (rec){
+        // Had a record (On time/Late/etc) → quick-tap clears it locally
         attendance.delete(id);
         saveSession();
-      } else {
-        presentNow(id);
+        renderGrid();
+        // Do NOT save on clear (your preference)
+        return;
       }
-      renderGrid();
 
-      if(el('autosave').checked){
-        saveOne(id).catch(err=>log(String(err),'error'));
-      }
+      // No record yet → mark present now
+      presentNow(id);
+      renderGrid();
+      maybeAutosave(id, 'on');
     }
 
     let longTimer=null;
@@ -889,14 +909,17 @@
       showMenu(btn.dataset.id, e.clientX, e.clientY);
     }
 
-    menu.addEventListener('click', (e)=>{
-      const act = e.target.closest('button')?.dataset.action; if(!act) return;
+    // Use pointerup so it fires reliably for right-click menu + long-press
+    menu.addEventListener('pointerup', (e)=>{
+      const btn = e.target.closest('button'); if(!btn) return;
+      e.preventDefault(); e.stopPropagation();
+      const act = btn.dataset.action;
       if(!menuTargetId) return;
-      setStatus(menuTargetId, act);
-      if(el('autosave').checked && act!=='clear'){
-        saveOne(menuTargetId).catch(err=>log(String(err),'error'));
-      }
+
+      setStatus(menuTargetId, act);       // updates local attendance + UI
+      maybeAutosave(menuTargetId, act);   // autosave for all except Clear
     });
+
     document.addEventListener('click', (e)=>{ if(!e.target.closest('#statusMenu')) hideMenu(); });
 
     /* =======================

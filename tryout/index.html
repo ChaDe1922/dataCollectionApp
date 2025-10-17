@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <!-- Apps Script base -->
+  <meta name="gsds-api-base" content="https://script.google.com/macros/s/AKfycbzoJ6e2OtWYIJCuIezqoUasJM-S9mebV9LC88nQvN_FYMf7biQouHmBwC1etF9uFKkuDw/exec">
+
+  <title>Tryouts – Football Data Tracker</title>
+
+  <!-- Auth guard -->
+  <script>
+    (function(){
+      const ok = localStorage.getItem('auth_ok')==='1' &&
+                 Number(localStorage.getItem('auth_until')||0) > Date.now();
+      if(!ok){ window.location.href = '../index.html#login'; }
+    })();
+  </script>
+
+  <!-- Fonts + theme stylesheet -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css"/>
+
+  <style>
+    .tryout-card{
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      margin: 0 0 14px 0;
+      backdrop-filter: blur(6px);
+    }
+    .tryout-grid{
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(2, minmax(140px, 1fr));
+    }
+    .tryout-grid .form-group{ display:flex; flex-direction:column; gap:6px; }
+    .tryout-grid label{
+      font-family: "Montserrat", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      font-weight: 700; font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
+      color: #C7C9DA;
+    }
+    .tryout-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top: 10px; }
+
+    .sub-nav .nav-button{
+      border-radius: 16px !important;
+      color: var(--atl-purple-dark);
+      border: 2px solid var(--atl-purple-dark);
+      background: #fff;
+      box-shadow: 0 8px 18px rgba(0,0,0,.18);
+    }
+    .sub-nav .nav-button:hover{
+      background: linear-gradient(90deg,var(--atl-lavender-1),var(--atl-lavender-2));
+      color:#fff; border-color:transparent; box-shadow: var(--shadow-hover); transform: translateY(-2px);
+    }
+  </style>
+</head>
+
+<body class="theme-atl practice-page">
+  <header class="page-header">
+    <h1>TRYOUTS</h1>
+    <nav class="menu-actions" aria-label="Top navigation">
+      <a class="menu-btn" href="../index.html">Home</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="container">
+
+      <!-- Live context banner -->
+      <div id="ctxBanner" class="chip tiny" style="margin:.5rem 0"></div>
+
+      <!-- Tryout context strip -->
+      <section class="tryout-card" aria-labelledby="ctxTitle">
+        <h2 id="ctxTitle" class="info-title" style="margin:0 0 8px 0;">Session Context</h2>
+
+        <div class="tryout-grid" style="margin-bottom:6px">
+          <div class="form-group">
+            <label for="ctx_tryout">Tryout ID</label>
+            <input id="ctx_tryout" type="text" class="form-input" placeholder="e.g., TRYOUT-2025-10-12"/>
+          </div>
+
+          <div class="form-group">
+            <label for="ctx_period">Period</label>
+            <select id="ctx_period" class="form-select">
+              <option value="">— Select period —</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>&nbsp;</label>
+            <div class="tryout-actions">
+              <button id="btnAutoPeriod" class="btn btn-neutral">Auto-detect Period</button>
+              <button id="btnSaveCtx" class="btn btn-primary">Save Context</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <p class="page-intro" style="text-align:center">
+        Pick a station or position module to begin collecting tryout data.
+      </p>
+
+      <!-- Sub-menu grid -->
+      <nav class="sub-nav" aria-label="Tryout modules">
+        <a href="agility.html" class="nav-button">Agility</a>
+        <a href="tryout-qb.html"      class="nav-button">QB Station</a>
+        <a href="tryout-rb.html"      class="nav-button">RB Station</a>
+        <a href="tryout-wr.html"      class="nav-button">WR Station</a>
+        <a href="tryout-ol.html"      class="nav-button">OL Station</a>
+        <a href="tryout-dl.html"      class="nav-button">DL Station</a>
+        <a href="tryout-lb.html"      class="nav-button">LB Station</a>
+        <a href="tryout-db.html"      class="nav-button">DB Station</a>
+        <a href="tryout-1v1.html"     class="nav-button">1 v 1</a>
+        <a href="tryout-team.html"    class="nav-button">Team</a>
+        <a href="tryout-roster.html"  class="nav-button">Roster</a>
+        <a href="tryout-report.html"  class="nav-button">Report</a>
+      </nav>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 2025 Game Speed Data Systems</p>
+  </footer>
+
+  <!-- Libraries -->
+  <script src="../js/api.js"></script>
+  <script src="../js/context.js"></script>
+
+  <script>
+    // Resolve API base from <meta> so both api.js and GameContext use the same endpoint
+    (function(){
+      const meta = document.querySelector('meta[name="gsds-api-base"]');
+      window.API_BASE = (window.API_BASE || (meta && meta.content) || '').trim();
+    })();
+
+    // Boot unified App/GameContext with server sync
+    GameContext.configure({ apiBase: window.API_BASE, server: true, pollMs: 1000 });
+    GameContext.mountBanner('#ctxBanner');
+
+    // Hub does not use a group; clear any sticky value so banner never shows "Group"
+    try { GameContext.set({ group_code: '' }); } catch(e) {}
+
+    // Bind ONLY tryout_id + period_code to inputs
+    GameContext.bindInputs({
+      tryout_id:   '#ctx_tryout',
+      period_code: '#ctx_period'
+    });
+
+    // Controls
+    const selPeriod = document.getElementById('ctx_period');
+    const btnAuto   = document.getElementById('btnAutoPeriod');
+    const btnSave   = document.getElementById('btnSaveCtx');
+
+    // Immediately reflect manual period changes in the banner/context
+    selPeriod.addEventListener('change', () => {
+      GameContext.setPeriod((selPeriod.value || '').trim());
+    });
+
+    // Helpers
+    function norm(s){ return (s||'').toString().trim(); }
+    function asDate(t){
+      if (t instanceof Date) return t;
+      const now = new Date();
+      const base = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0,0,0,0);
+      if (/^\d{1,2}:\d{2}(\s*[ap]m)?$/i.test(String(t))) {
+        const str = String(t).toUpperCase().replace(/\s+/g,'');
+        let [hh, mm] = str.replace(/[AP]M/,'').split(':').map(n=>parseInt(n,10));
+        const ampm = /PM$/.test(str) ? 'PM' : (/AM$/.test(str) ? 'AM' : null);
+        if (ampm === 'PM' && hh < 12) hh += 12;
+        if (ampm === 'AM' && hh === 12) hh = 0;
+        base.setHours(hh, mm, 0, 0);
+        return base;
+      }
+      const d = new Date(t);
+      return isNaN(+d) ? now : d;
+    }
+
+    async function loadPeriods(){
+      const ctx0 = GameContext.get();
+      const params = { action:'tryout_periods' };
+      if (ctx0.tryout_id) params.tryout_id = ctx0.tryout_id;
+
+      const res = await apiGet(params);
+      if (!res || !res.ok) { console.warn('tryout_periods failed', res && res.error); return; }
+
+      const currentCtx = GameContext.get();
+      const list = (res.periods||[]).map(r => ({
+        tryout_id: r.tryout_id || r.id || '',
+        code:      r.period_code || r.code || r.id || '',
+        label:     r.label || r.period_label || (r.period_code||''),
+        start:     r.start_time || r.start || r.start_local || '',
+        end:       r.end_time   || r.end   || r.end_local   || ''
+      })).filter(p => p.code);
+
+      selPeriod.innerHTML = '<option value="">— Select period —</option>' +
+        list.map(p => `<option value="${p.code}">${p.code} — ${p.label}</option>`).join('');
+      selPeriod.dataset.periodJson = JSON.stringify(list);
+
+      // Re-select saved period if present
+      if (currentCtx.period_code) selPeriod.value = currentCtx.period_code;
+
+      // Push whatever is currently selected into context so banner matches UI
+      if (selPeriod.value) GameContext.setPeriod(selPeriod.value);
+
+      // If there’s exactly one tryout_id in the sheet, auto-fill it
+      const ids = Array.from(new Set(list.map(p => p.tryout_id).filter(Boolean)));
+      if (!currentCtx.tryout_id && ids.length === 1) {
+        document.getElementById('ctx_tryout').value = ids[0];
+        GameContext.setTryoutId(ids[0]);
+      }
+    }
+
+    function autoDetectPeriod(now = new Date()){
+      const raw = selPeriod.dataset.periodJson ? JSON.parse(selPeriod.dataset.periodJson) : [];
+      if (!raw.length) return null;
+      const n = now.getTime();
+
+      let active = raw.find(p => {
+        const s = asDate(p.start).getTime();
+        const e = asDate(p.end).getTime();
+        return n >= s && n <= e;
+      });
+      if (!active){
+        const upcoming = raw.map(p => ({ p, s: asDate(p.start).getTime() }))
+                            .filter(x => x.s >= n)
+                            .sort((a,b)=>a.s-b.s);
+        active = upcoming.length ? upcoming[0].p : raw[raw.length-1];
+      }
+      if (active){
+        selPeriod.value = active.code;
+        GameContext.setPeriod(active.code);
+      }
+      return active;
+    }
+
+    // Wire controls
+    btnAuto.addEventListener('click', (e)=>{ e.preventDefault(); autoDetectPeriod(); });
+    btnSave.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const tid = norm(document.getElementById('ctx_tryout').value);
+      const per = norm(selPeriod.value);
+      if (tid) GameContext.setTryoutId(tid);
+      if (per) GameContext.setPeriod(per);
+    });
+    document.getElementById('ctx_tryout').addEventListener('change', () => {
+      GameContext.setTryoutId(document.getElementById('ctx_tryout').value.trim());
+      loadPeriods();
+    });
+
+    // Init
+    (async function init(){
+      // If arriving with ?tryout_id=, set it before loading periods
+      const url = new URL(window.location.href);
+      const qId = url.searchParams.get('tryout_id');
+      if (qId) {
+        document.getElementById('ctx_tryout').value = qId;
+        GameContext.setTryoutId(qId);
+      }
+
+      await loadPeriods();
+
+      // If no period yet, auto-detect
+      if (!GameContext.get().period_code) autoDetectPeriod();
+    })();
+  </script>
+</body>
+</html>
