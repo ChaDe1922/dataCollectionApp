@@ -269,6 +269,10 @@
     const STATION_ID='RB';
     const AFTER_SAVE={ clearLane:false, markDone:true };
 
+    // Identify this device/app in the sheet
+    const SOURCE_APP = 'web.tryout.station';
+    const CLIENT_ID  = (localStorage.client_id ||= (self.crypto?.randomUUID?.() || String(Date.now())));
+
     let roster=[]; const groupLatest=new Map(); const pageLog=[]; const PAGE_LOG_LIMIT=12;
     const lanePlayers={A:null,B:null}; let activeLane='A';
     const timers=new Map(); let RB_DRILLS=[], RB_CURR=null;
@@ -546,30 +550,35 @@
       const p=(lane==='A')?'a':'b';
       const saveBtn=qs('#'+p+'Save'); const toggleBtn=qs('#'+p+'Toggle'); const resetBtn=qs('#'+p+'Reset');
       if(!saveBtn.dataset.label) saveBtn.dataset.label=saveBtn.textContent;
-      if(saving){ saveBtn.classList.add('loading'); saveBtn.disabled=true; if(toggleBtn) toggleBtn.disabled=true; if(resetBtn) resetBtn.disabled=true; saveBtn.innerHTML='<span class="spin"></span>Saving…'; }
+      if(saving){ saveBtn.classList.add('loading'); saveBtn.disabled=true; if(toggleBtn) toggleBtn.disabled=true; if(resetBtn) toggleBtn.disabled=true; saveBtn.innerHTML='<span class="spin"></span>Saving…'; }
       else{ saveBtn.classList.remove('loading'); saveBtn.disabled=(lane==='A'? !lanePlayers.A : !lanePlayers.B); if(toggleBtn) toggleBtn.disabled=false; if(resetBtn) resetBtn.disabled=false; saveBtn.textContent=saveBtn.dataset.label||'Save'; }
     }
 
+    // ---- universal lane read (time or rate) ----
     function readLaneValues(prefix, drill){
       const isTime=isTimeDrill(drill);
       const isRate=isRateDrill(drill);
+
       let primaryVal=null, secondaryVal=null;
+      let successes=0, failures=0, attempts=0;
 
       if(isTime){
-        const el=qs(`#${prefix}Time`); primaryVal=parseFloat((el.textContent||'0').trim()); if(isNaN(primaryVal)) primaryVal=null;
+        const el=qs(`#${prefix}Time`);
+        primaryVal=parseFloat((el.textContent||'0').trim());
+        if(isNaN(primaryVal)) primaryVal=null;
       }else if(isRate){
         const pm=(drill.primary_measurement||'').toLowerCase();
         const errorLike = pm.includes('error_rate') || pm.includes('fumble_rate') || (pm.includes('error') && pm.includes('rate'));
         const box=qs(`#${prefix}InputsBlock`);
-        const succ=parseInt(box?.querySelector(`[data-counter-value="${prefix}Successes"]`)?.textContent||'0');
-        const sec =parseInt(box?.querySelector(`[data-counter-value="${prefix}Secondary"]`)?.textContent||'0');
-        const att=succ+sec;
-        primaryVal = att>0 ? (errorLike ? (sec/att)*100 : (succ/att)*100) : 0;
-        // if secondary is an attempts goal, metric_2 should carry attempts; otherwise carry the event count
-        if (/attempt/i.test(String(drill.secondary_measurement||''))) secondaryVal = att;
-        else if (drill.secondary_measurement) secondaryVal = sec;
+        successes=parseInt(box?.querySelector(`[data-counter-value="${prefix}Successes"]`)?.textContent||'0');
+        failures =parseInt(box?.querySelector(`[data-counter-value="${prefix}Secondary"]`)?.textContent||'0');
+        attempts =successes+failures;
+        primaryVal = attempts>0 ? (errorLike ? (failures/attempts)*100 : (successes/attempts)*100) : 0;
+
+        if (/attempt/i.test(String(drill.secondary_measurement||''))) secondaryVal = attempts;
+        else if (drill.secondary_measurement) secondaryVal = failures;
       }
-      return { primaryVal, secondaryVal };
+      return { primaryVal, secondaryVal, successes, failures, attempts, isTime, isRate };
     }
 
     async function saveAttempt({ lane }){
@@ -588,24 +597,46 @@
 
       const t=timers.get(prefix); if(t?.isRunning()) t.stop();
 
-      const { primaryVal, secondaryVal } = readLaneValues(prefix, RB_CURR);
+      const { primaryVal, secondaryVal, successes, failures, attempts, isTime, isRate } = readLaneValues(prefix, RB_CURR);
       const attempt=Number(attSel.value||1);
       const evaluation=evaluateDrill(RB_CURR, primaryVal, secondaryVal);
 
+      // ----- UNIVERSAL WRITE SHAPE (works for any position station) -----
       const row={
         tryout_id:c.tryout_id||'', period_code:c.period_code||'',
-        tryout_num:String(player.tryout_num||'').trim(), player_id:String(player.player_id||'').trim(),
+        player_id:String(player.player_id||'').trim(), tryout_num:String(player.tryout_num||'').trim(),
         group_code:resolveGroupCode(player.player_id,'',player)||'',
         station_id:STATION_ID, drill_id:RB_CURR.drill_id, attempt:attempt,
-        metric_1:primaryVal, metric_2:secondaryVal, pass_flag:(evaluation.rating==='above'?1:0),
-        notes:(qs('#sharedNotes').value||'').trim()
+
+        primary_name: RB_CURR.primary_measurement || (isTime ? 'time' : 'rate'),
+        primary_unit: RB_CURR.measurement_unit || (isTime ? 'sec' : 'percentage'),
+        primary_value: (primaryVal===true)?1:(primaryVal===false)?0:primaryVal,
+        primary_successes: isRate ? successes : '',
+        primary_failures:  isRate ? failures  : '',
+        primary_attempts:  isRate ? attempts  : '',
+
+        secondary_name: RB_CURR.secondary_measurement || '',
+        secondary_unit: RB_CURR.secondary_unit || '',
+        secondary_value: (secondaryVal===true)?1:(secondaryVal===false)?0:secondaryVal,
+
+        rating_tier: evaluation.rating,
+        pass_flag:   evaluation.rating==='above'?1:0,
+        score_5:     '',
+        notes:(qs('#sharedNotes').value||'').trim(),
+
+        source_app: `${SOURCE_APP}.${STATION_ID.toLowerCase()}`,
+        client_id:  CLIENT_ID,
+
+        // legacy for compatibility
+        metric_1:(primaryVal===true)?1:(primaryVal===false)?0:primaryVal,
+        metric_2:secondaryVal
       };
 
       setSaving(lane,true);
       let res; try{ res=await API.tryout.write.station(row); } finally{ setSaving(lane,false); }
       if(!res?.ok){ statusEl.textContent=res?.error||'Save failed.'; statusEl.className='status err'; return; }
 
-      const primTxt = isTimeDrill(RB_CURR) ? Number(primaryVal).toFixed(2)+' s' : Number(primaryVal).toFixed(1)+'%';
+      const primTxt = isTime ? Number(primaryVal).toFixed(2)+' s' : Number(primaryVal).toFixed(1)+'%';
       const secTxt  = RB_CURR.secondary_measurement ? (secondaryVal==null ? '—' : String(secondaryVal)) : '—';
 
       const tr=document.createElement('tr');
@@ -613,9 +644,12 @@
       logTbody.prepend(tr); while(logTbody.children.length>10) logTbody.removeChild(logTbody.lastChild);
 
       const who=player.tryout_num||player.player_id||'—';
-      addRecent('station', `Write → RB :: ${who} • ${RB_CURR.drill_name} • ${primTxt}${RB_CURR.secondary_measurement?` • ${secTxt}`:''} • ${evaluation.ratingText} (Att ${attempt})`);
+      addRecent('station', `Write → ${STATION_ID} :: ${who} • ${RB_CURR.drill_name} • ${primTxt}${RB_CURR.secondary_measurement?` • ${secTxt}`:''} • ${evaluation.ratingText} (Att ${attempt})`);
 
-      if(AFTER_SAVE.markDone){ try{ TryoutUI?.markDone?.(player.player_id||player.tryout_num); }catch{} try{ window.dispatchEvent(new CustomEvent('tryoutui:done',{detail:{player_id:player.player_id,tryout_num:player.tryout_num}})); }catch{} }
+      if(AFTER_SAVE.markDone){
+        try{ TryoutUI?.markDone?.(player.player_id||player.tryout_num); }catch{}
+        try{ window.dispatchEvent(new CustomEvent('tryoutui:done',{detail:{player_id:player.player_id,tryout_num:player.tryout_num}})); }catch{}
+      }
 
       const next=Math.min((attempt%10)+1,10); attSel.value=String(next); softResetLane(lane);
       statusEl.textContent=`Saved ✔ • ${evaluation.ratingText}`;
