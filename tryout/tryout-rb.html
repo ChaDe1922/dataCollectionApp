@@ -6,7 +6,6 @@
   <meta name="gsds-api-base" content="https://script.google.com/macros/s/AKfycbw8Jb7RpQ7j9L2q32YDSBuNSPLFMjPzKdvuI_BgkutfNk5COrEYUdsUWZYXDOJRAeH3kA/exec">
   <title>RB Station — Tryouts</title>
 
-  <!-- Simple auth guard -->
   <script>
     (function(){
       const ok = localStorage.getItem('auth_ok')==='1' &&
@@ -15,7 +14,6 @@
     })();
   </script>
 
-  <!-- Theme + fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -41,10 +39,10 @@
 
     .field{ margin:10px 0; }
     .label{ font-weight:800; font-size:.95rem; opacity:.9; margin-bottom:6px; display:block; }
-    .form-input, .form-select, .form-number{ width:100%; padding:.68rem .8rem; border-radius:12px; border:1px solid rgba(255,255,255,.28);
+    .form-input, .form-select{ width:100%; padding:.68rem .8rem; border-radius:12px; border:1px solid rgba(255,255,255,.28);
       background:rgba(255,255,255,.08); color:#fff; }
     .row{ display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; }
-    .row3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; }
+    .row3{ display:grid; grid-template-columns: 1fr; gap:12px; }
 
     .timer{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
     .time{ font-variant-numeric:tabular-nums; font-weight:900; font-size:1.25rem; min-width:82px; text-align:right; }
@@ -57,32 +55,18 @@
     .btn.ghost{ background:transparent; }
     .btn:disabled{ opacity:.55; cursor:not-allowed; }
 
-    /* Counter control */
-    .counter-control { display:flex; align-items:center; gap:8px; }
-    .counter-btn {
-      width:40px; height:40px; display:flex; align-items:center; justify-content:center;
-      border-radius:8px; border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08);
-      color:#fff; font-size:20px; font-weight:800; cursor:pointer; transition:all .2s ease; user-select:none;
-    }
+    .counter-control{ display:flex; align-items:center; gap:8px; }
+    .counter-btn{ width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:8px;
+      border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08); color:#fff; font-size:20px; font-weight:800;
+      cursor:pointer; transition:all .2s ease; user-select:none; }
     .counter-btn:hover{ background:rgba(255,255,255,.15); transform:scale(1.05); }
     .counter-btn:active{ transform:scale(0.95); }
     .counter-value{ min-width:60px; text-align:center; font-size:24px; font-weight:900; color:#C4B5FD; font-variant-numeric:tabular-nums; }
 
-    /* Toggle switch for boolean inputs */
-    .toggle-switch{ display:inline-flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
-    .toggle-switch input[type="checkbox"]{ position:absolute; opacity:0; width:0; height:0; }
-    .toggle-slider{ position:relative; width:50px; height:26px; background:rgba(255,255,255,.15); border-radius:999px; transition:all .3s ease; border:1px solid rgba(255,255,255,.25); }
-    .toggle-slider::before{ content:''; position:absolute; width:20px; height:20px; border-radius:50%; background:#fff; top:2px; left:3px; transition:all .3s ease; box-shadow:0 2px 4px rgba(0,0,0,.2); }
-    .toggle-switch input:checked + .toggle-slider{ background:linear-gradient(135deg,#16A34A,#10B981); border-color:#16A34A; }
-    .toggle-switch input:checked + .toggle-slider::before{ transform:translateX(23px); }
-    .toggle-label{ font-weight:700; font-size:.9rem; }
-
-    /* Save indicator */
-    .btn.loading{ position:relative; pointer-events:none; }
-    .btn.loading .spin{ width:14px; height:14px; border:2px solid rgba(255,255,255,.45);
-                        border-top-color:#fff; border-radius:50%; display:inline-block;
-                        margin-right:8px; vertical-align:-2px; animation:spin .8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .rate-display{ margin-top:8px; padding:8px 12px; background:rgba(139,92,246,.15);
+      border:1px solid rgba(139,92,246,.3); border-radius:8px; text-align:center; }
+    .rate-value{ font-size:28px; font-weight:900; color:#C4B5FD; font-variant-numeric:tabular-nums; }
+    .rate-label{ font-size:11px; opacity:.7; margin-top:2px; }
 
     .lane-title{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-weight:900; letter-spacing:.04em; opacity:.9; }
     .lane-chip{ display:inline-flex; align-items:center; gap:8px; padding:4px 8px; border-radius:999px;
@@ -99,40 +83,14 @@
     .table{ width:100%; border-collapse:collapse; font-size:.95rem; }
     .table th,.table td{ padding:6px 8px; border-bottom:1px solid rgba(255,255,255,.12); text-align:left; }
 
-    .muted{ opacity:.75; }
-
-    /* Hide any TryoutUI "recent" strip in the shared header */
-    #tryout-shared .tu-log,
-    #tryout-shared .tu-recent,
-    #tryout-shared .tu-recent-writes,
-    #tryout-shared .recent-writes,
-    #tryout-shared [data-section="recent"],
-    #tryout-shared [data-role="recent"] { display:none !important; }
-
-    /* ===== Make TryoutUI chips/filters black-outline + black text ===== */
-    #tryout-shared .chip,
-    #tryout-shared .pill,
-    #tryout-shared .filter-chip,
-    #tryout-shared .group-chip,
-    #tryout-shared .roster-chip,
-    #tryout-shared [data-chip],
-    #tryout-shared [role="tab"],
-    #tryout-shared button.tu-filter {
-      background:#fff !important;
-      color:#000 !important;
-      border:2px solid #000 !important;
-      box-shadow:none !important;
+    /* Hide TryoutUI “recent” up top + use black-outline chips */
+    #tryout-shared .tu-log, #tryout-shared .tu-recent, #tryout-shared [data-section="recent"], #tryout-shared [data-role="recent"]{ display:none !important; }
+    #tryout-shared .chip, #tryout-shared .pill, #tryout-shared .filter-chip, #tryout-shared .group-chip, #tryout-shared .roster-chip,
+    #tryout-shared [data-chip], #tryout-shared [role="tab"], #tryout-shared button.tu-filter{
+      background:#fff !important; color:#000 !important; border:2px solid #000 !important; box-shadow:none !important;
     }
-    #tryout-shared .is-active,
-    #tryout-shared .active,
-    #tryout-shared [aria-pressed="true"]{
-      background:#fff !important;
-      color:#000 !important;
-      border-color:#000 !important;
-    }
-    /* Number/name sublabels in header chips also black */
-    #tryout-shared .small,
-    #tryout-shared .muted { color:#000 !important; }
+    #tryout-shared .is-active, #tryout-shared .active, #tryout-shared [aria-pressed="true"]{ background:#fff !important; color:#000 !important; border-color:#000 !important; }
+    #tryout-shared .small, #tryout-shared .muted{ color:#000 !important; }
   </style>
 </head>
 
@@ -147,15 +105,12 @@
 
   <main>
     <div class="container">
-      <!-- Shared: context bar, filter chips, roster chips (filter to RB) -->
       <div id="tryout-shared" style="margin-bottom:12px"></div>
 
-      <!-- Top control bar -->
       <section class="card" style="margin-bottom:14px">
         <div class="toolbar">
           <span class="chip">Station: <strong>RB</strong></span>
 
-          <!-- Drill dropdown from Drill Dictionary -->
           <div class="field" style="min-width:280px; margin:0;">
             <label class="label">RB Drill</label>
             <select id="rbDrillSel" class="form-select"></select>
@@ -164,7 +119,6 @@
 
           <span id="drillBadge" class="chip badge">Drill: —</span>
 
-          <!-- Assign selection to lane -->
           <div class="assign" style="margin-left:auto">
             <span class="chip ghost small">Assign selection to:</span>
             <div class="seg" role="tablist" aria-label="Active lane">
@@ -174,7 +128,6 @@
           </div>
         </div>
 
-        <!-- Picker + shared notes -->
         <div class="row" style="margin-top:10px">
           <div>
             <label class="label">Player (search by number or name)</label>
@@ -187,15 +140,13 @@
           </div>
         </div>
 
-        <!-- Current lane assignments -->
         <div class="toolbar" style="margin-top:10px;gap:12px">
           <span id="chipLaneA" class="lane-chip" style="display:none"></span>
           <span id="chipLaneB" class="lane-chip" style="display:none"></span>
-          <span class="small muted">Tip: time drills show timers; count/boolean drills show counters/toggles. Attempts auto-increment.</span>
+          <span class="small muted">Time drills use a timer; rate drills use two simple counters. Attempts auto-calc.</span>
         </div>
       </section>
 
-      <!-- Two lanes -->
       <section class="grid-2">
         <!-- LANE A -->
         <div id="laneA" class="card lane-card lane-active">
@@ -212,17 +163,8 @@
                 <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
               </select>
             </div>
-            <div>
-              <label class="label">Extra 1 (opt)</label>
-              <input id="aExtra1" class="form-input" placeholder="Hash/side, defender, cone layout, etc."/>
-            </div>
-            <div>
-              <label class="label">Extra 2 (opt)</label>
-              <input id="aExtra2" class="form-input" placeholder="Tags, footing, notes, etc."/>
-            </div>
           </div>
 
-          <!-- Dynamic primary/secondary -->
           <div class="field">
             <div id="aTimerBlock">
               <label class="label">Primary: <span id="aPrimaryLabel">Time</span></label>
@@ -262,17 +204,8 @@
                 <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
               </select>
             </div>
-            <div>
-              <label class="label">Extra 1 (opt)</label>
-              <input id="bExtra1" class="form-input" placeholder="Hash/side, defender, cone layout, etc."/>
-            </div>
-            <div>
-              <label class="label">Extra 2 (opt)</label>
-              <input id="bExtra2" class="form-input" placeholder="Tags, footing, notes, etc."/>
-            </div>
           </div>
 
-          <!-- Dynamic primary/secondary -->
           <div class="field">
             <div id="bTimerBlock">
               <label class="label">Primary: <span id="bPrimaryLabel">Time</span></label>
@@ -298,14 +231,12 @@
         </div>
       </section>
 
-      <!-- Start both (below lanes, above writes) -->
       <section id="bothStartCard" class="card" style="margin-top:8px; display:none">
         <div class="toolbar" style="justify-content:center">
           <button id="bothStart" class="btn primary">Start Both</button>
         </div>
       </section>
 
-      <!-- Recent writes (BOTTOM — pinned by script as a failsafe) -->
       <section id="recentCard" class="card" style="margin-top:14px">
         <div class="toolbar">
           <button id="toggleRecent" class="btn ghost">Recent Writes ▾</button>
@@ -327,712 +258,385 @@
   <script src="../js/tryout-ui.js"></script>
 
   <script>
-    // ---------- Boot shared context/UI ----------
-    (function(){
-      const meta = document.querySelector('meta[name="gsds-api-base"]');
-      window.API_BASE = (meta && meta.content || '').trim();
-    })();
+    (function(){ const meta=document.querySelector('meta[name="gsds-api-base"]'); window.API_BASE=(meta&&meta.content||'').trim(); })();
     GameContext.configure({ apiBase: window.API_BASE, server: true, pollMs: 1000 });
 
-    // RB group filter in the shared Tryout UI
     TryoutUI.init('#tryout-shared', { showGroup:true, filterMode:'groups', allowPresence:false });
     GameContext.setGroup('RB');
 
-    // Remove any TryoutUI "Recent Writes" row/section that appears up top
-    (function hideSharedRecent(){
-      const root = document.getElementById('tryout-shared');
-      if (!root) return;
-      const sel = '.tu-log, .tu-recent, .tu-recent-writes, .recent-writes, [data-section="recent"], [data-role="recent"]';
-      root.querySelectorAll(sel).forEach(el => el.remove());
-    })();
+    (function pinRecent(){ const recent=document.getElementById('recentCard'); const container=document.querySelector('.container'); if(recent&&container&&container.lastElementChild!==recent){ container.appendChild(recent);} })();
 
-    // Keep our Recent Writes as the LAST element in the container (defensive)
-    (function pinRecentWritesToBottom(){
-      const recent = document.getElementById('recentCard');
-      const container = document.querySelector('.container');
-      if (recent && container && container.lastElementChild !== recent) {
-        container.appendChild(recent);
-      }
-    })();
+    const STATION_ID='RB';
+    const AFTER_SAVE={ clearLane:false, markDone:true };
 
-    // ---------- RB Station logic (dictionary-driven) ----------
-    const STATION_ID = 'RB';
-    const AFTER_SAVE = { clearLane:false, markDone:true };
+    let roster=[]; const groupLatest=new Map(); const pageLog=[]; const PAGE_LOG_LIMIT=12;
+    const lanePlayers={A:null,B:null}; let activeLane='A';
+    const timers=new Map(); let RB_DRILLS=[], RB_CURR=null;
 
-    let roster = [];
-    const groupLatest = new Map();
-    const pageLog = [];
-    const PAGE_LOG_LIMIT = 12;
-
-    const lanePlayers = { A:null, B:null };
-    let activeLane = 'A';
-    const timers = new Map();
-    let RB_DRILLS = [], RB_CURR = null;
-
-    // ------- helpers -------
-    const qs  = (s,p=document)=>p.querySelector(s);
-    const qsa = (s,p=document)=>[...p.querySelectorAll(s)];
-    const labelFor = (r)=> [r.tryout_num, '•', r.display_name, r.primary_pos?`(${r.primary_pos})`:'' ].filter(Boolean).join(' ');
+    const qs=(s,p=document)=>p.querySelector(s);
+    const qsa=(s,p=document)=>[...p.querySelectorAll(s)];
+    const labelFor=r=>[r.tryout_num,'•',r.display_name,r.primary_pos?`(${r.primary_pos})`:'' ].filter(Boolean).join(' ');
     function ctx(){ return GameContext.get ? GameContext.get() : {}; }
-    const fmtTime = (d)=>{ const pad=n=>String(n).padStart(2,'0'); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
-    const isTimeDrill = d => /sec/i.test(String(d?.measurement_unit||''));
-    const isRateDrill = d => /percentage|percent|rate/i.test(String(d?.measurement_unit||'')) || String(d?.drill_type||'').toUpperCase()==='RATE';
+    const fmtTime=d=>{ const pad=n=>String(n).padStart(2,'0'); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
+    const isTimeDrill=d=>/sec/i.test(String(d?.measurement_unit||''));
+    const isRateDrill=d=>/percentage|percent|rate/i.test(String(d?.measurement_unit||'')) || String(d?.drill_type||'').toUpperCase()==='RATE';
+    const pretty=s=>(String(s||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()));
 
-    // ------ Threshold parsing and evaluation ------
-    function parseThreshold(str) {
-      if (!str) return null;
-      const s = String(str).trim();
-      if (/^(yes|true)$/i.test(s)) return { type: 'bool', value: true };
-      if (/^(no|false)$/i.test(s)) return { type: 'bool', value: false };
-      const rangeMatch = s.match(/^(-?\d+(?:\.\d+)?)\s*[-–]\s*(-?\d+(?:\.\d+)?)$/);
-      if (rangeMatch) return { type: 'range', min: parseFloat(rangeMatch[1]), max: parseFloat(rangeMatch[2]) };
-      const compMatch = s.match(/^(<=|>=|<|>|=|≤|≥)\s*(-?\d+(?:\.\d+)?)$/);
-      if (compMatch) {
-        const op = compMatch[1].replace('≤','<=').replace('≥','>=');
-        return { type:'comp', op, value: parseFloat(compMatch[2]) };
-      }
-      if (!isNaN(parseFloat(s))) return { type:'comp', op:'>=', value: parseFloat(s) };
+    function parseThreshold(str){
+      if(!str) return null; const s=String(str).trim();
+      const r=s.match(/^(-?\d+(?:\.\d+)?)\s*[-–]\s*(-?\d+(?:\.\d+)?)$/); if(r) return {type:'range',min:parseFloat(r[1]),max:parseFloat(r[2])};
+      const c=s.match(/^(<=|>=|<|>|=|≤|≥)\s*(-?\d+(?:\.\d+)?)$/); if(c){ const op=c[1].replace('≤','<=').replace('≥','>=');
+        return {type:'comp',op,value:parseFloat(c[2])}; }
+      if(!isNaN(parseFloat(s))) return {type:'comp',op:'>=',value:parseFloat(s)};
       return null;
     }
-    function meetsThreshold(threshold, value) {
-      if (!threshold || value == null) return null;
-      if (threshold.type === 'bool') return !!value === threshold.value;
-      if (threshold.type === 'range') return value >= threshold.min && value <= threshold.max;
-      if (threshold.type === 'comp') {
-        switch(threshold.op){
-          case '<=': return value <= threshold.value;
-          case '>=': return value >= threshold.value;
-          case '<':  return value <  threshold.value;
-          case '>':  return value >  threshold.value;
-          case '=':  return value === threshold.value;
-        }
-      }
-      return null;
-    }
-
-    // ---------- Rating ----------
-    function evaluateDrill(drill, primaryVal, secondaryVal){
-      try{
-        if (window.Rules?.evaluateRep){
-          const res = Rules.evaluateRep(drill, primaryVal, secondaryVal);
-          if (res && typeof res.is_success==='boolean'){
-            return {
-              rating: res.is_success ? 'above' : (res.is_failure ? 'below' : 'average'),
-              ratingText: res.is_success ? 'Above Average' : (res.is_failure ? 'Below Average' : 'Average'),
-              ratingClass: res.is_success ? 'rating-above' : (res.is_failure ? 'rating-below' : 'rating-avg')
-            };
-          }
-        }
-      }catch(_){}
-      const primaryOk   = meetsThreshold(parseThreshold(drill.success_threshold), primaryVal);
-      const primaryFail = meetsThreshold(parseThreshold(drill.failure_threshold), primaryVal);
-
+    function meets(th,v){ if(!th||v==null) return null; if(th.type==='range') return v>=th.min&&v<=th.max;
+      if(th.type==='comp'){ switch(th.op){case'<=':return v<=th.value;case'>=':return v>=th.value;case'<':return v<th.value;case'>':return v>th.value;case'=':return v===th.value;} } return null; }
+    function evaluateDrill(drill, p1, p2){
+      const ok=meets(parseThreshold(drill.success_threshold), p1);
+      const bad=meets(parseThreshold(drill.failure_threshold), p1);
+      // If secondary is just an attempts goal, don't punish rating—only show goal chip
       const ignoreSecondaryForRating = isRateDrill(drill) && /attempt/i.test(String(drill.secondary_measurement||''));
-      const secT  = ignoreSecondaryForRating ? null : parseThreshold(drill.secondary_threshold);
-      const secOk = secT ? meetsThreshold(secT, secondaryVal) : true;
-
-      if (primaryOk && secOk) return { rating:'above', ratingText:'Above Average',  ratingClass:'rating-above' };
-      if (primaryFail || !secOk) return { rating:'below',  ratingText:'Below Average', ratingClass:'rating-below' };
-      return { rating:'average', ratingText:'Average', ratingClass:'rating-avg' };
+      const secOk = ignoreSecondaryForRating ? true : (drill.secondary_threshold ? meets(parseThreshold(drill.secondary_threshold), p2) : true);
+      if(ok && secOk) return {rating:'above', ratingText:'Above Average', ratingClass:'rating-above'};
+      if(bad || !secOk) return {rating:'below', ratingText:'Below Average', ratingClass:'rating-below'};
+      return {rating:'average', ratingText:'Average', ratingClass:'rating-avg'};
     }
 
-    function normalizeValue(unit, raw){
-      if (raw === '' || raw == null) return null;
-      if (typeof raw === 'boolean') return raw;
-      const u = String(unit||'').toLowerCase();
-      if (u.includes('bool') || u==='boolean'){
-        if (typeof raw === 'string') return /^(yes|true|1)$/i.test(raw.trim());
-        return !!raw;
-      }
-      const n = parseFloat(raw);
-      if (!isNaN(n)) return n;
-      return raw;
+    function makeTimer(el,onState){
+      let running=false,t0=0,acc=0,raf=null;
+      const fmt=ms=>(ms/1000).toFixed(2);
+      const tick=()=>{ const now=performance.now(); const ms=acc+(running?(now-t0):0); el.textContent=fmt(ms); if(running) raf=requestAnimationFrame(tick); };
+      const start=()=>{ if(running) return; running=true; t0=performance.now(); tick(); onState?.(true); };
+      const stop=()=>{ if(!running) return; running=false; acc+=performance.now()-t0; cancelAnimationFrame(raf); tick(); onState?.(false); };
+      const reset=()=>{ running=false; acc=0; cancelAnimationFrame(raf); tick(); onState?.(false); };
+      const toggle=()=>running?stop():start(); tick(); return {start,stop,reset,toggle,isRunning:()=>running};
     }
 
-    // timers
-    function makeTimer(timeEl, onState){
-      let running=false, t0=0, acc=0, raf=null;
-      const fmt = ms => (ms/1000).toFixed(2);
-      const tick = ()=>{ const now=performance.now(); const ms=acc + (running ? (now-t0) : 0); timeEl.textContent = fmt(ms); if(running) raf=requestAnimationFrame(tick); };
-      const start = ()=>{ if(running) return; running=true; t0=performance.now(); tick(); onState?.(true); };
-      const stop  = ()=>{ if(!running) return; running=false; acc += performance.now()-t0; cancelAnimationFrame(raf); tick(); onState?.(false); };
-      const reset = ()=>{ running=false; acc=0; cancelAnimationFrame(raf); tick(); onState?.(false); };
-      const toggle= ()=> running ? stop() : start();
-      tick();
-      return { start, stop, reset, toggle, isRunning:()=>running };
-    }
-
-    // roster datalist
     async function loadRoster(){
-      const res = await API.tryout.read.roster();
-      if(!res?.ok) return;
-      const tid = ctx().tryout_id || '';
-      roster = (res.roster||[]).filter(r => !tid || String(r.tryout_id||'')===String(tid));
-      const dl = document.getElementById('rb_roster');
-      dl.innerHTML = '';
+      const res=await API.tryout.read.roster(); if(!res?.ok) return;
+      const tid=ctx().tryout_id||''; roster=(res.roster||[]).filter(r=>!tid || String(r.tryout_id||'')===String(tid));
+      const dl=document.getElementById('rb_roster'); dl.innerHTML='';
       roster.forEach(r=>{
-        const rec = {
-          player_id: r.player_id || '',
-          display_name: r.display_name || r.player_name || '',
-          primary_pos: r.primary_pos || r.position || '',
-          tryout_num: r.tryout_num || r.jersey_number || '',
-          group_code: r.group_code || r.primary_pos || ''
-        };
-        const opt = document.createElement('option');
-        opt.value = labelFor(rec);
-        opt.dataset.pid = rec.player_id;
-        dl.appendChild(opt);
+        const rec={ player_id:r.player_id||'', display_name:r.display_name||r.player_name||'', primary_pos:r.primary_pos||r.position||'', tryout_num:r.tryout_num||r.jersey_number||'', group_code:r.group_code||r.primary_pos||'' };
+        const opt=document.createElement('option'); opt.value=labelFor(rec); opt.dataset.pid=rec.player_id; dl.appendChild(opt);
       });
     }
-
     async function loadLatestGroups(){
-      const res = await API.tryout.read.groupsLatest(ctx().tryout_id);
-      if(!res?.ok || !Array.isArray(res.latest)) return;
+      const res=await API.tryout.read.groupsLatest(ctx().tryout_id);
+      if(!res?.ok||!Array.isArray(res.latest)) return;
       groupLatest.clear();
-      res.latest.forEach(row => { if(row.player_id && row.group_code) groupLatest.set(String(row.player_id).trim(), String(row.group_code).trim()); });
+      res.latest.forEach(row=>{ if(row.player_id&&row.group_code) groupLatest.set(String(row.player_id).trim(), String(row.group_code).trim()); });
     }
-    function resolveGroupCode(pid, fallback, rec){
-      if (pid) {
-        const direct = groupLatest.get(String(pid).trim());
-        if (direct) return direct;
-        const r = roster.find(x => String(x.player_id).trim() === String(pid).trim());
-        return r?.group_code || r?.primary_pos || fallback || '';
-      }
-      return rec?.group_code || rec?.primary_pos || fallback || '';
+    function resolveGroupCode(pid,fallback,rec){
+      if(pid){ const direct=groupLatest.get(String(pid).trim()); if(direct) return direct;
+        const r=roster.find(x=>String(x.player_id).trim()===String(pid).trim()); return r?.group_code||r?.primary_pos||fallback||''; }
+      return rec?.group_code||rec?.primary_pos||fallback||'';
     }
 
-    // Active lane highlight
-    function setActiveLane(l){
-      activeLane = (l==='B') ? 'B' : 'A';
-      document.getElementById('segA').setAttribute('aria-pressed', activeLane==='A' ? 'true':'false');
-      document.getElementById('segB').setAttribute('aria-pressed', activeLane==='B' ? 'true':'false');
+    function setActiveLane(l){ activeLane=(l==='B')?'B':'A';
+      document.getElementById('segA').setAttribute('aria-pressed', activeLane==='A'?'true':'false');
+      document.getElementById('segB').setAttribute('aria-pressed', activeLane==='B'?'true':'false');
       qs('#laneA').classList.toggle('lane-active', activeLane==='A');
       qs('#laneB').classList.toggle('lane-active', activeLane==='B');
     }
-    document.getElementById('segA').addEventListener('click', ()=> setActiveLane('A'));
-    document.getElementById('segB').addEventListener('click', ()=> setActiveLane('B'));
-    qs('#laneA').addEventListener('click', ()=> setActiveLane('A'));
-    qs('#laneB').addEventListener('click', ()=> setActiveLane('B'));
+    document.getElementById('segA').onclick=()=>setActiveLane('A');
+    document.getElementById('segB').onclick=()=>setActiveLane('B');
+    qs('#laneA').onclick=()=>setActiveLane('A'); qs('#laneB').onclick=()=>setActiveLane('B');
 
-    // Resets
     function softResetLane(lane){
-      const p = lane==='A' ? 'a' : 'b';
-      qs(`#${p}Time`).textContent = '0.00';
-      const t = timers.get(p); t && t.reset();
-      const box = qs(`#${p}InputsBlock`);
-      if (box){
-        box.querySelectorAll('[data-counter-value]').forEach(el=> el.textContent='0');
-        box.querySelectorAll('input[type="checkbox"]').forEach(el=> el.checked=false);
-      }
-      qs(`#${p}Status`).textContent = '';
+      const p=lane==='A'?'a':'b';
+      qs(`#${p}Time`).textContent='0.00';
+      const t=timers.get(p); t&&t.reset();
+      const box=qs(`#${p}InputsBlock`);
+      if(box){ box.querySelectorAll('[data-counter-value]').forEach(el=>el.textContent='0'); }
+      qs(`#${p}Status`).textContent='';
     }
     function hardResetLane(lane){
-      const p = lane==='A' ? 'a' : 'b';
-      qs(`#${p}Attempt`).value = '1';
-      qs(`#${p}Log`).innerHTML = '';
-      qs(`#${p}Extra1`).value = '';
-      qs(`#${p}Extra2`).value = '';
+      const p=lane==='A'?'a':'b';
+      qs(`#${p}Attempt`).value='1';
+      qs(`#${p}Log`).innerHTML='';
       softResetLane(lane);
     }
 
     function renderLaneChips(){
-      const a = lanePlayers.A, b = lanePlayers.B;
-      const aEl = document.getElementById('laneAWho');
-      const bEl = document.getElementById('laneBWho');
-      const topA= document.getElementById('chipLaneA');
-      const topB= document.getElementById('chipLaneB');
-
-      if(a){
-        const txt = `${a.tryout_num||''} • ${a.display_name||a.player_id}${a.primary_pos?` (${a.primary_pos})`:''}`;
-        aEl.innerHTML = `${txt} <span class="x" title="Clear" aria-label="Clear" data-clear="A">✕</span>`;
-        aEl.style.display = '';
-        topA.textContent = `Lane A: ${txt}`; topA.style.display = '';
-        document.getElementById('aSave').disabled = false;
-      } else {
-        aEl.style.display = 'none'; topA.style.display = 'none';
-        document.getElementById('aSave').disabled = true;
-      }
-      if(b){
-        const txt = `${b.tryout_num||''} • ${b.display_name||b.player_id}${b.primary_pos?` (${b.primary_pos})`:''}`;
-        bEl.innerHTML = `${txt} <span class="x" title="Clear" aria-label="Clear" data-clear="B">✕</span>`;
-        bEl.style.display = '';
-        topB.textContent = `Lane B: ${txt}`; topB.style.display = '';
-        document.getElementById('bSave').disabled = false;
-      } else {
-        bEl.style.display = 'none'; topB.style.display = 'none';
-        document.getElementById('bSave').disabled = true;
-      }
-
-      document.querySelectorAll('[data-clear="A"]').forEach(x=> x.onclick = ()=>{ lanePlayers.A = null; renderLaneChips(); hardResetLane('A'); });
-      document.querySelectorAll('[data-clear="B"]').forEach(x=> x.onclick = ()=>{ lanePlayers.B = null; renderLaneChips(); hardResetLane('B'); });
+      const a=lanePlayers.A, b=lanePlayers.B;
+      const aEl=qs('#laneAWho'), bEl=qs('#laneBWho'), topA=qs('#chipLaneA'), topB=qs('#chipLaneB');
+      if(a){ const txt=`${a.tryout_num||''} • ${a.display_name||a.player_id}${a.primary_pos?` (${a.primary_pos})`:''}`;
+        aEl.innerHTML=`${txt} <span class="x" data-clear="A">✕</span>`; aEl.style.display=''; topA.textContent=`Lane A: ${txt}`; topA.style.display=''; qs('#aSave').disabled=false;
+      }else{ aEl.style.display='none'; topA.style.display='none'; qs('#aSave').disabled=true; }
+      if(b){ const txt=`${b.tryout_num||''} • ${b.display_name||b.player_id}${b.primary_pos?` (${b.primary_pos})`:''}`;
+        bEl.innerHTML=`${txt} <span class="x" data-clear="B">✕</span>`; bEl.style.display=''; topB.textContent=`Lane B: ${txt}`; topB.style.display=''; qs('#bSave').disabled=false;
+      }else{ bEl.style.display='none'; topB.style.display='none'; qs('#bSave').disabled=true; }
+      qsa('[data-clear="A"]').forEach(x=> x.onclick=()=>{ lanePlayers.A=null; renderLaneChips(); hardResetLane('A'); });
+      qsa('[data-clear="B"]').forEach(x=> x.onclick=()=>{ lanePlayers.B=null; renderLaneChips(); hardResetLane('B'); });
     }
+    function assignToActiveLane(rec){ lanePlayers[activeLane]=rec; qs('#playerPicker').value=labelFor(rec); renderLaneChips(); hardResetLane(activeLane); }
 
-    // Assign to active lane
-    function assignToActiveLane(rec){
-      lanePlayers[activeLane] = rec;
-      document.getElementById('playerPicker').value = labelFor(rec);
-      renderLaneChips();
-      hardResetLane(activeLane);
-    }
-
-    // Selection sources
-    window.addEventListener('tryoutui:select', (e)=>{
-      const d = e?.detail?.player; if(!d) return;
-      const hit = roster.find(r => r.player_id===d.player_id) || d;
-      assignToActiveLane(hit);
-    });
-    document.getElementById('playerPicker').addEventListener('change', (e)=>{
-      const txt = (e.target.value||'').toLowerCase();
-      const hit = roster.find(r => labelFor(r).toLowerCase() === txt) ||
-                  roster.find(r => String(r.tryout_num||'').toLowerCase() === txt) ||
-                  roster.find(r => String(r.display_name||'').toLowerCase() === txt);
+    window.addEventListener('tryoutui:select',(e)=>{ const d=e?.detail?.player; if(!d) return; const hit=roster.find(r=>r.player_id===d.player_id)||d; assignToActiveLane(hit); });
+    document.getElementById('playerPicker').addEventListener('change',(e)=>{
+      const txt=(e.target.value||'').toLowerCase();
+      const hit=roster.find(r=>labelFor(r).toLowerCase()===txt)||
+                roster.find(r=>String(r.tryout_num||'').toLowerCase()===txt)||
+                roster.find(r=>String(r.display_name||'').toLowerCase()===txt);
       if(hit) assignToActiveLane(hit);
     });
 
-    // ---- Drill Dictionary hookup ----
+    // Build minimal inputs for the drill
     function renderInputs(prefix, drill){
-      const isTime = isTimeDrill(drill);
-      const isRate = isRateDrill(drill);
-      const timerBlk = qs(`#${prefix}TimerBlock`);
-      const inputBlk = qs(`#${prefix}InputsBlock`);
-      const bothCard = qs('#bothStartCard');
-      const primaryLabel = qs(`#${prefix}PrimaryLabel`);
-      const primaryHelp = qs(`#${prefix}PrimaryHelp`);
+      const isTime=isTimeDrill(drill);
+      const isRate=isRateDrill(drill);
+      const timerBlk=qs(`#${prefix}TimerBlock`);
+      const inputBlk=qs(`#${prefix}InputsBlock`);
+      const bothCard=qs('#bothStartCard');
+      const primaryLabel=qs(`#${prefix}PrimaryLabel`);
+      const primaryHelp=qs(`#${prefix}PrimaryHelp`);
 
-      // Update primary label/help (overridden for rate below)
-      primaryLabel.textContent = isRate ? `${drill.primary_measurement} (calculated %)` : (drill.primary_measurement || 'Time');
-      const parts = [];
-      if (drill.drill_category) parts.push(drill.drill_category);
-      if (drill.success_threshold) parts.push(`Above Avg: ${drill.success_threshold}`);
-      if (drill.failure_threshold) parts.push(`Below Avg: ${drill.failure_threshold}`);
-      primaryHelp.textContent = parts.join(' • ');
+      const pm=(drill.primary_measurement||'').toLowerCase();
+      const errorLike = pm.includes('error_rate') || pm.includes('fumble_rate') || (pm.includes('error') && pm.includes('rate'));
+      const friendly = errorLike ? (pm.includes('fumble') ? 'Fumble Rate' : 'Error Rate')
+                                 : (pm.includes('catch_rate') ? 'Catch Rate' : pretty(drill.primary_measurement));
 
-      // Toggle timer vs inputs
+      primaryLabel.textContent = isRate ? `${friendly} (calculated %)` : (drill.primary_measurement || 'Time');
+
+      const hint=[];
+      if(drill.drill_category) hint.push(drill.drill_category);
+      if(drill.success_threshold) hint.push(`Above Avg: ${drill.success_threshold}`);
+      if(drill.failure_threshold) hint.push(`Below Avg: ${drill.failure_threshold}`);
+      primaryHelp.textContent=hint.join(' • ');
+
       timerBlk.style.display = isTime ? '' : 'none';
-      inputBlk.style.display = isTime ? 'none' : '';
+      inputBlk.style.display  = isTime ? 'none' : '';
 
-      // Update table head
-      const head = qs(`#${prefix}Head`);
-      head.innerHTML = `<tr>
-        <th>Drill</th><th>Att</th>
-        <th>${drill.primary_measurement || 'Primary'}</th>
-        <th>${drill.secondary_measurement || 'Secondary'}</th>
-        <th>Rating</th>
-      </tr>`;
+      const head=qs(`#${prefix}Head`);
+      head.innerHTML=`<tr><th>Drill</th><th>Att</th><th>${pretty(drill.primary_measurement) || 'Primary'}</th><th>${drill.secondary_measurement?pretty(drill.secondary_measurement):'Secondary'}</th><th>Rating</th></tr>`;
 
-      // Start Both only for time drills
       bothCard.style.display = isTime ? '' : 'none';
+      inputBlk.innerHTML='';
 
-      // Build inputs if not time
-      inputBlk.innerHTML = '';
-      if (!isTime){
-        if (isRate){
-          const succId = `${prefix}Successes`;
-          const failId = `${prefix}Failures`;
+      if(!isTime && isRate){
+        const succId=`${prefix}Successes`;
+        const secId =`${prefix}Secondary`;
 
-          const pm = String(drill.primary_measurement||'').toLowerCase();
-          const isErrorRate = pm.includes('error');
-          const successLabel = isErrorRate ? 'Clean reps' : 'Successes';
-          const failureLabel = isErrorRate ? 'Errors / Faults' : 'Failures';
+        // Labels: minimal pair only
+        let succLabel='Successes', secLabel='Errors';
+        if(pm.includes('catch_rate')){ succLabel='Catches'; secLabel='Drops'; }
+        else if(pm.includes('fumble_rate')){ succLabel='Secure carries'; secLabel='Fumbles'; }
+        else if(errorLike){ succLabel='Clean reps'; secLabel='Errors'; }
 
-          const attemptsIsGoal = /attempt/i.test(String(drill.secondary_measurement||'')) && drill.secondary_threshold;
-          const secT = attemptsIsGoal ? parseThreshold(drill.secondary_threshold) : null;
-          const goalValue = (secT && secT.type==='comp') ? secT.value : null;
+        const attemptsIsGoal = /attempt/i.test(String(drill.secondary_measurement||'')) && drill.secondary_threshold;
+        const secT = attemptsIsGoal ? parseThreshold(drill.secondary_threshold) : null;
+        const goalValue = (secT && secT.type==='comp') ? secT.value : null;
 
-          inputBlk.innerHTML = `
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-              <div>
-                <label class="label">${successLabel}</label>
-                <div class="counter-control">
-                  <button class="counter-btn" data-counter-dec="${succId}" type="button">−</button>
-                  <div class="counter-value" data-counter-value="${succId}">0</div>
-                  <button class="counter-btn" data-counter-inc="${succId}" type="button">+</button>
-                </div>
-              </div>
-              <div>
-                <label class="label">${failureLabel}</label>
-                <div class="counter-control">
-                  <button class="counter-btn" data-counter-dec="${failId}" type="button">−</button>
-                  <div class="counter-value" data-counter-value="${failId}">0</div>
-                  <button class="counter-btn" data-counter-inc="${failId}" type="button">+</button>
-                </div>
-              </div>
-            </div>
-
-            <div class="small" style="margin-top:8px; display:flex; align-items:center; gap:10px;">
-              <span>Attempts: <strong data-rate="${prefix}-att">0</strong></span>
-              <span>• ${isErrorRate ? 'Error rate' : 'Success rate'}: <strong data-rate="${prefix}-pct">0.0%</strong></span>
-              <span data-rate="${prefix}-goal" class="chip ghost small" style="display:${attemptsIsGoal?'inline-flex':'none'}"></span>
-            </div>
-          `;
-
-          const update = ()=>{
-            const s = parseInt(inputBlk.querySelector(`[data-counter-value="${succId}"]`)?.textContent||'0');
-            const f = parseInt(inputBlk.querySelector(`[data-counter-value="${failId}"]`)?.textContent||'0');
-            const att = s + f;
-            const pct = att>0 ? (isErrorRate ? (f/att)*100 : (s/att)*100) : 0;
-
-            inputBlk.querySelector(`[data-rate="${prefix}-att"]`).textContent = att;
-            inputBlk.querySelector(`[data-rate="${prefix}-pct"]`).textContent = pct.toFixed(1)+'%';
-
-            const goalEl = inputBlk.querySelector(`[data-rate="${prefix}-goal"]`);
-            if (goalEl){
-              if (goalValue!=null){
-                const met = att >= goalValue;
-                goalEl.textContent = met ? 'Goal met ✓' : `Goal ≥ ${goalValue} attempts`;
-                goalEl.classList.toggle('badge', met);
-              } else {
-                goalEl.style.display = 'none';
-              }
-            }
-          };
-          inputBlk.querySelectorAll('[data-counter-inc],[data-counter-dec]').forEach(btn=>{
-            const isInc = btn.hasAttribute('data-counter-inc');
-            btn.addEventListener('click', ()=>{
-              const id = btn.getAttribute(isInc ? 'data-counter-inc' : 'data-counter-dec');
-              const el = inputBlk.querySelector(`[data-counter-value="${id}"]`);
-              const cur = parseInt(el.textContent)||0;
-              el.textContent = String(isInc ? cur+1 : Math.max(0,cur-1));
-              update();
-            });
-          });
-
-          primaryLabel.textContent = isErrorRate ? 'Error rate (calculated %)' : 'Success rate (calculated %)';
-          const parts2 = [];
-          if (drill.drill_category) parts2.push(drill.drill_category);
-          if (drill.success_threshold) parts2.push(`Above Avg: ${drill.success_threshold}`);
-          if (drill.failure_threshold) parts2.push(`Below Avg: ${drill.failure_threshold}`);
-          primaryHelp.textContent = parts2.join(' • ');
-          update();
-
-        } else {
-          const makeCounter = (id, label, help='') => `
+        inputBlk.innerHTML = `
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
             <div>
-              <label class="label">${label}</label>
-              ${help ? `<div class="measure-help">${help}</div>` : ''}
+              <label class="label">${succLabel}</label>
               <div class="counter-control">
-                <button class="counter-btn" data-counter-dec="${id}" type="button">−</button>
-                <div class="counter-value" data-counter-value="${id}">0</div>
-                <button class="counter-btn" data-counter-inc="${id}" type="button">+</button>
+                <button class="counter-btn" data-counter-dec="${succId}" type="button">−</button>
+                <div class="counter-value" data-counter-value="${succId}">0</div>
+                <button class="counter-btn" data-counter-inc="${succId}" type="button">+</button>
               </div>
-            </div>`;
-          const makeToggle = (id, label, help='') => `
+            </div>
             <div>
-              <label class="label" style="margin-bottom:8px">${label}</label>
-              ${help ? `<div class="measure-help" style="margin-bottom:6px">${help}</div>` : ''}
-              <label class="toggle-switch">
-                <input type="checkbox" id="${id}">
-                <span class="toggle-slider"></span>
-                <span class="toggle-label">Yes</span>
-              </label>
-            </div>`;
+              <label class="label">${secLabel}</label>
+              <div class="counter-control">
+                <button class="counter-btn" data-counter-dec="${secId}" type="button">−</button>
+                <div class="counter-value" data-counter-value="${secId}">0</div>
+                <button class="counter-btn" data-counter-inc="${secId}" type="button">+</button>
+              </div>
+            </div>
+          </div>
 
-          const primId = `${prefix}PrimVal`;
-          const secId  = `${prefix}SecVal`;
-          const primIsBool = /bool/i.test(drill.measurement_unit||'') || (String(drill.measurement_unit||'').toLowerCase()==='boolean');
-          const secIsBool  = /bool/i.test(drill.secondary_unit||'') || (String(drill.secondary_unit||'').toLowerCase()==='boolean');
+          <div class="rate-display" style="margin-top:8px;">
+            <div class="rate-value" id="${prefix}RateVal">0%</div>
+            <div class="rate-label">${drill.primary_measurement || 'Rate'} (<span id="${prefix}SuccCount">0</span> / Attempts: <span id="${prefix}AttCount">0</span>)</div>
+          </div>
+          <div class="small" style="margin-top:6px;">
+            <span data-rate="${prefix}-goal" class="chip ghost small" style="display:${attemptsIsGoal?'inline-flex':'none'}"></span>
+          </div>
+        `;
 
-          inputBlk.innerHTML += (primIsBool
-            ? makeToggle(primId, drill.primary_measurement || 'Primary', drill.success_threshold?`Target: ${drill.success_threshold}`:'')
-            : makeCounter(primId, drill.primary_measurement || 'Primary', drill.success_threshold?`Target: ${drill.success_threshold}`:''));
+        const update=()=>{
+          const s=parseInt(inputBlk.querySelector(`[data-counter-value="${succId}"]`)?.textContent||'0');
+          const x=parseInt(inputBlk.querySelector(`[data-counter-value="${secId}"]`)?.textContent||'0');
+          const att=s+x;
+          // For error/fumble rates, primary is "bad/attempts"; for catch_rate, primary is "good/attempts"
+          const pct = att>0 ? (errorLike ? (x/att)*100 : (s/att)*100) : 0;
+          inputBlk.querySelector(`#${prefix}RateVal`).textContent=pct.toFixed(1)+'%';
+          inputBlk.querySelector(`#${prefix}SuccCount`).textContent=String(s);
+          inputBlk.querySelector(`#${prefix}AttCount`).textContent=String(att);
 
-          if (drill.secondary_measurement){
-            inputBlk.innerHTML += (secIsBool
-              ? makeToggle(secId, drill.secondary_measurement, drill.secondary_threshold?`Target: ${drill.secondary_threshold}`:'')
-              : makeCounter(secId, drill.secondary_measurement, drill.secondary_threshold?`Target: ${drill.secondary_threshold}`:''));
+          const goalEl=inputBlk.querySelector(`[data-rate="${prefix}-goal"]`);
+          if(goalEl && goalValue!=null){
+            const met = att>=goalValue;
+            goalEl.textContent = met ? 'Attempts goal met ✓' : `Goal ≥ ${goalValue} attempts`;
+            goalEl.classList.toggle('badge', met);
           }
+        };
 
-          inputBlk.querySelectorAll('[data-counter-inc]').forEach(btn=>{
-            btn.addEventListener('click', ()=>{
-              const id = btn.getAttribute('data-counter-inc');
-              const el = inputBlk.querySelector(`[data-counter-value="${id}"]`);
-              el.textContent = String((parseInt(el.textContent)||0)+1);
-            });
+        inputBlk.querySelectorAll('[data-counter-inc],[data-counter-dec]').forEach(btn=>{
+          const isInc=btn.hasAttribute('data-counter-inc');
+          btn.addEventListener('click', ()=>{
+            const id=btn.getAttribute(isInc?'data-counter-inc':'data-counter-dec');
+            const el=inputBlk.querySelector(`[data-counter-value="${id}"]`);
+            const cur=parseInt(el.textContent)||0;
+            el.textContent=String(isInc ? cur+1 : Math.max(0,cur-1));
+            update();
           });
-          inputBlk.querySelectorAll('[data-counter-dec]').forEach(btn=>{
-            btn.addEventListener('click', ()=>{
-              const id = btn.getAttribute('data-counter-dec');
-              const el = inputBlk.querySelector(`[data-counter-value="${id}"]`);
-              const cur = parseInt(el.textContent)||0;
-              if (cur>0) el.textContent = String(cur-1);
-            });
-          });
-        }
+        });
+        update();
       }
     }
 
     async function loadRBDrills(){
-      try {
-        const res = await API.tryout.read.drills();
-        if (res?.ok) {
-          const all = res.drills || res.rows || [];
-          RB_DRILLS = all.filter(d => {
-            const pg = String(d.position_group || '').toUpperCase();
-            const st = String(d.station_id || '').toUpperCase();
-            return pg === 'RB' || st === 'RB' || st === 'RBS';
+      try{
+        const res=await API.tryout.read.drills();
+        if(res?.ok){
+          const all=res.drills||res.rows||[];
+          RB_DRILLS=all.filter(d=>{
+            const pg=String(d.position_group||'').toUpperCase();
+            const st=String(d.station_id||'').toUpperCase();
+            return pg==='RB' || st==='RB' || st==='RBS';
           });
         }
-      } catch (e) { console.error('Error loading drills:', e); }
+      }catch(e){ console.error('Error loading drills:', e); }
 
-      if (!Array.isArray(RB_DRILLS) || !RB_DRILLS.length){
-        RB_DRILLS = [
-          { drill_id:'RB01', drill_name:'8 Cone Snake', station_id:'RB', position_group:'RB', drill_type:'Time', primary_measurement:'time', measurement_unit:'sec', success_threshold:'<=12.0', failure_threshold:'>=15.0' },
+      if(!Array.isArray(RB_DRILLS)||!RB_DRILLS.length){
+        RB_DRILLS=[
+          { drill_id:'RB01', drill_name:'8 Cone Snake', station_id:'RB', position_group:'RB', drill_type:'Time', primary_measurement:'time', measurement_unit:'sec', success_threshold:'<=13.0', failure_threshold:'>=16.0' },
           { drill_id:'RB04', drill_name:'Ladder Drills', station_id:'RB', position_group:'RB', drill_type:'Rate', primary_measurement:'error_rate', measurement_unit:'percentage', success_threshold:'<=10', failure_threshold:'>=25', secondary_measurement:'attempts', secondary_unit:'count', secondary_threshold:'>=12' },
-          { drill_id:'RB05', drill_name:'Pass Catching - Backfield', station_id:'RB', position_group:'RB', drill_type:'Count', primary_measurement:'catches', measurement_unit:'count', success_threshold:'>=8', failure_threshold:'<=5', secondary_measurement:'drops', secondary_unit:'count', secondary_threshold:'<=1' }
+          { drill_id:'RB05', drill_name:'Pass Catching — Backfield', station_id:'RB', position_group:'RB', drill_type:'Rate', primary_measurement:'catch_rate', measurement_unit:'percentage', success_threshold:'>=75', failure_threshold:'<=45', secondary_measurement:'drops', secondary_unit:'count', secondary_threshold:'<=1' },
+          { drill_id:'RB07', drill_name:'Ball Security Drill', station_id:'RB', position_group:'RB', drill_type:'Rate', primary_measurement:'fumble_rate', measurement_unit:'percentage', success_threshold:'<=10', failure_threshold:'>=25', secondary_measurement:'fumbles_count', secondary_unit:'count', secondary_threshold:'<=1' }
         ];
       }
 
-      const sel = document.getElementById('rbDrillSel');
-      sel.innerHTML = RB_DRILLS.map(d=>`<option value="${d.drill_id}">${d.drill_name}</option>`).join('');
-      if (RB_DRILLS[0]) sel.value = RB_DRILLS[0].drill_id;
+      const sel=qs('#rbDrillSel');
+      sel.innerHTML=RB_DRILLS.map(d=>`<option value="${d.drill_id}">${d.drill_name}</option>`).join('');
+      if(RB_DRILLS[0]) sel.value=RB_DRILLS[0].drill_id;
       sel.dispatchEvent(new Event('change'));
     }
 
-    // Wire drill selection
     document.getElementById('rbDrillSel').addEventListener('change', ()=>{
-      const sel = document.getElementById('rbDrillSel');
-      RB_CURR = RB_DRILLS.find(x=>x.drill_id===sel.value) || null;
-      const badge = document.getElementById('drillBadge');
-      const hint  = document.getElementById('rbDrillHint');
-
-      if (RB_CURR){
-        badge.textContent = `Drill: ${RB_CURR.drill_name}`;
-        const hintParts = [];
-        if (RB_CURR.drill_category) hintParts.push(RB_CURR.drill_category);
-        if (RB_CURR.success_threshold) hintParts.push(`Above Avg: ${RB_CURR.success_threshold}`);
-        if (RB_CURR.failure_threshold) hintParts.push(`Below Avg: ${RB_CURR.failure_threshold}`);
-        hint.textContent = hintParts.join(' • ');
-
-        renderInputs('a', RB_CURR);
-        renderInputs('b', RB_CURR);
+      const sel=qs('#rbDrillSel');
+      RB_CURR=RB_DRILLS.find(x=>x.drill_id===sel.value)||null;
+      const badge=qs('#drillBadge'); const hint=qs('#rbDrillHint');
+      if(RB_CURR){
+        badge.textContent=`Drill: ${RB_CURR.drill_name}`;
+        const parts=[]; if(RB_CURR.drill_category) parts.push(RB_CURR.drill_category);
+        if(RB_CURR.success_threshold) parts.push(`Above Avg: ${RB_CURR.success_threshold}`);
+        if(RB_CURR.failure_threshold) parts.push(`Below Avg: ${RB_CURR.failure_threshold}`);
+        hint.textContent=parts.join(' • ');
+        renderInputs('a',RB_CURR); renderInputs('b',RB_CURR);
         softResetLane('A'); softResetLane('B');
-      } else {
-        badge.textContent = 'Drill: —'; hint.textContent='';
-      }
+      }else{ badge.textContent='Drill: —'; hint.textContent=''; }
     });
 
-    // ----- Recent writes (bottom) -----
     function addRecent(route, summary){
-      pageLog.unshift({ ts:new Date(), route, summary });
-      pageLog.splice(PAGE_LOG_LIMIT);
-      renderRecent();
+      pageLog.unshift({ts:new Date(), route, summary}); pageLog.splice(PAGE_LOG_LIMIT); renderRecent();
     }
     function renderRecent(){
-      const ul = qs('#recentList');
-      const cnt = qs('#recentCount');
-      if (!ul) return;
-      ul.innerHTML = pageLog.map(it => `<li><strong>${fmtTime(it.ts)}</strong> — ${it.summary}</li>`).join('');
-      cnt.textContent = pageLog.length ? `${pageLog.length} item${pageLog.length===1?'':'s'}` : '';
+      const ul=qs('#recentList'); const cnt=qs('#recentCount'); if(!ul) return;
+      ul.innerHTML=pageLog.map(it=>`<li><strong>${fmtTime(it.ts)}</strong> — ${it.summary}</li>`).join('');
+      cnt.textContent=pageLog.length ? `${pageLog.length} item${pageLog.length===1?'':'s'}` : '';
     }
-    qs('#toggleRecent').addEventListener('click', ()=>{
-      const p = qs('#recentPanel');
-      const open = p.style.display !== 'none';
-      p.style.display = open ? 'none' : '';
-      qs('#toggleRecent').textContent = open ? 'Recent Writes ▾' : 'Recent Writes ▴';
-    });
+    qs('#toggleRecent').onclick=()=>{ const p=qs('#recentPanel'); const open=p.style.display!=='none'; p.style.display=open?'none':''; qs('#toggleRecent').textContent=open?'Recent Writes ▾':'Recent Writes ▴'; };
 
-    /* -------- Saving indicator helpers -------- */
-    function setSaving(lane, saving){
-      const p = (lane==='A') ? 'a' : 'b';
-      const saveBtn = document.getElementById(p+'Save');
-      const toggleBtn = document.getElementById(p+'Toggle');
-      const resetBtn = document.getElementById(p+'Reset');
-
-      if (!saveBtn.dataset.label) saveBtn.dataset.label = saveBtn.textContent;
-
-      if (saving){
-        saveBtn.classList.add('loading');
-        saveBtn.disabled = true;
-        if (toggleBtn) toggleBtn.disabled = true;
-        if (resetBtn) resetBtn.disabled = true;
-        saveBtn.innerHTML = '<span class="spin"></span>Saving…';
-      } else {
-        saveBtn.classList.remove('loading');
-        saveBtn.disabled = (lane==='A' ? !lanePlayers.A : !lanePlayers.B);
-        if (toggleBtn) toggleBtn.disabled = false;
-        if (resetBtn)  resetBtn.disabled  = false;
-        saveBtn.textContent = saveBtn.dataset.label || 'Save';
-      }
+    function setSaving(lane,saving){
+      const p=(lane==='A')?'a':'b';
+      const saveBtn=qs('#'+p+'Save'); const toggleBtn=qs('#'+p+'Toggle'); const resetBtn=qs('#'+p+'Reset');
+      if(!saveBtn.dataset.label) saveBtn.dataset.label=saveBtn.textContent;
+      if(saving){ saveBtn.classList.add('loading'); saveBtn.disabled=true; if(toggleBtn) toggleBtn.disabled=true; if(resetBtn) resetBtn.disabled=true; saveBtn.innerHTML='<span class="spin"></span>Saving…'; }
+      else{ saveBtn.classList.remove('loading'); saveBtn.disabled=(lane==='A'? !lanePlayers.A : !lanePlayers.B); if(toggleBtn) toggleBtn.disabled=false; if(resetBtn) resetBtn.disabled=false; saveBtn.textContent=saveBtn.dataset.label||'Save'; }
     }
 
     function readLaneValues(prefix, drill){
-      const isTime = isTimeDrill(drill);
-      const isRate = isRateDrill(drill);
-      let primaryVal = null, secondaryVal = null;
+      const isTime=isTimeDrill(drill);
+      const isRate=isRateDrill(drill);
+      let primaryVal=null, secondaryVal=null;
 
-      if (isTime){
-        const timeEl = qs(`#${prefix}Time`);
-        primaryVal = parseFloat((timeEl.textContent||'0').trim());
-        if (isNaN(primaryVal)) primaryVal = null;
-
-      } else if (isRate){
-        const box = qs(`#${prefix}InputsBlock`);
-        const succEl = box?.querySelector(`[data-counter-value="${prefix}Successes"]`);
-        const failEl = box?.querySelector(`[data-counter-value="${prefix}Failures"]`);
-        const s = parseInt(succEl?.textContent||'0');
-        const f = parseInt(failEl?.textContent||'0');
-        const att = s + f;
-
-        const pm = String(drill.primary_measurement||'').toLowerCase();
-        const isErrorRate = pm.includes('error');
-
-        primaryVal = att>0 ? (isErrorRate ? (f/att)*100 : (s/att)*100) : null;
-        secondaryVal = /attempt/i.test(String(drill.secondary_measurement||'')) ? att : null;
-
-      } else {
-        const box = qs(`#${prefix}InputsBlock`);
-        const primId = `${prefix}PrimVal`;
-        const secId  = `${prefix}SecVal`;
-
-        const primCounter = box?.querySelector(`[data-counter-value="${primId}"]`);
-        const primToggle  = box?.querySelector(`#${primId}`);
-        const secCounter  = box?.querySelector(`[data-counter-value="${secId}"]`);
-        const secToggle   = box?.querySelector(`#${secId}`);
-
-        if (primCounter) primaryVal = parseInt(primCounter.textContent)||0;
-        else if (primToggle) primaryVal = primToggle.checked;
-
-        if (secCounter) secondaryVal = parseInt(secCounter.textContent)||0;
-        else if (secToggle) secondaryVal = secToggle.checked;
-
-        primaryVal = normalizeValue(drill.measurement_unit, primaryVal);
-        secondaryVal = (secondaryVal!=null) ? normalizeValue(drill.secondary_unit, secondaryVal) : null;
+      if(isTime){
+        const el=qs(`#${prefix}Time`); primaryVal=parseFloat((el.textContent||'0').trim()); if(isNaN(primaryVal)) primaryVal=null;
+      }else if(isRate){
+        const pm=(drill.primary_measurement||'').toLowerCase();
+        const errorLike = pm.includes('error_rate') || pm.includes('fumble_rate') || (pm.includes('error') && pm.includes('rate'));
+        const box=qs(`#${prefix}InputsBlock`);
+        const succ=parseInt(box?.querySelector(`[data-counter-value="${prefix}Successes"]`)?.textContent||'0');
+        const sec =parseInt(box?.querySelector(`[data-counter-value="${prefix}Secondary"]`)?.textContent||'0');
+        const att=succ+sec;
+        primaryVal = att>0 ? (errorLike ? (sec/att)*100 : (succ/att)*100) : 0;
+        // if secondary is an attempts goal, metric_2 should carry attempts; otherwise carry the event count
+        if (/attempt/i.test(String(drill.secondary_measurement||''))) secondaryVal = att;
+        else if (drill.secondary_measurement) secondaryVal = sec;
       }
-      return { primaryVal, secondaryVal, isTime, isRate };
+      return { primaryVal, secondaryVal };
     }
 
     async function saveAttempt({ lane }){
-      const prefix   = lane==='A' ? 'a' : 'b';
-      const statusEl = document.getElementById(lane==='A' ? 'aStatus' : 'bStatus');
-      const attSel   = document.getElementById(lane==='A' ? 'aAttempt': 'bAttempt');
-      const logTbody = document.getElementById(lane==='A' ? 'aLog'    : 'bLog');
+      const prefix=(lane==='A')?'a':'b';
+      const statusEl=qs(lane==='A'?'#aStatus':'#bStatus');
+      const attSel=qs(lane==='A'?'#aAttempt':'#bAttempt');
+      const logTbody=qs(lane==='A'?'#aLog':'#bLog');
+      statusEl.textContent='';
 
-      statusEl.textContent = '';
-
-      const c = ctx();
+      const c=ctx();
       if(!c.tryout_id){ statusEl.textContent='Set a Tryout ID first.'; statusEl.className='status warn'; return; }
       if(!RB_CURR){ statusEl.textContent='Choose a drill.'; statusEl.className='status warn'; return; }
 
-      const player = lanePlayers[lane];
-      if(!(player?.tryout_num || player?.player_id)){
-        statusEl.textContent=`Assign a player to Lane ${lane}.`;
-        statusEl.className='status warn';
-        return;
-      }
+      const player=lanePlayers[lane];
+      if(!(player?.tryout_num || player?.player_id)){ statusEl.textContent=`Assign a player to Lane ${lane}.`; statusEl.className='status warn'; return; }
 
-      const t = timers.get(prefix);
-      if (t?.isRunning()) t.stop();
+      const t=timers.get(prefix); if(t?.isRunning()) t.stop();
 
       const { primaryVal, secondaryVal } = readLaneValues(prefix, RB_CURR);
-      const attempt = Number(attSel.value||1);
+      const attempt=Number(attSel.value||1);
+      const evaluation=evaluateDrill(RB_CURR, primaryVal, secondaryVal);
 
-      const evaluation = evaluateDrill(RB_CURR, primaryVal, secondaryVal);
-
-      const row = {
-        tryout_id:   c.tryout_id || '',
-        period_code: c.period_code || '',
-        tryout_num:  String(player.tryout_num || '').trim(),
-        player_id:   String(player.player_id || '').trim(),
-        group_code:  resolveGroupCode(player.player_id, '', player) || '',
-        station_id:  STATION_ID,
-        drill_id:    RB_CURR.drill_id,
-        attempt:     attempt,
-        metric_1:    (primaryVal===true)?1:(primaryVal===false)?0:primaryVal,
-        metric_2:    (secondaryVal===true)?1:(secondaryVal===false)?0:secondaryVal,
-        pass_flag:   evaluation.rating==='above' ? 1 : 0,
-        notes:       (document.getElementById('sharedNotes').value||'').trim(),
-        extra_1:     (document.getElementById(prefix+'Extra1').value||'').trim(),
-        extra_2:     (document.getElementById(prefix+'Extra2').value||'').trim()
+      const row={
+        tryout_id:c.tryout_id||'', period_code:c.period_code||'',
+        tryout_num:String(player.tryout_num||'').trim(), player_id:String(player.player_id||'').trim(),
+        group_code:resolveGroupCode(player.player_id,'',player)||'',
+        station_id:STATION_ID, drill_id:RB_CURR.drill_id, attempt:attempt,
+        metric_1:primaryVal, metric_2:secondaryVal, pass_flag:(evaluation.rating==='above'?1:0),
+        notes:(qs('#sharedNotes').value||'').trim()
       };
 
-      setSaving(lane, true);
-      let res;
-      try { res = await API.tryout.write.station(row); }
-      finally { setSaving(lane, false); }
+      setSaving(lane,true);
+      let res; try{ res=await API.tryout.write.station(row); } finally{ setSaving(lane,false); }
+      if(!res?.ok){ statusEl.textContent=res?.error||'Save failed.'; statusEl.className='status err'; return; }
 
-      if(!res?.ok){
-        statusEl.textContent = res?.error || 'Save failed.';
-        statusEl.className = 'status err';
-        return;
-      }
-
-      const primTxt = primaryVal==null ? '—' :
-                      (isTimeDrill(RB_CURR) ? Number(primaryVal).toFixed(2)+' s' :
-                      isRateDrill(RB_CURR) ? Number(primaryVal).toFixed(1)+'%' : String(primaryVal));
+      const primTxt = isTimeDrill(RB_CURR) ? Number(primaryVal).toFixed(2)+' s' : Number(primaryVal).toFixed(1)+'%';
       const secTxt  = RB_CURR.secondary_measurement ? (secondaryVal==null ? '—' : String(secondaryVal)) : '—';
 
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${RB_CURR.drill_name}</td>
-        <td>${attempt}</td>
-        <td>${primTxt}</td>
-        <td>${secTxt}</td>
-        <td><span class="${evaluation.ratingClass}">${evaluation.ratingText}</span></td>`;
-      logTbody.prepend(tr);
-      while(logTbody.children.length > 10) logTbody.removeChild(logTbody.lastChild);
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${RB_CURR.drill_name}</td><td>${attempt}</td><td>${primTxt}</td><td>${secTxt}</td><td><span class="${evaluation.ratingClass}">${evaluation.ratingText}</span></td>`;
+      logTbody.prepend(tr); while(logTbody.children.length>10) logTbody.removeChild(logTbody.lastChild);
 
-      const who = player.tryout_num || player.player_id || '—';
+      const who=player.tryout_num||player.player_id||'—';
       addRecent('station', `Write → RB :: ${who} • ${RB_CURR.drill_name} • ${primTxt}${RB_CURR.secondary_measurement?` • ${secTxt}`:''} • ${evaluation.ratingText} (Att ${attempt})`);
 
-      if (AFTER_SAVE.markDone) {
-        try { TryoutUI?.markDone?.(player.player_id || player.tryout_num); } catch {}
-        try { window.dispatchEvent(new CustomEvent('tryoutui:done', { detail:{ player_id: player.player_id, tryout_num: player.tryout_num } })); } catch {}
-      }
+      if(AFTER_SAVE.markDone){ try{ TryoutUI?.markDone?.(player.player_id||player.tryout_num); }catch{} try{ window.dispatchEvent(new CustomEvent('tryoutui:done',{detail:{player_id:player.player_id,tryout_num:player.tryout_num}})); }catch{} }
 
-      const next = Math.min((attempt % 10) + 1, 10);
-      attSel.value = String(next);
-      softResetLane(lane);
-
-      statusEl.textContent = `Saved ✔ • ${evaluation.ratingText}`;
-      statusEl.className = evaluation.rating==='above' ? 'status ok' :
-                           evaluation.rating==='below' ? 'status warn' : 'status avg';
+      const next=Math.min((attempt%10)+1,10); attSel.value=String(next); softResetLane(lane);
+      statusEl.textContent=`Saved ✔ • ${evaluation.ratingText}`;
+      statusEl.className=evaluation.rating==='above'?'status ok':evaluation.rating==='below'?'status warn':'status avg';
     }
 
-    // wire lanes
     function wireLane(prefix){
-      const toggleBtn = document.getElementById(prefix+'Toggle');
-      const timeEl = document.getElementById(prefix+'Time');
-      const statusEl = document.getElementById(prefix+'Status');
-
-      const t = makeTimer(timeEl, (running)=>{
-        if (toggleBtn){
-          toggleBtn.textContent = running ? 'Stop' : 'Start';
-          toggleBtn.setAttribute('aria-pressed', running ? 'true' : 'false');
-          toggleBtn.classList.toggle('warn', running);
-        }
-        if (!running) statusEl.textContent = '';
-      });
-      timers.set(prefix, t);
-
-      if (toggleBtn) toggleBtn.addEventListener('click', t.toggle);
-      const resetBtn = document.getElementById(prefix+'Reset');
-      if (resetBtn) resetBtn.addEventListener('click', ()=>{ softResetLane(prefix==='a'?'A':'B'); });
-      document.getElementById(prefix+'Save').addEventListener('click', ()=>{ saveAttempt({ lane: (prefix==='a'?'A':'B') }); });
+      const toggleBtn=qs('#'+prefix+'Toggle'); const timeEl=qs('#'+prefix+'Time'); const statusEl=qs('#'+prefix+'Status');
+      const t=makeTimer(timeEl,(running)=>{ if(toggleBtn){ toggleBtn.textContent=running?'Stop':'Start'; toggleBtn.setAttribute('aria-pressed', running?'true':'false'); toggleBtn.classList.toggle('warn', running); } if(!running) statusEl.textContent=''; });
+      timers.set(prefix,t);
+      if(toggleBtn) toggleBtn.addEventListener('click', t.toggle);
+      const resetBtn=qs('#'+prefix+'Reset'); if(resetBtn) resetBtn.addEventListener('click', ()=>softResetLane(prefix==='a'?'A':'B'));
+      qs('#'+prefix+'Save').addEventListener('click', ()=>saveAttempt({ lane:(prefix==='a'?'A':'B') }));
     }
 
-    // Start both timers (time drills only)
-    function wireBothStart(){
-      const a = () => timers.get('a');
-      const b = () => timers.get('b');
-      const btn = document.getElementById('bothStart');
-      if (!btn) return;
-      btn.addEventListener('click', ()=>{ if(lanePlayers.A) a()?.start(); if(lanePlayers.B) b()?.start(); });
-    }
+    function wireBothStart(){ const a=()=>timers.get('a'); const b=()=>timers.get('b'); const btn=qs('#bothStart'); if(!btn) return; btn.addEventListener('click', ()=>{ if(lanePlayers.A) a()?.start(); if(lanePlayers.B) b()?.start(); }); }
 
-    // Init
     (async function init(){
-      wireLane('a');
-      wireLane('b');
-      wireBothStart();
-      setActiveLane('A');
-
-      await Promise.all([ loadRoster(), loadLatestGroups(), loadRBDrills() ]);
-
-      // Preload selected player from TryoutUI if present
-      if (window.TryoutUI?.getSelectedPlayers) {
-        const cur = TryoutUI.getSelectedPlayers();
-        if (Array.isArray(cur) && cur[0]) assignToActiveLane(cur[0]);
-      }
+      wireLane('a'); wireLane('b'); wireBothStart(); setActiveLane('A');
+      await Promise.all([loadRoster(), loadLatestGroups(), loadRBDrills()]);
+      if(window.TryoutUI?.getSelectedPlayers){ const cur=TryoutUI.getSelectedPlayers(); if(Array.isArray(cur)&&cur[0]) assignToActiveLane(cur[0]); }
     })();
   </script>
 </body>

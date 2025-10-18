@@ -4,9 +4,8 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="gsds-api-base" content="https://script.google.com/macros/s/AKfycbw8Jb7RpQ7j9L2q32YDSBuNSPLFMjPzKdvuI_BgkutfNk5COrEYUdsUWZYXDOJRAeH3kA/exec">
-  <title>Team — Tryouts</title>
+  <title>Team 7v7 — Tryouts</title>
 
-  <!-- Simple auth guard -->
   <script>
     (function(){
       const ok = localStorage.getItem('auth_ok')==='1' &&
@@ -15,7 +14,6 @@
     })();
   </script>
 
-  <!-- Theme + fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -23,70 +21,84 @@
 
   <style>
     .container{ max-width:1200px; margin:0 auto; padding:16px; }
+    .stack{ display:flex; flex-direction:column; gap:12px; }
     .card{ background: rgba(255,255,255,.05); border:1px solid var(--border);
            border-radius:16px; padding:16px; box-shadow: var(--shadow-soft, 0 8px 24px rgba(0,0,0,.18)); }
-
-    .toolbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .toolbar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
     .chip{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px;
-           border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.06); font-weight:800; }
+           border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.06); font-weight:700; }
     .chip.badge{ background:linear-gradient(135deg,#7C4DFF,#8B5CF6); color:#071018; border:0; }
     .chip.ghost{ background:transparent; }
+    .chip.tiny{ font-size:.8rem; padding:4px 8px; }
 
-    .small{ font-size:.85rem; opacity:.8; }
-    .muted{ opacity:.75; }
+    .label{ font-weight:800; font-size:.95rem; opacity:.9; margin-bottom:6px; display:block; }
+    .form-input, .form-select{ width:100%; padding:.65rem .8rem; border-radius:10px; border:1px solid rgba(255,255,255,.28);
+      background:rgba(255,255,255,.08); color:#fff; }
+
+    .seg{ display:inline-flex; border:1px solid rgba(255,255,255,.18); border-radius:10px; overflow:hidden; }
+    .seg button{ appearance:none; border:0; padding:8px 14px; font-weight:800; color:#fff; background:rgba(255,255,255,.06); cursor:pointer; border-right:1px solid rgba(255,255,255,.18); }
+    .seg button:last-child{ border-right:0; }
+    .seg button.active{ background:linear-gradient(135deg,#7C4DFF,#8B5CF6); color:#071018; }
 
     .row{ display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; }
-    .row3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; }
-    .row4{ display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; }
-    @media (max-width:1000px){ .row, .row3, .row4{ grid-template-columns:1fr; } }
-
-    .form-input, .form-select, .form-number{
-      width:100%; padding:.68rem .8rem; border-radius:12px; border:1px solid rgba(255,255,255,.28);
-      background:rgba(255,255,255,.08); color:#fff;
-    }
-    .label{ font-weight:800; font-size:.95rem; opacity:.9; margin-bottom:6px; display:block; }
+    @media (max-width:768px){ .row{ grid-template-columns: 1fr; } }
 
     .btn{ appearance:none; border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08); color:#fff;
-          padding:.55rem .8rem; border-radius:10px; font-weight:800; cursor:pointer; transition: all .2s ease; }
-    .btn.primary{ background:linear-gradient(135deg,#7C4DFF,#8B5CF6); color:#071018; border:0; }
+          padding:.55rem .8rem; border-radius:10px; font-weight:800; cursor:pointer; transition:.2s ease; }
     .btn.success{ background:linear-gradient(135deg,#16A34A,#10B981); color:#061710; border:0; }
-    .btn.warn{ background:linear-gradient(135deg,#F59E0B,#F59E0B); color:#2A1400; border:0; }
     .btn.ghost{ background:transparent; }
-    .btn:disabled{ opacity:.55; cursor:not-allowed; }
+    .btn:disabled{ opacity:.5; cursor:not-allowed; }
+    
+    /* Loading spinner */
     .btn.loading{ position:relative; pointer-events:none; }
     .btn.loading .spin{ width:14px; height:14px; border:2px solid rgba(255,255,255,.45);
                         border-top-color:#fff; border-radius:50%; display:inline-block;
                         margin-right:8px; vertical-align:-2px; animation:spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .seg{ display:inline-flex; background:rgba(255,255,255,.06); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
-    .seg button{ appearance:none; border:0; padding:6px 10px; font-weight:800; color:#fff; background:transparent; cursor:pointer; }
-    .seg button[aria-pressed="true"]{ background:#8B5CF6; color:#071018; }
-
-    /* Toggle switches */
-    .toggle{ display:flex; align-items:center; gap:10px; }
-    .toggle input{ display:none; }
-    .toggle .track{ width:50px; height:26px; border-radius:999px; background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); position:relative; transition:all .2s; }
-    .toggle .knob{ position:absolute; top:2px; left:3px; width:20px; height:20px; background:#fff; border-radius:999px; box-shadow:0 2px 4px rgba(0,0,0,.22); transition:all .2s; }
-    .toggle input:checked + .track{ background:linear-gradient(135deg,#16A34A,#10B981); border-color:#16A34A; }
-    .toggle input:checked + .track .knob{ transform:translateX(23px); }
-
-    /* Lineups */
-    .lineup{ display:flex; flex-wrap:wrap; gap:8px; }
-    .pill{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.08); }
-    .pill .x{ opacity:.7; cursor:pointer; padding:0 .25rem; }
+    .lineup{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+    .player-tag{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:8px; background:rgba(139,92,246,.15); border:1px solid rgba(139,92,246,.3); }
+    .player-tag .remove{ cursor:pointer; opacity:.6; }
 
     .status{ margin-top:8px; font-weight:700; }
-    .status.ok{ color:#34D399; } .status.err{ color:#F87171; } .status.warn{ color:#F59E0B; } .status.avg{ color:#8B5CF6; }
+    .status.ok{ color:#34D399; } .status.err{ color:#F87171; } .status.warn{ color:#F59E0B; }
 
-    .table{ width:100%; border-collapse:collapse; font-size:.95rem; }
-    .table th,.table td{ padding:6px 8px; border-bottom:1px solid rgba(255,255,255,.12); text-align:left; }
+    .play-log{ margin-top:12px; }
+    .play-row{ padding:8px; border-radius:8px; background:rgba(255,255,255,.06); margin-bottom:6px; font-size:.9rem; }
+
+    .muted{ opacity:.7; }
+    .small{ font-size:.85rem; }
+
+    /* Roster cards grid */
+    .roster-cards{ display:grid; grid-template-columns: repeat(5, 1fr); gap:8px; margin-top:12px; }
+    @media (max-width:900px){ .roster-cards{ grid-template-columns: repeat(4, 1fr); } }
+    @media (max-width:768px){ .roster-cards{ grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width:480px){ .roster-cards{ grid-template-columns: repeat(2, 1fr); } }
+
+    .roster-card{ padding:10px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15); border-radius:8px; cursor:pointer; transition:all .2s; text-align:center; }
+    .roster-card:hover{ background:rgba(139,92,246,.2); border-color:rgba(139,92,246,.4); }
+    .roster-card .num{ font-weight:900; font-size:1.1rem; }
+    .roster-card .name{ font-size:.8rem; opacity:.8; margin-top:2px; }
+    .roster-card .pos{ font-size:.7rem; opacity:.6; }
+
+    .roster-filters{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+    .filter-btn{ padding:6px 12px; border-radius:8px; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.06); color:#fff; font-weight:800; cursor:pointer; transition:all .2s; }
+    .filter-btn.active{ background:linear-gradient(135deg,#7C4DFF,#8B5CF6); border-color:#8B5CF6; color:#071018; }
+
+    .pager{ display:flex; gap:8px; justify-content:center; align-items:center; margin-top:12px; }
+    .pager button{ padding:6px 10px; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.06); color:#fff; border-radius:8px; cursor:pointer; }
+    .pager button:disabled{ opacity:.4; cursor:not-allowed; }
+    .pager .info{ font-size:.9rem; opacity:.8; }
+
+    /* Loading overlay for roster */
+    .loading-overlay{ position:absolute; inset:0; background:rgba(0,0,0,.3); display:flex; align-items:center; justify-content:center; border-radius:8px; }
+    .loading-overlay .spinner{ width:32px; height:32px; border:3px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin 1s linear infinite; }
   </style>
 </head>
 
 <body class="theme-atl practice-page">
   <header class="page-header">
-    <h1>Team</h1>
+    <h1>Team 7v7</h1>
     <nav class="menu-actions">
       <a class="menu-btn" href="../index.html">Home</a>
       <a class="menu-btn" href="../tryout/index.html">Tryout Hub</a>
@@ -94,605 +106,604 @@
   </header>
 
   <main>
-    <div class="container">
-      <!-- Shared: context bar -->
-      <div id="tryout-shared" style="margin-bottom:12px"></div>
+    <div class="container stack">
+      <div id="ctxBanner" class="chip tiny" aria-live="polite">Loading context…</div>
 
-      <!-- Control bar -->
-      <section class="card" style="margin-bottom:14px">
-        <div class="toolbar">
-          <span class="chip">Station: <strong>TEAM</strong></span>
-
-          <!-- Drill (TEAM-only) -->
-          <div class="field" style="min-width:280px; margin:0;">
-            <label class="label">Team Drill</label>
-            <select id="tmDrillSel" class="form-select"></select>
-            <div id="tmHint" class="small muted" style="margin-top:6px"></div>
-          </div>
-
-          <span id="drillBadge" class="chip badge">Drill: —</span>
-          <span id="posHint" class="chip ghost small">Positions: —</span>
-        </div>
-
-        <!-- Add players to lineups -->
-        <div class="row" style="margin-top:10px">
-          <div>
-            <label class="label">Add to Offense (filtered)</label>
-            <input id="addOff" class="form-input" list="off_list" placeholder="number • name"/>
-            <datalist id="off_list"></datalist>
-            <div id="offLine" class="lineup" style="margin-top:8px"></div>
-          </div>
-          <div>
-            <label class="label">Add to Defense (filtered)</label>
-            <input id="addDef" class="form-input" list="def_list" placeholder="number • name"/>
-            <datalist id="def_list"></datalist>
-            <div id="defLine" class="lineup" style="margin-top:8px"></div>
-          </div>
-        </div>
-
-        <!-- 7v7 / Inside Run specific inputs -->
-        <div id="tmInputs" style="margin-top:10px"></div>
-
-        <!-- Notes + Save -->
-        <div class="row" style="margin-top:10px">
-          <div>
-            <label class="label">Notes (optional)</label>
-            <input id="tmNotes" class="form-input" placeholder="late throw, TFL, blitz, etc."/>
-          </div>
-          <div style="display:flex; align-items:flex-end; gap:8px;">
-            <button id="saveRep" class="btn success" disabled>Save Rep (all in lineup)</button>
-            <button id="clearAll" class="btn ghost">Clear</button>
-          </div>
-        </div>
-
-        <div id="tmStatus" class="status"></div>
-      </section>
-
-      <!-- Rep save log (per player for the last save) -->
-      <section class="card" style="margin-bottom:14px">
-        <div class="toolbar">
-          <span class="chip ghost small">Saved Lines (last rep)</span>
-          <span id="lastCount" class="small muted"></span>
-        </div>
-        <table class="table">
-          <thead>
-            <tr><th>Player</th><th>Side</th><th>Pos</th><th>Drill</th><th>Primary</th><th>Secondary</th><th>Pass?</th><th>Extras</th></tr>
-          </thead>
-          <tbody id="lastLog"></tbody>
-        </table>
-      </section>
-
-      <!-- Recent writes at bottom -->
+      <!-- Drill Selection -->
       <section class="card">
         <div class="toolbar">
-          <span class="chip ghost small">Recent Writes</span>
-          <span id="recentCount" class="small muted"></span>
+          <span class="chip">Station: <strong>TEAM 7v7</strong></span>
+          <div style="min-width:240px">
+            <label class="label">Drill</label>
+            <select id="drillSelect" class="form-select"></select>
+            <div id="drillHint" class="small muted" style="margin-top:6px"></div>
+          </div>
+          <span id="drillBadge" class="chip badge">Drill: —</span>
         </div>
-        <div id="recentPanel" style="margin-top:8px">
-          <ul id="recentList" style="margin:0; padding-left:18px"></ul>
+      </section>
+
+      <!-- Side Selection -->
+      <section class="card">
+        <div class="toolbar">
+          <div>
+            <label class="label">Select Side to Add Players</label>
+            <div class="seg" role="group">
+              <button id="sideOff" class="active">Offense</button>
+              <button id="sideDef">Defense</button>
+            </div>
+          </div>
+          <span id="selectedHint" class="small muted" style="margin-left:auto">Click player cards to add to Offense</span>
         </div>
+      </section>
+
+      <!-- Roster Cards with Pagination -->
+      <section class="card" style="position:relative">
+        <div id="rosterLoadingOverlay" class="loading-overlay" style="display:none">
+          <div class="spinner"></div>
+        </div>
+        <div class="toolbar">
+          <span class="chip tiny">Available Players</span>
+          <span id="pageInfo" class="small muted" style="margin-left:auto"></span>
+        </div>
+        
+        <div class="roster-filters" id="filterButtons"></div>
+        <div class="roster-cards" id="rosterCards"></div>
+        <div class="pager">
+          <button id="prevPage" class="btn ghost">← Prev</button>
+          <span class="info" id="pageCounter"></span>
+          <button id="nextPage" class="btn ghost">Next →</button>
+        </div>
+      </section>
+
+      <!-- Lineups Display -->
+      <section class="card">
+        <div class="row" style="margin-bottom:12px">
+          <div>
+            <span class="chip badge">Offense</span>
+            <div id="offenseLineup" class="lineup"></div>
+          </div>
+          <div>
+            <span class="chip badge" style="background:linear-gradient(135deg,#EF4444,#DC2626);">Defense</span>
+            <div id="defenseLineup" class="lineup"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Play Recording -->
+      <section class="card">
+        <div class="toolbar" style="margin-bottom:12px">
+          <span class="chip">Record Play</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <label class="label">Play Type</label>
+            <div class="seg" role="group">
+              <button id="typePass" class="active">Pass</button>
+              <button id="typeRun">Run</button>
+            </div>
+          </div>
+          <div>
+            <label class="label">QB</label>
+            <select id="qbSelect" class="form-select">
+              <option value="">Select QB</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:12px" id="passInputs">
+          <div>
+            <label class="label">Target (Pass only)</label>
+            <select id="targetSelect" class="form-select">
+              <option value="">Select Target</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">Pass Result</label>
+            <div class="seg" role="group">
+              <button id="outcomeSuccess" class="active">Catch</button>
+              <button id="outcomeFail">Incomplete</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="passDefenseInputs" style="margin-top:12px">
+          <div class="row">
+            <div>
+              <label class="label">Defender (optional)</label>
+              <select id="defenderSelect" class="form-select">
+                <option value="">Select Defender</option>
+              </select>
+            </div>
+            <div>
+              <label class="label">Defensive Action</label>
+              <div class="seg" role="group">
+                <button id="defNone" data-action="none" class="active">None</button>
+                <button id="defPBU" data-action="pbu">PBU</button>
+                <button id="defINT" data-action="int">INT</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="runInputs" style="display:none">
+          <div class="row" style="margin-top:12px">
+            <div>
+              <label class="label">Ball Carrier (Run only)</label>
+              <select id="ballCarrier" class="form-select">
+                <option value="">Select Ball Carrier</option>
+              </select>
+            </div>
+            <div>
+              <label class="label">Gain/Loss Yards</label>
+              <input id="gainYards" class="form-input" type="number" placeholder="0" step="0.5"/>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:12px" id="runDefenseInputs">
+            <div>
+              <label class="label">Tackler (optional)</label>
+              <select id="tacklerSelect" class="form-select">
+                <option value="">Select Tackler</option>
+              </select>
+            </div>
+            <div>
+              <label class="label">Tackle Type</label>
+              <div class="seg" role="group">
+                <button id="tklNone" data-tackle="none" class="active">None</button>
+                <button id="tklTFL" data-tackle="tfl">TFL</button>
+                <button id="tklMissed" data-tackle="missed">Missed</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:12px">
+          <div>
+            <label class="label">Notes (optional)</label>
+            <input id="playNotes" class="form-input" placeholder="coverage, pursuit, etc."/>
+          </div>
+          <div>
+            <label class="label">Attempt</label>
+            <input id="playAttempt" class="form-input" type="number" value="1" min="1" max="10"/>
+          </div>
+        </div>
+
+        <button id="savePlay" class="btn success" style="margin-top:12px" disabled>Save Play</button>
+        <div id="playStatus" class="status"></div>
+      </section>
+
+      <!-- Play Log -->
+      <section class="card">
+        <span class="chip tiny">Recent Plays</span>
+        <div id="playLog" class="play-log"></div>
       </section>
     </div>
   </main>
 
   <footer class="site-footer"><p>&copy; 2025 Game Speed Data Systems</p></footer>
 
-  <!-- libs -->
   <script src="../js/api.js"></script>
   <script src="../js/rules.js"></script>
   <script src="../js/context.js"></script>
   <script src="../js/tryout-ui.js"></script>
 
   <script>
-    // ---------- Boot shared context/UI ----------
     (function(){
       const meta = document.querySelector('meta[name="gsds-api-base"]');
       window.API_BASE = (meta && meta.content || '').trim();
     })();
     GameContext.configure({ apiBase: window.API_BASE, server: true, pollMs: 1000 });
-    TryoutUI.init('#tryout-shared', { showGroup:true, filterMode:'groups', allowPresence:false });
+    GameContext.mountBanner('#ctxBanner');
 
-    const STATION_ID = 'TEAM';
-    const AFTER_SAVE = { markDone:false };
-
+    const CARDS_PER_PAGE = 10;
     let roster = [];
-    const groupLatest = new Map();
-    let TM_DRILLS = [], TM_CURR = null;
+    let filteredRoster = [];
+    let currentPage = 0;
+    let selectedPlayer = null;
+    let selectedSide = 'OFF';
+    let playType = 'PASS';
+    let passOutcome = 'CATCH';
+    let defenseAction = 'none'; // pbu, int, or none
+    let tackleType = 'none'; // tfl, missed, or none
+    let drills = [];
+    let currentDrill = null;
+    const offense = [];
+    const defense = [];
+    const plays = [];
+    let selectedGroup = null;
 
-    const offense = new Map(); // pid -> rec
-    const defense = new Map();
+    const qs = (s,p=document) => p.querySelector(s);
+    const qsa = (s,p=document) => [...p.querySelectorAll(s)];
+    const ctx = () => GameContext.get ? GameContext.get() : {};
 
-    const recent = [];
-    const RECENT_MAX = 30;
+    function fmtPlayer(r) {
+      return `${r.tryout_num||''} • ${r.display_name||r.player_id}`;
+    }
 
-    // helpers
-    const qs  = (s,p=document)=>p.querySelector(s);
-    const qsa = (s,p=document)=>[...p.querySelectorAll(s)];
-    const labelFor = (r)=> [r.tryout_num, '•', r.display_name, r.primary_pos?`(${r.primary_pos})`:'' ].filter(Boolean).join(' ');
-    const posOf = (r)=> String(r.primary_pos||r.position||'').toUpperCase().trim();
-    function ctx(){ return GameContext.get ? GameContext.get() : {}; }
-    const fmtTime = (d)=>{ const pad=n=>String(n).padStart(2,'0'); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
+    function setLoading(isLoading, type = 'roster') {
+      if (type === 'roster') {
+        qs('#rosterLoadingOverlay').style.display = isLoading ? 'flex' : 'none';
+      }
+    }
 
-    function addRecent(summary){
-      recent.unshift({ ts:new Date(), summary });
-      recent.splice(RECENT_MAX);
-      const ul = qs('#recentList');
-      ul.innerHTML = recent.map(x=> `<li><strong>${fmtTime(x.ts)}</strong> — ${x.summary}</li>`).join('');
-      qs('#recentCount').textContent = `${recent.length} item${recent.length===1?'':'s'}`;
+    function setSaving(isSaving) {
+      const btn = qs('#savePlay');
+      if (!btn.dataset.label) btn.dataset.label = btn.textContent;
+      
+      if (isSaving) {
+        btn.classList.add('loading');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spin"></span>Saving…';
+      } else {
+        btn.classList.remove('loading');
+        btn.textContent = btn.dataset.label || 'Save Play';
+        refreshSaveEnabled();
+      }
     }
 
     async function loadRoster(){
-      const res = await API.tryout.read.roster();
-      if(!res?.ok) return;
-      const tid = ctx().tryout_id || '';
-      roster = (res.roster||[]).filter(r => !tid || String(r.tryout_id||'')===String(tid))
-        .map(r=>({
-          player_id: r.player_id || '',
-          display_name: r.display_name || r.player_name || '',
-          primary_pos: r.primary_pos || r.position || '',
-          tryout_num: r.tryout_num || r.jersey_number || '',
-          group_code: r.group_code || r.primary_pos || ''
-        }));
-    }
-    async function loadLatestGroups(){
-      const res = await API.tryout.read.groupsLatest(ctx().tryout_id);
-      if(!res?.ok || !Array.isArray(res.latest)) return;
-      groupLatest.clear();
-      res.latest.forEach(row => { if(row.player_id && row.group_code) groupLatest.set(String(row.player_id).trim(), String(row.group_code).trim()); });
-    }
-    function resolveGroupCode(pid, fallback, rec){
-      if (pid) {
-        const direct = groupLatest.get(String(pid).trim());
-        if (direct) return direct;
-        const r = roster.find(x => String(x.player_id).trim() === String(pid).trim());
-        return r?.group_code || r?.primary_pos || fallback || '';
+      setLoading(true, 'roster');
+      try {
+        const res = await API.tryout.read.roster();
+        if(res?.ok) {
+          roster = (res.roster||[]).map(r=>({
+            player_id: r.player_id || '',
+            display_name: r.display_name || r.player_name || '',
+            primary_pos: r.primary_pos || r.position || '',
+            tryout_num: String(r.tryout_num||r.jersey_number||'').padStart(3,'0'),
+            group_code: r.group_code || r.primary_pos || '',
+            tryout_id: r.tryout_id || ''
+          })).sort((a,b)=> (parseInt(a.tryout_num,10)||0) - (parseInt(b.tryout_num,10)||0));
+          filterByGroup(null);
+        }
+      }catch(e){ 
+        console.error(e); 
+        qs('#pageInfo').textContent = 'Error loading roster';
+      } finally {
+        setLoading(false, 'roster');
       }
-      return rec?.group_code || rec?.primary_pos || fallback || '';
     }
 
-    // TEAM drills only
-    async function loadTMDrills(){
-      try{
+    async function loadDrills(){
+      try {
         const res = await API.tryout.read.drills();
-        if (res?.ok){
+        if(res?.ok){
           const all = res.drills || res.rows || [];
-          TM_DRILLS = all.filter(d=>{
+          drills = all.filter(d => {
             const st = String(d.station_id||'').toUpperCase();
-            const pg = String(d.position_group||'').toUpperCase();
-            return st==='TEAM' || pg==='ALL';
+            return st === 'TEAM';
           });
         }
       }catch(e){ console.error(e); }
 
-      if (!Array.isArray(TM_DRILLS) || !TM_DRILLS.length){
-        // Fallback from your example
-        TM_DRILLS = [
-          { drill_id:'TM01', drill_name:'7 v 7', station_id:'TEAM', position_group:'ALL', drill_type:'Rate', primary_measurement:'completion_rate', measurement_unit:'percentage', success_threshold:'>=65', failure_threshold:'<=40', secondary_measurement:'targets', secondary_unit:'count', secondary_threshold:'>=15', drill_category:'Team/Skelly' },
-          { drill_id:'TM02', drill_name:'Inside Run', station_id:'TEAM', position_group:'ALL', drill_type:'Rate', primary_measurement:'offense_win_rate', measurement_unit:'percentage', success_threshold:'>=55', failure_threshold:'<=35', secondary_measurement:'total_plays', secondary_unit:'count', secondary_threshold:'>=10', drill_category:'Team' },
-          { drill_id:'TM03', drill_name:'Dynamic Warm-up / Static Stretch', station_id:'TEAM', position_group:'ALL', drill_type:'Binary', primary_measurement:'completed', measurement_unit:'boolean', success_threshold:'yes', failure_threshold:'no', drill_category:'Movement Prep' }
+      if (!drills.length) {
+        drills = [
+          { drill_id:'TM01', drill_name:'7v7', station_id:'TEAM', success_threshold:'>=65', failure_threshold:'<=40' },
+          { drill_id:'TM02', drill_name:'Inside Run', station_id:'TEAM', success_threshold:'>=55', failure_threshold:'<=35' }
         ];
       }
 
-      const sel = qs('#tmDrillSel');
-      sel.innerHTML = TM_DRILLS.map(d=>`<option value="${d.drill_id}">${d.drill_name}</option>`).join('');
-      if (TM_DRILLS[0]) sel.value = TM_DRILLS[0].drill_id;
-      sel.dispatchEvent(new Event('change'));
+      const sel = qs('#drillSelect');
+      sel.innerHTML = drills.map(d => `<option value="${d.drill_id}">${d.drill_name || d.name || d.drill_id}</option>`).join('');
+      if (drills[0]) sel.value = drills[0].drill_id;
+      updateDrillUI();
     }
 
-    // Lineup UI
-    function pill(rec, side){
-      const pos = posOf(rec);
-      return `<span class="pill" data-side="${side}" data-pid="${rec.player_id}">
-        ${rec.tryout_num||''} • ${rec.display_name||rec.player_id} <span class="muted">(${pos})</span>
-        <span class="x" title="Remove">✕</span>
-      </span>`;
+    function updateDrillUI(){
+      const id = qs('#drillSelect').value;
+      currentDrill = drills.find(d => d.drill_id === id);
+      if(!currentDrill) return;
+
+      qs('#drillBadge').textContent = `Drill: ${currentDrill.drill_name || currentDrill.drill_id}`;
+      const parts = [];
+      if(currentDrill.success_threshold) parts.push(`Above Avg: ${currentDrill.success_threshold}`);
+      if(currentDrill.failure_threshold) parts.push(`Below Avg: ${currentDrill.failure_threshold}`);
+      qs('#drillHint').textContent = parts.join(' • ');
     }
-    function renderLineups(){
-      const o = qs('#offLine'), d = qs('#defLine');
-      o.innerHTML = [...offense.values()].map(r=> pill(r,'OFF')).join('');
-      d.innerHTML = [...defense.values()].map(r=> pill(r,'DEF')).join('');
-      qsa('.pill .x').forEach(x=>{
-        x.addEventListener('click', ()=>{
-          const p = x.closest('.pill'); const pid = p.dataset.pid; const side = p.dataset.side;
-          if (side==='OFF') offense.delete(pid); else defense.delete(pid);
-          renderLineups(); refreshDrillInputs(); refreshSaveEnabled();
+
+    function getUniqueGroups(){
+      const groups = new Set();
+      roster.forEach(r => {
+        if(r.group_code) groups.add(r.group_code);
+      });
+      return Array.from(groups).sort();
+    }
+
+    function renderFilterButtons(){
+      const groups = getUniqueGroups();
+      const btnContainer = qs('#filterButtons');
+      btnContainer.innerHTML = '<button class="filter-btn active" data-group="CLEAR">Clear</button>' +
+        groups.map(g => `<button class="filter-btn" data-group="${g}">${g}</button>`).join('');
+
+      qsa('#filterButtons .filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const group = btn.dataset.group === 'CLEAR' ? null : btn.dataset.group;
+          filterByGroup(group);
+          qsa('#filterButtons .filter-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
         });
       });
-      refreshDrillInputs(); refreshSaveEnabled();
     }
 
-    function datalistFor(side, allowed){
-      const dl = qs(side==='OFF' ? '#off_list' : '#def_list');
-      const opts = roster
-        .filter(r=> allowed.has(posOf(r)))
-        .map(r=> `<option value="${labelFor(r)}" data-pid="${r.player_id}"></option>`)
-        .join('');
-      dl.innerHTML = opts;
+    function filterByGroup(group){
+      selectedGroup = group;
+      filteredRoster = group ? roster.filter(r => r.group_code === group) : roster;
+      currentPage = 0;
+      renderRosterCards();
+      updatePager();
     }
 
-    function findByLabel(txt){
-      const s = String(txt||'').toLowerCase();
-      return roster.find(r => labelFor(r).toLowerCase()===s) ||
-             roster.find(r => String(r.tryout_num||'').toLowerCase()===s) ||
-             roster.find(r => String(r.display_name||'').toLowerCase()===s);
+    function renderRosterCards(){
+      const start = currentPage * CARDS_PER_PAGE;
+      const end = start + CARDS_PER_PAGE;
+      const pageRoster = filteredRoster.slice(start, end);
+
+      const cardsHtml = pageRoster.map(r => `
+        <div class="roster-card" onclick="selectPlayerCard('${r.player_id}', '${r.display_name}', '${r.primary_pos}', '${r.tryout_num}')">
+          <div class="num">${r.tryout_num}</div>
+          <div class="name">${r.display_name}</div>
+          <div class="pos">${r.primary_pos}</div>
+        </div>
+      `).join('');
+
+      qs('#rosterCards').innerHTML = cardsHtml;
+      qs('#pageInfo').textContent = `Showing ${pageRoster.length} of ${filteredRoster.length}`;
     }
 
-    function allowedPositionsFor(drillId){
-      const id = String(drillId||'').toUpperCase();
-      // Sets of position codes expected in roster primary_pos (QB,RB,WR,TE,OL,DL,LB,DB)
-      if (id==='TM01'){ // 7v7
-        return {
-          OFF: new Set(['QB','RB','WR','TE']),
-          DEF: new Set(['LB','DB']),
-          label: '7v7 — OFF: QB/RB/WR/TE • DEF: LB/DB'
-        };
-      }
-      if (id==='TM02'){ // Inside Run
-        return {
-          OFF: new Set(['QB','RB','TE','OL']),
-          DEF: new Set(['DL','LB']),
-          label: 'Inside Run — OFF: OL/QB/RB/TE • DEF: DL/LB'
-        };
-      }
-      return { // TM03 warm-up
-        OFF: new Set(['QB','RB','WR','TE','OL','DL','LB','DB']),
-        DEF: new Set(['QB','RB','WR','TE','OL','DL','LB','DB']),
-        label: 'Warm-up — All positions'
-      };
+    function updatePager(){
+      const totalPages = Math.ceil(filteredRoster.length / CARDS_PER_PAGE);
+      qs('#prevPage').disabled = currentPage === 0;
+      qs('#nextPage').disabled = currentPage >= totalPages - 1;
+      qs('#pageCounter').textContent = `Page ${currentPage + 1} of ${Math.max(1, totalPages)}`;
     }
 
-    // Drill-specific inputs
-    function refreshDrillInputs(){
-      const wrap = qs('#tmInputs');
-      const id = TM_CURR?.drill_id || '';
-      const allow = allowedPositionsFor(id);
+    window.selectPlayerCard = function(pid, name, pos, num){
+      const rec = { player_id: pid, display_name: name, primary_pos: pos, tryout_num: num };
+      const arr = selectedSide === 'OFF' ? offense : defense;
+      if(arr.find(r => r.player_id === pid)) return;
+      arr.push(rec);
+      renderLineup();
+    };
 
-      // Target/QB lists (for 7v7)
-      const offPlayers = [...offense.values()];
-      const defPlayers = [...defense.values()];
-      const qbList = offPlayers.filter(r=> posOf(r)==='QB');
-      const targetList = offPlayers.filter(r=> ['WR','TE','RB'].includes(posOf(r)));
-
-      // Common attempt selector
-      const attSel = `
-        <div>
-          <label class="label">Attempt</label>
-          <select id="tmAttempt" class="form-select">
-            ${Array.from({length:10},(_,i)=>`<option>${i+1}</option>`).join('')}
-          </select>
-        </div>`;
-
-      if (id==='TM01'){ // 7v7
-        wrap.innerHTML = `
-          <div class="small muted" style="margin-bottom:6px">Only showing positions for ${allow.label}. Add/remove players above.</div>
-          <div class="row3">
-            ${attSel}
-            <div>
-              <label class="label">QB on play</label>
-              <select id="tmQB" class="form-select">
-                <option value="">—</option>
-                ${qbList.map(r=> `<option value="${r.player_id}">${labelFor(r)}</option>`).join('')}
-              </select>
-            </div>
-            <div>
-              <label class="label">Targeted Receiver</label>
-              <select id="tmTarget" class="form-select">
-                <option value="">—</option>
-                ${targetList.map(r=> `<option value="${r.player_id}">${labelFor(r)}</option>`).join('')}
-              </select>
-            </div>
-          </div>
-
-          <div class="row4" style="margin-top:8px">
-            <div>
-              <label class="label">Completed</label>
-              <label class="toggle"><input id="tgCompleted" type="checkbox"><span class="track"><span class="knob"></span></span></label>
-            </div>
-            <div>
-              <label class="label">Pass Breakup</label>
-              <label class="toggle"><input id="tgPBU" type="checkbox"><span class="track"><span class="knob"></span></span></label>
-            </div>
-            <div>
-              <label class="label">Interception</label>
-              <label class="toggle"><input id="tgINT" type="checkbox"><span class="track"><span class="knob"></span></span></label>
-            </div>
-            <div>
-              <label class="label">Yards (est)</label>
-              <input id="tmYards" class="form-number" type="number" step="1" placeholder="e.g., 8"/>
-            </div>
-          </div>
-        `;
-      } else if (id==='TM02'){ // Inside Run
-        wrap.innerHTML = `
-          <div class="small muted" style="margin-bottom:6px">Only showing positions for ${allow.label}. Add/remove players above.</div>
-          <div class="row3">
-            ${attSel}
-            <div>
-              <label class="label">Outcome</label>
-              <div class="seg" role="tablist" aria-label="Outcome">
-                <button id="outOff" role="tab" aria-pressed="true">Offense Win</button>
-                <button id="outDef" role="tab" aria-pressed="false">Defense Win</button>
-              </div>
-            </div>
-            <div>
-              <label class="label">Yards (est)</label>
-              <input id="tmYards" class="form-number" type="number" step="1" placeholder="e.g., 4"/>
-            </div>
-          </div>
-          <div class="row4" style="margin-top:8px">
-            <div>
-              <label class="label">TFL</label>
-              <label class="toggle"><input id="tgTFL" type="checkbox"><span class="track"><span class="knob"></span></span></label>
-            </div>
-            <div>
-              <label class="label">Fumble</label>
-              <label class="toggle"><input id="tgFMB" type="checkbox"><span class="track"><span class="knob"></span></span></label>
-            </div>
-          </div>
-        `;
-        // outcome buttons
-        const setOut = (who)=>{ qs('#outOff').setAttribute('aria-pressed', who==='OFF'?'true':'false'); qs('#outDef').setAttribute('aria-pressed', who==='DEF'?'true':'false'); qs('#tmInputs').dataset.outcome = who; };
-        qs('#outOff').addEventListener('click', ()=> setOut('OFF'));
-        qs('#outDef').addEventListener('click', ()=> setOut('DEF'));
-        setOut('OFF');
-      } else { // TM03 - Warm-up
-        wrap.innerHTML = `
-          <div class="small muted" style="margin-bottom:6px">${allow.label}. Mark completion for players in the lineups above.</div>
-          <div class="row3">
-            ${attSel}
-            <div>
-              <label class="label">Completed (for selected players)</label>
-              <div class="seg" role="tablist" aria-label="Warmup">
-                <button id="wuYes" role="tab" aria-pressed="true">Yes</button>
-                <button id="wuNo"  role="tab" aria-pressed="false">No</button>
-              </div>
-            </div>
-          </div>
-        `;
-        const setWU=(v)=>{ qs('#wuYes').setAttribute('aria-pressed', v?'true':'false'); qs('#wuNo').setAttribute('aria-pressed', v?'false':'true'); qs('#tmInputs').dataset.wu = v ? '1':'0'; };
-        qs('#wuYes').addEventListener('click', ()=> setWU(true));
-        qs('#wuNo').addEventListener('click', ()=> setWU(false));
-        setWU(true);
-      }
-    }
-
-    function refreshSaveEnabled(){
-      const id = TM_CURR?.drill_id || '';
-      const offOK = offense.size>0;
-      const defOK = defense.size>0 || id==='TM03'; // warm-up can be single side
-      let ok = !!(TM_CURR && offOK && defOK);
-      // 7v7 needs at least one QB if Completed or Target selected
-      if (id==='TM01'){
-        const hasQB = [...offense.values()].some(r=> posOf(r)==='QB');
-        ok = ok && hasQB;
-      }
-      qs('#saveRep').disabled = !ok;
-    }
-
-    function setSaving(on){
-      const btn = qs('#saveRep');
-      if (!btn.dataset.label) btn.dataset.label = btn.textContent;
-      if (on){ btn.classList.add('loading'); btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Saving…'; }
-      else { btn.classList.remove('loading'); btn.textContent = btn.dataset.label; refreshSaveEnabled(); }
-    }
-
-    // Render options based on drill
-    function applyDrillContext(){
-      const sel = qs('#tmDrillSel').value;
-      TM_CURR = TM_DRILLS.find(x=> x.drill_id===sel) || null;
-
-      // hint + badge
-      const badge = qs('#drillBadge');
-      const hint  = qs('#tmHint');
-      if (TM_CURR){
-        badge.textContent = `Drill: ${TM_CURR.drill_name}`;
-        const parts = [];
-        if (TM_CURR.drill_category) parts.push(TM_CURR.drill_category);
-        if (TM_CURR.success_threshold) parts.push(`Above Avg: ${TM_CURR.success_threshold}`);
-        if (TM_CURR.failure_threshold) parts.push(`Below Avg: ${TM_CURR.failure_threshold}`);
-        hint.textContent = parts.join(' • ');
-      } else { badge.textContent='Drill: —'; hint.textContent=''; }
-
-      // position filters & datalists
-      const allow = allowedPositionsFor(TM_CURR?.drill_id);
-      qs('#posHint').textContent = `Positions: ${allow.label}`;
-      datalistFor('OFF', allow.OFF);
-      datalistFor('DEF', allow.DEF);
-
-      // prune lineups if someone no longer allowed (in case drill changed)
-      [...offense.values()].forEach(r=>{ if(!allow.OFF.has(posOf(r))) offense.delete(r.player_id); });
-      [...defense.values()].forEach(r=>{ if(!allow.DEF.has(posOf(r))) defense.delete(r.player_id); });
-      renderLineups();
-
-      refreshDrillInputs();
+    function renderLineup(){
+      qs('#offenseLineup').innerHTML = offense.map(r => `
+        <div class="player-tag">
+          ${fmtPlayer(r)} <span class="remove" onclick="removePlayer('${r.player_id}','OFF')">✕</span>
+        </div>
+      `).join('');
+      qs('#defenseLineup').innerHTML = defense.map(r => `
+        <div class="player-tag">
+          ${fmtPlayer(r)} <span class="remove" onclick="removePlayer('${r.player_id}','DEF')">✕</span>
+        </div>
+      `).join('');
+      updateQBAndCarrierSelects();
       refreshSaveEnabled();
     }
 
-    // Reads + writes
-    function normalizeBool(v){ return v ? 1 : 0; }
+    window.removePlayer = function(pid, side){
+      const arr = side === 'OFF' ? offense : defense;
+      const idx = arr.findIndex(r => r.player_id === pid);
+      if(idx > -1) arr.splice(idx, 1);
+      renderLineup();
+    };
 
-    function buildRows(){
+    function updateQBAndCarrierSelects(){
+      const qbs = offense.filter(r => (r.primary_pos||'').toUpperCase() === 'QB');
+      const carriers = offense.filter(r => ['RB','WR','TE'].includes((r.primary_pos||'').toUpperCase()));
+      const targets = offense.filter(r => ['WR','TE','RB'].includes((r.primary_pos||'').toUpperCase()));
+      const defenders = defense; // All defense players can be defenders
+      const tacklers = defense; // All defense players can be tacklers
+      
+      qs('#qbSelect').innerHTML = '<option value="">Select QB</option>' + qbs.map(r => `<option value="${r.player_id}">${fmtPlayer(r)}</option>`).join('');
+      qs('#ballCarrier').innerHTML = '<option value="">Select Ball Carrier</option>' + carriers.map(r => `<option value="${r.player_id}">${fmtPlayer(r)}</option>`).join('');
+      qs('#targetSelect').innerHTML = '<option value="">Select Target</option>' + targets.map(r => `<option value="${r.player_id}">${fmtPlayer(r)}</option>`).join('');
+      qs('#defenderSelect').innerHTML = '<option value="">Select Defender</option>' + defenders.map(r => `<option value="${r.player_id}">${fmtPlayer(r)}</option>`).join('');
+      qs('#tacklerSelect').innerHTML = '<option value="">Select Tackler</option>' + tacklers.map(r => `<option value="${r.player_id}">${fmtPlayer(r)}</option>`).join('');
+    }
+
+    function refreshSaveEnabled(){
+      const ok = offense.length > 0 && defense.length > 0;
+      qs('#savePlay').disabled = !ok;
+    }
+
+    function addToLog(summary){
+      plays.unshift({ts:new Date(), summary});
+      plays.splice(30);
+      const pad = n => String(n).padStart(2,'0');
+      const fmt = d => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      qs('#playLog').innerHTML = plays.map(p => `<div class="play-row"><strong>${fmt(p.ts)}</strong> — ${p.summary}</div>`).join('');
+    }
+
+    async function savePlay(){
+      const status = qs('#playStatus');
+      status.textContent = '';
       const c = ctx();
-      const id = TM_CURR?.drill_id || '';
-      const name = TM_CURR?.drill_name || '';
-      const attempt = Number(qs('#tmAttempt')?.value||1);
-      const notes = (qs('#tmNotes').value||'').trim();
 
-      const offArr = [...offense.values()];
-      const defArr = [...defense.values()];
-      const rows = [];
+      if(!c.tryout_id){ status.textContent='Set Tryout ID'; status.className='status warn'; return; }
+      if(offense.length===0 || defense.length===0){ status.textContent='Need both offense & defense'; status.className='status warn'; return; }
 
-      if (id==='TM01'){ // 7v7
-        const qb = qs('#tmQB').value || '';
-        const target = qs('#tmTarget').value || '';
-        const completed = qs('#tgCompleted')?.checked || false;
-        const pbu = qs('#tgPBU')?.checked || false;
-        const intr = qs('#tgINT')?.checked || false;
-        const yards = (qs('#tmYards').value||'').trim();
+      const qbId = qs('#qbSelect').value;
+      const carrierId = qs('#ballCarrier').value;
+      const targetId = qs('#targetSelect').value;
+      const defenderId = qs('#defenderSelect').value;
+      const tacklerId = qs('#tacklerSelect').value;
+      const gainYards = parseFloat(qs('#gainYards').value) || 0;
+      
+      const outcome = playType === 'PASS' ? passOutcome : 'RUN';
+      const success = (playType === 'PASS' && passOutcome === 'CATCH') ? 1 : (playType === 'RUN' && gainYards > 0) ? 1 : 0;
+      const notes = (qs('#playNotes').value||'').trim();
+      const attempt = Number(qs('#playAttempt').value||1);
 
-        // Offense lines
-        offArr.forEach(p=>{
-          const isQB = posOf(p)==='QB';
-          const isTarget = String(p.player_id)===String(target);
-          const extra = `role:offense|pos:${posOf(p)}|qb:${qb?'1':'0'}|target:${isTarget?'1':'0'}|catch:${(isTarget&&completed)?'1':'0'}|pbu:${pbu?'1':'0'}|int:${intr?'1':'0'}|yards:${yards||''}`;
-          rows.push({
-            tryout_id: c.tryout_id||'', period_code: c.period_code||'',
-            tryout_num: String(p.tryout_num||'').trim(), player_id: String(p.player_id||'').trim(),
-            group_code: resolveGroupCode(p.player_id,'',p) || '',
-            station_id: STATION_ID, drill_id: id, attempt: attempt,
-            metric_1: isQB ? normalizeBool(completed) : (isTarget ? 1 : 0), // QB->completion, target->1, others 0
-            metric_2: isTarget ? normalizeBool(completed) : null,
-            pass_flag: completed ? 1 : 0, // offense "pass" if completed
-            notes, extra_1: extra, extra_2: name
-          });
-        });
+      if(playType === 'PASS' && !qbId){ status.textContent='Select QB for pass play'; status.className='status warn'; return; }
+      if(playType === 'RUN' && !carrierId){ status.textContent='Select ball carrier for run play'; status.className='status warn'; return; }
 
-        // Defense lines
-        defArr.forEach(p=>{
-          const extra = `role:defense|pos:${posOf(p)}|pbu:${pbu?'1':'0'}|int:${intr?'1':'0'}|yards:${yards||''}`;
-          const madePlay = (pbu || intr) ? 1 : 0;
-          rows.push({
-            tryout_id: c.tryout_id||'', period_code: c.period_code||'',
-            tryout_num: String(p.tryout_num||'').trim(), player_id: String(p.player_id||'').trim(),
-            group_code: resolveGroupCode(p.player_id,'',p) || '',
-            station_id: STATION_ID, drill_id: id, attempt: attempt,
-            metric_1: madePlay, metric_2: intr ? 1 : null,
-            pass_flag: completed ? 0 : 1, // defense "pass" if ball not completed
-            notes, extra_1: extra, extra_2: name
-          });
-        });
-
-      } else if (id==='TM02'){ // Inside Run
-        const outcome = (qs('#tmInputs').dataset.outcome || 'OFF'); // OFF or DEF
-        const yards = (qs('#tmYards').value||'').trim();
-        const tfl = qs('#tgTFL')?.checked || false;
-        const fmb = qs('#tgFMB')?.checked || false;
-
-        offArr.forEach(p=>{
-          const extra = `role:offense|pos:${posOf(p)}|tfl:${tfl?'1':'0'}|fumble:${fmb?'1':'0'}|yards:${yards||''}`;
-          rows.push({
-            tryout_id: c.tryout_id||'', period_code: c.period_code||'',
-            tryout_num: String(p.tryout_num||'').trim(), player_id: String(p.player_id||'').trim(),
-            group_code: resolveGroupCode(p.player_id,'',p) || '',
-            station_id: STATION_ID, drill_id: id, attempt: attempt,
-            metric_1: yards ? Number(yards) : null, metric_2: tfl ? 1 : null,
-            pass_flag: outcome==='OFF' ? 1 : 0,
-            notes, extra_1: extra, extra_2: 'Inside Run'
-          });
-        });
-        defArr.forEach(p=>{
-          const extra = `role:defense|pos:${posOf(p)}|tfl:${tfl?'1':'0'}|fumble:${fmb?'1':'0'}|yards:${yards||''}`;
-          rows.push({
-            tryout_id: c.tryout_id||'', period_code: c.period_code||'',
-            tryout_num: String(p.tryout_num||'').trim(), player_id: String(p.player_id||'').trim(),
-            group_code: resolveGroupCode(p.player_id,'',p) || '',
-            station_id: STATION_ID, drill_id: id, attempt: attempt,
-            metric_1: yards ? Number(yards) : null, metric_2: tfl ? 1 : null,
-            pass_flag: outcome==='DEF' ? 1 : 0,
-            notes, extra_1: extra, extra_2: 'Inside Run'
-          });
-        });
-
-      } else { // TM03 Warm-up
-        const wu = (qs('#tmInputs').dataset.wu==='1');
-        const everyone = [...offArr, ...defArr];
-        everyone.forEach(p=>{
-          const extra = `role:team|pos:${posOf(p)}`;
-          rows.push({
-            tryout_id: c.tryout_id||'', period_code: c.period_code||'',
-            tryout_num: String(p.tryout_num||'').trim(), player_id: String(p.player_id||'').trim(),
-            group_code: resolveGroupCode(p.player_id,'',p) || '',
-            station_id: STATION_ID, drill_id: id, attempt: Number(qs('#tmAttempt').value||1),
-            metric_1: normalizeBool(wu), metric_2: null,
-            pass_flag: wu ? 1 : 0,
-            notes, extra_1: extra, extra_2: 'Warm-up'
-          });
-        });
-      }
-
-      return rows;
-    }
-
-    async function saveRows(rows){
       setSaving(true);
-      let ok = true, firstErr='';
-      for (const row of rows){
-        try{
-          const res = await API.tryout.write.station(row);
-          if (!res?.ok){ ok=false; firstErr = firstErr || (res?.error||'Save failed.'); }
-        }catch(e){ ok=false; firstErr = firstErr || (e?.message||'Save failed.'); }
+
+      let rows = [];
+      const timestamp = new Date().toISOString();
+      const rep_id = `${c.tryout_id}_${attempt}_${Date.now()}`;
+
+      // Build rows for offense
+      offense.forEach(p => {
+        const isQB = p.player_id === qbId;
+        const isCarrier = p.player_id === carrierId;
+        const isTarget = p.player_id === targetId && playType === 'PASS';
+
+        rows.push({
+          timestamp,
+          tryout_id: c.tryout_id,
+          period_code: c.period_code || '',
+          player_id: p.player_id,
+          tryout_num: p.tryout_num,
+          group_code: p.primary_pos || p.group_code || '',
+          station_id: 'TEAM',
+          rep_id,
+          unit: playType,
+          qb_id: isQB ? qbId : '',
+          runner_id: isCarrier ? carrierId : '',
+          receiver_id: isTarget ? targetId : '',
+          offense_group: p.primary_pos || p.group_code || '',
+          defense_group: '',
+          result: success,
+          catch: isTarget ? (passOutcome === 'CATCH' ? 1 : 0) : '',
+          pbu: '',
+          int: '',
+          tfl: '',
+          missed_tkl: '',
+          gain_yards: isCarrier ? gainYards : '',
+          notes
+        });
+      });
+
+      // Build rows for defense
+      defense.forEach(p => {
+        const isDefender = p.player_id === defenderId;
+        const isTackler = p.player_id === tacklerId;
+        
+        rows.push({
+          timestamp,
+          tryout_id: c.tryout_id,
+          period_code: c.period_code || '',
+          player_id: p.player_id,
+          tryout_num: p.tryout_num,
+          group_code: p.primary_pos || p.group_code || '',
+          station_id: 'TEAM',
+          rep_id,
+          unit: playType,
+          qb_id: '',
+          runner_id: '',
+          receiver_id: '',
+          offense_group: '',
+          defense_group: p.primary_pos || p.group_code || '',
+          result: success ? 0 : 1,
+          catch: '',
+          pbu: (isDefender && defenseAction === 'pbu') ? 1 : '',
+          int: (isDefender && defenseAction === 'int') ? 1 : '',
+          tfl: (isTackler && tackleType === 'tfl') ? 1 : '',
+          missed_tkl: (isTackler && tackleType === 'missed') ? 1 : '',
+          gain_yards: '',
+          notes
+        });
+      });
+
+      let ok = true, err = '';
+      
+      // Save to 73_Fact_Tryout_Team sheet using the correct API route
+      try {
+        for(const row of rows) {
+          const res = await API.tryout.write.team(row);
+          
+          if(!res?.ok){ 
+            ok = false; 
+            err = res?.error || 'Save failed'; 
+            break; 
+          }
+        }
+      } catch(e) { 
+        ok = false; 
+        err = e?.message || 'Save failed'; 
       }
+
       setSaving(false);
-      return { ok, error:firstErr };
+
+      if(!ok){ 
+        status.textContent = err; 
+        status.className = 'status err'; 
+        return; 
+      }
+
+      status.textContent = `Saved ✔ — ${rows.length} lines recorded to 73_Fact_Tryout_Team`; 
+      status.className = 'status ok';
+      
+      const defStats = [];
+      if(defenderId && defenseAction !== 'none') defStats.push(defenseAction.toUpperCase());
+      if(tacklerId && tackleType !== 'none') defStats.push(tackleType.toUpperCase());
+      const defSummary = defStats.length ? ` | DEF: ${defStats.join(', ')}` : '';
+      const yardSummary = playType === 'RUN' && gainYards !== 0 ? ` | ${gainYards > 0 ? '+' : ''}${gainYards} yds` : '';
+      
+      addToLog(`${playType} → ${passOutcome || 'RUN'}${yardSummary}${defSummary} (${offense.length} OFF, ${defense.length} DEF)`);
+
+      const next = Math.min(attempt % 10 + 1, 10);
+      qs('#playAttempt').value = next;
+      
+      // Reset defensive action and tackle type
+      defenseAction = 'none';
+      tackleType = 'none';
+      qs('#defNone').classList.add('active');
+      qs('#defPBU').classList.remove('active');
+      qs('#defINT').classList.remove('active');
+      qs('#tklNone').classList.add('active');
+      qs('#tklTFL').classList.remove('active');
+      qs('#tklMissed').classList.remove('active');
+      qs('#gainYards').value = '';
     }
 
-    function renderLastLog(rows){
-      const tb = qs('#lastLog');
-      tb.innerHTML = rows.map(r=>{
-        const side = (r.extra_1||'').includes('role:defense') ? 'DEF' : ((r.extra_1||'').includes('role:offense') ? 'OFF' : '—');
-        const pos = (r.extra_1||'').match(/pos:([A-Z]+)/)?.[1] || '';
-        const prim = (r.metric_1==null) ? '—' : String(r.metric_1);
-        const sec  = (r.metric_2==null) ? '—' : String(r.metric_2);
-        const pass = Number(r.pass_flag)===1 ? 'Yes' : 'No';
-        const playerTxt = `${r.tryout_num||''} • ${ (roster.find(x=>x.player_id===r.player_id)?.display_name || r.player_id) }`;
-        return `<tr>
-          <td>${playerTxt}</td><td>${side}</td><td>${pos}</td><td>${r.drill_id}</td>
-          <td>${prim}</td><td>${sec}</td><td>${pass}</td><td>${r.extra_1||''}</td>
-        </tr>`;
-      }).join('');
-      qs('#lastCount').textContent = `${rows.length} line${rows.length===1?'':'s'}`;
-    }
+    // Event wiring
+    qs('#drillSelect').addEventListener('change', updateDrillUI);
 
-    function clearAll(){
-      offense.clear(); defense.clear();
-      qs('#addOff').value=''; qs('#addDef').value='';
-      qs('#tmNotes').value='';
-      renderLineups(); refreshDrillInputs(); refreshSaveEnabled();
-      qs('#tmStatus').textContent='';
-      qs('#lastLog').innerHTML=''; qs('#lastCount').textContent='';
-    }
+    qs('#sideOff').addEventListener('click', function(){ selectedSide='OFF'; this.classList.add('active'); qs('#sideDef').classList.remove('active'); qs('#selectedHint').textContent = 'Click cards to add to Offense'; });
+    qs('#sideDef').addEventListener('click', function(){ selectedSide='DEF'; this.classList.add('active'); qs('#sideOff').classList.remove('active'); qs('#selectedHint').textContent = 'Click cards to add to Defense'; });
 
-    // ---------- Init wiring ----------
+    qs('#typePass').addEventListener('click', function(){ 
+      playType='PASS'; 
+      this.classList.add('active'); 
+      qs('#typeRun').classList.remove('active'); 
+      qs('#passInputs').style.display='block'; 
+      qs('#passDefenseInputs').style.display='block'; 
+      qs('#runInputs').style.display='none'; 
+    });
+    qs('#typeRun').addEventListener('click', function(){ 
+      playType='RUN'; 
+      this.classList.add('active'); 
+      qs('#typePass').classList.remove('active'); 
+      qs('#passInputs').style.display='none'; 
+      qs('#passDefenseInputs').style.display='none'; 
+      qs('#runInputs').style.display='block'; 
+    });
+
+    qs('#outcomeSuccess').addEventListener('click', function(){ passOutcome='CATCH'; this.classList.add('active'); qs('#outcomeFail').classList.remove('active'); });
+    qs('#outcomeFail').addEventListener('click', function(){ passOutcome='INCOMPLETE'; this.classList.add('active'); qs('#outcomeSuccess').classList.remove('active'); });
+
+    // Defense actions for passes
+    qs('#defPBU').addEventListener('click', function(){ defenseAction='pbu'; this.classList.add('active'); qs('#defINT').classList.remove('active'); qs('#defNone').classList.remove('active'); });
+    qs('#defINT').addEventListener('click', function(){ defenseAction='int'; this.classList.add('active'); qs('#defPBU').classList.remove('active'); qs('#defNone').classList.remove('active'); });
+    qs('#defNone').addEventListener('click', function(){ defenseAction='none'; this.classList.add('active'); qs('#defPBU').classList.remove('active'); qs('#defINT').classList.remove('active'); });
+
+    // Tackle types for runs
+    qs('#tklTFL').addEventListener('click', function(){ tackleType='tfl'; this.classList.add('active'); qs('#tklMissed').classList.remove('active'); qs('#tklNone').classList.remove('active'); });
+    qs('#tklMissed').addEventListener('click', function(){ tackleType='missed'; this.classList.add('active'); qs('#tklTFL').classList.remove('active'); qs('#tklNone').classList.remove('active'); });
+    qs('#tklNone').addEventListener('click', function(){ tackleType='none'; this.classList.add('active'); qs('#tklTFL').classList.remove('active'); qs('#tklMissed').classList.remove('active'); });
+
+    qs('#prevPage').addEventListener('click', () => { if(currentPage > 0) { currentPage--; renderRosterCards(); updatePager(); } });
+    qs('#nextPage').addEventListener('click', () => { const maxPage = Math.ceil(filteredRoster.length / CARDS_PER_PAGE) - 1; if(currentPage < maxPage) { currentPage++; renderRosterCards(); updatePager(); } });
+
+    qs('#savePlay').addEventListener('click', savePlay);
+
     (async function init(){
-      await Promise.all([ loadRoster(), loadLatestGroups(), loadTMDrills() ]);
-
-      // Drill selection
-      qs('#tmDrillSel').addEventListener('change', applyDrillContext);
-      applyDrillContext();
-
-      // Adders
-      qs('#addOff').addEventListener('change', (e)=>{
-        const hit = findByLabel(e.target.value); if(!hit) return;
-        offense.set(hit.player_id, hit); e.target.value=''; renderLineups();
-      });
-      qs('#addDef').addEventListener('change', (e)=>{
-        const hit = findByLabel(e.target.value); if(!hit) return;
-        defense.set(hit.player_id, hit); e.target.value=''; renderLineups();
-      });
-
-      // Save
-      qs('#saveRep').addEventListener('click', async ()=>{
-        const status = qs('#tmStatus');
-        status.textContent = '';
-        const c = ctx();
-        if(!c.tryout_id){ status.textContent='Set a Tryout ID first.'; status.className='status warn'; return; }
-        if(!TM_CURR){ status.textContent='Choose a drill.'; status.className='status warn'; return; }
-        if(offense.size===0 || (defense.size===0 && TM_CURR.drill_id!=='TM03')){ status.textContent='Add players to both sides.'; status.className='status warn'; return; }
-
-        const rows = buildRows();
-        const res = await saveRows(rows);
-        if (!res.ok){ status.textContent = res.error || 'Save failed.'; status.className='status err'; return; }
-
-        renderLastLog(rows);
-        addRecent(`TEAM ${TM_CURR.drill_name} — ${rows.length} lines saved`);
-        status.textContent = 'Saved ✔'; status.className='status ok';
-
-        // next attempt auto-inc
-        const attSel = qs('#tmAttempt'); const next = Math.min(((Number(attSel.value)||1)%10)+1,10); attSel.value=String(next);
-      });
-
-      // Clear
-      qs('#clearAll').addEventListener('click', clearAll);
+      await Promise.all([loadRoster(), loadDrills()]);
+      renderFilterButtons();
+      qs('#selectedHint').textContent = 'Click cards to add to Offense';
     })();
   </script>
 </body>
