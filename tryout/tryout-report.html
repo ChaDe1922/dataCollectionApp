@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
   <!-- Apps Script base -->
-  <meta name="gsds-api-base" content="https://script.google.com/macros/s/AKfycbz2m5h4t5O5x9XdvNnMVMFWAZHBHdo4TnTy0W22e1jYF6jkzOHKc9vnwWCu7Q5a8HLOPg/exec">
+  <meta name="gsds-api-base" content="https://script.google.com/macros/s/AKfycbw1TUGYjGHhiv5agsHg-_3uJvhU4nsODxy50dDxbmO6csHtAKR2L3kC8eY0APXOutb91A/exec">
 
   <title>Coaches Corner — Tryouts</title>
 
@@ -51,7 +51,6 @@
     .lane-card{ transition: box-shadow .15s ease, border-color .15s ease; }
     .lane-card.lane-active{ border-color:#8B5CF6; box-shadow:0 0 0 2px rgba(139,92,246,.35) inset; }
 
-    /* 4-lane segmented switch */
     .seg{ display:inline-flex; border:1px solid rgba(255,255,255,.18); border-radius:12px; overflow:hidden; }
     .seg .seg-btn{
       appearance:none; border:0; background:rgba(255,255,255,.06); color:#fff;
@@ -61,7 +60,6 @@
     .seg .seg-btn:last-child{ border-right:0; }
     .seg .seg-btn.is-active{ background:linear-gradient(135deg,#7C4DFF,#8B5CF6); color:#071018; }
 
-    /* ===== 1–5 rating buttons ===== */
     .crit{ display:grid; grid-template-columns: 1fr auto auto; gap:10px; align-items:center; }
     .crit label{ font-weight:800; font-size:.95rem; }
     .crit .val{ width:40px; text-align:right; font-variant-numeric:tabular-nums; font-weight:900; opacity:.9; }
@@ -84,7 +82,6 @@
     .btn.success{ background:linear-gradient(135deg,#16A34A,#10B981); color:#061710; border:0; }
     .btn:disabled{ opacity:.55; cursor:not-allowed; }
 
-    /* Spinner overlay */
     .shared-wrap{ position:relative; }
     .tu-loading{
       position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
@@ -95,7 +92,6 @@
       border-top-color:#fff; border-radius:50%; animation:spin .9s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Pagination + done visuals */
     .cc-pager{ display:flex; gap:8px; justify-content:flex-end; align-items:center; margin-top:10px; }
     .cc-pager .cc-btn{ padding:.35rem .6rem; border:1px solid rgba(255,255,255,.25); border-radius:8px; background:rgba(255,255,255,.08); color:#fff; font-weight:800; }
     .cc-pager .cc-btn:disabled{ opacity:.45; cursor:not-allowed; }
@@ -111,6 +107,7 @@
     .status.ok{ color:#34D399; }
     .status.err{ color:#F87171; }
     .status.warn{ color:#F59E0B; }
+    .status.debug{ color:#60A5FA; font-size:.85rem; font-family:monospace; max-height:100px; overflow-y:auto; }
   </style>
 </head>
 
@@ -158,7 +155,6 @@
             <select id="coachDrill" class="form-select"></select>
           </div>
 
-          <!-- Assign selection to lane -->
           <div id="laneSegWrap" class="seg" role="group" aria-label="Assign selection to lane">
             <button type="button" class="seg-btn is-active" data-lane="A" aria-pressed="true">Lane A</button>
             <button type="button" class="seg-btn" data-lane="B" aria-pressed="false">Lane B</button>
@@ -171,7 +167,6 @@
         <div class="muted" id="stationHint"></div>
       </section>
 
-      <!-- Shared Tryout UI -->
       <section class="card">
         <div class="shared-wrap">
           <div id="tryout-shared"></div>
@@ -182,7 +177,6 @@
         </div>
       </section>
 
-      <!-- Four lanes -->
       <section class="grid-4">
         <!-- Lane A -->
         <div id="laneA" class="card lane-card lane-active" data-lane="A">
@@ -299,14 +293,12 @@
     <p>&copy; 2025 Game Speed Data Systems</p>
   </footer>
 
-  <!-- libs -->
   <script src="../js/api.js"></script>
   <script src="../js/rules.js"></script>
   <script src="../js/context.js"></script>
   <script src="../js/tryout-ui.js"></script>
 
   <script>
-    // ---------- Boot shared context ----------
     (function(){
       const meta = document.querySelector('meta[name="gsds-api-base"]');
       window.API_BASE = (window.API_BASE || (meta && meta.content) || '').trim();
@@ -314,7 +306,6 @@
     GameContext.configure({ apiBase: window.API_BASE, server: true, pollMs: 1000 });
     GameContext.mountBanner('#ctxBanner');
 
-    // ---------- Small API helper ----------
     async function apiGet(action, params={}) {
       const url = new URL(window.API_BASE);
       url.searchParams.set('action', action);
@@ -327,12 +318,10 @@
       return r.json();
     }
 
-    // ---------- Constants ----------
     const PAGE_SIZE = 10;
     const POS_STATIONS = ['QB','RB','WR','TE','OL','DL','LB','DB'];
 
-    // ---------- State ----------
-    const savedPlayers = new Set();           // mark roster cards after save
+    const savedPlayers = new Set();
     let roster = [];
     const groupLatest = new Map();
     let drills = [];
@@ -343,7 +332,6 @@
     const laneAttempt = { A:1, B:1, C:1, D:1 };
     let activeLane = 'A';
 
-    // ---------- Helpers ----------
     const qs  = (s,p=document)=>p.querySelector(s);
     const qsa = (s,p=document)=>[...p.querySelectorAll(s)];
     function ctx(){ return GameContext.get ? GameContext.get() : {}; }
@@ -353,6 +341,12 @@
     function stationId(){ return String(qs('#stationSelect')?.value || 'AGILITY').toUpperCase(); }
     function coachDrillId(){ return String(qs('#coachDrill')?.value || ''); }
     const toTri = v => (/^\d{1,3}$/.test(String(v||'').trim()) ? String(v).padStart(3,'0') : String(v||'').trim());
+    function getUrlTryoutId(){
+      const u = new URL(window.location.href);
+      const fromSearch = u.searchParams.get('tryout_id') || u.searchParams.get('event_id');
+      const fromHash = new URLSearchParams((u.hash||'').replace(/^#/, '')).get('tryout_id');
+      return (fromSearch || fromHash || '').trim();
+    }
 
     function normalizePlayer(rec){
       if (!rec) return null;
@@ -363,7 +357,6 @@
       return byPid || byTnum || null;
     }
 
-    // ---------- Coaches ----------
     function getAuthIdentityTokens(){
       const tokens = new Set();
       const add = v => { if(!v) return; tokens.add(String(v).trim().toLowerCase()); };
@@ -399,7 +392,6 @@
       localStorage.setItem('coach_id', sel.value);
     }
 
-    // ---------- Roster & groups ----------
     async function loadRoster(){
       const res = await apiGet('tryout_roster');
       if(!res?.ok) return;
@@ -433,7 +425,6 @@
       return rec?.group_code || rec?.primary_pos || fallback || '';
     }
 
-    // ---------- Drills + Criteria ----------
     async function loadDrills(){
       const want = stationId();
       let rows = [];
@@ -530,7 +521,6 @@
       });
     }
 
-    // ---------- Shared Tryout UI mounting ----------
     async function mountRosterForStation(){
       const overlay = document.getElementById('tryout-loading');
       const mountSel = '#tryout-shared';
@@ -546,17 +536,14 @@
 
       await TryoutUI.init(mountSel, opts);
 
-      // Immediately filter on position stations
       if (isPos) GameContext.setGroup(sid); else GameContext.setGroup('');
 
-      // Ensure roster clicks/keys assign to lanes
       wireRosterDelegation();
-
       setupPagination();
       overlay.style.display = 'none';
+      reapplyDoneMarks();
     }
 
-    // ---------- Pagination ----------
     function setupPagination(){
       const root = document.querySelector('#tryout-shared');
       const rosterBox = root.querySelector('#tuRoster, .tu-roster') || root;
@@ -609,7 +596,6 @@
       render();
     }
 
-    // ---------- Lane activation ----------
     function setActiveLane(l){
       const L = ['A','B','C','D'].includes(l) ? l : 'A';
       activeLane = L;
@@ -632,7 +618,6 @@
       if (l) setActiveLane(l);
     });
 
-    // ---------- Lane reset helpers ----------
     function resetLaneUI(l){
       laneAttempt[l] = 1;
       const attSel = qs('#att'+l);
@@ -644,7 +629,6 @@
       if (btn) btn.disabled = !lanePlayers[l];
     }
 
-    // ---------- Lane chips / assign / clear ----------
     function renderLaneChip(l){
       const rec = lanePlayers[l];
       const el = qs('#who'+l);
@@ -680,7 +664,6 @@
       }
     }
 
-    // ---------- Save ratings ----------
     function setSaving(lane, saving){
       const btn = qs('#save'+lane);
       if (!btn.dataset.label) btn.dataset.label = btn.textContent;
@@ -709,6 +692,14 @@
       root.querySelectorAll(sels.join(',')).forEach(c=> c.classList.add('cc-done'));
     }
 
+    function reapplyDoneMarks(){
+      if (!savedPlayers.size) return;
+      savedPlayers.forEach(key=>{
+        const rec = roster.find(r => String(r.player_id).trim()===String(key).trim() || toTri(r.tryout_num)===toTri(key));
+        if (rec) markCardDoneUI(rec);
+      });
+    }
+
     async function saveLane(lane){
       const statusEl = qs('#status'+lane);
       statusEl.textContent = '';
@@ -718,11 +709,17 @@
       const drillSel = qs('#drill'+lane);
 
       const c = ctx();
-      if (!c.tryout_id){ statusEl.textContent='Set a Tryout ID first.'; statusEl.className='status warn'; return; }
-
       const player = lanePlayers[lane];
+
       if(!(player?.tryout_num || player?.player_id)){
         statusEl.textContent=`Assign a player to Lane ${lane}.`;
+        statusEl.className='status warn';
+        return;
+      }
+
+      const tryoutId = c.tryout_id || player?.tryout_id || '';
+      if (!tryoutId){
+        statusEl.textContent='Missing Tryout ID (no context).';
         statusEl.className='status warn';
         return;
       }
@@ -742,14 +739,14 @@
         return { id, label, value: val, weight: 1 };
       });
 
-      const tsUTC = new Date().toISOString();
+      const timestamp = new Date().toISOString();
       const repId = uuid();
       const clientId = (localStorage.getItem('client_id') || (function(){ const id=uuid(); localStorage.setItem('client_id', id); return id; })());
 
       const base = {
         rating_id: uuid(),
-        ts_utc: tsUTC,
-        tryout_id:   c.tryout_id || '',
+        timestamp: timestamp,
+        tryout_id:   tryoutId,
         period_code: c.period_code || '',
         station_id:  String(stationSel.value || drill.station_id || '').toUpperCase(),
         coach_id:    coachSel.value || '',
@@ -770,7 +767,7 @@
       const ops = critRows.map(cr => ({
         route: 'tryout_coach_ratings',
         ensure_headers: [
-          'rating_id','ts_utc','tryout_id','period_code','station_id','coach_id','coach_name','player_id',
+          'rating_id','timestamp','tryout_id','period_code','station_id','coach_id','coach_name','player_id',
           'tryout_num','group_code','position_group','drill_id','criterion_id','criterion_label','rating_value',
           'weight','lane','attempt','rep_id','notes','source_app','client_id'
         ],
@@ -779,43 +776,51 @@
 
       setSaving(lane, true);
       let ok=true, err='';
+      
       try{
+        console.log('Sending batch:', JSON.stringify(ops, null, 2));
         const res = await apiPost({ action:'batch', ops });
+        console.log('Response:', res);
         ok = !!res?.ok;
         if (!ok) err = res?.error || 'Save failed.';
-      } catch(e){ ok=false; err = e?.message || 'Save failed.'; }
+      } catch(e){ 
+        ok=false; 
+        err = e?.message || 'Save failed.';
+        console.error('Error:', e);
+      }
       setSaving(lane, false);
 
-      if(!ok){ statusEl.textContent = err; statusEl.className = 'status err'; return; }
+      if(!ok){ 
+        statusEl.textContent = err; 
+        statusEl.className = 'status err';
+        console.error('Save failed:', err);
+        return; 
+      }
 
       statusEl.textContent = `Saved ✔ · ${ops.length} rating${ops.length===1?'':'s'} recorded`;
       statusEl.className = 'status ok';
 
-      // auto-increment attempt for multiple reps (same player)
-      const next = (att % 3) + 1; laneAttempt[lane] = next;
+      const next = (att % 3) + 1; 
+      laneAttempt[lane] = next;
       qs('#att'+lane).value = String(next);
 
-      // mark roster card, allow lane to be cleared with ✓ showing on roster
-      savedPlayers.add(player.player_id || player.tryout_num);
+      const key = player.player_id || player.tryout_num;
+      if (key) savedPlayers.add(key);
       markCardDoneUI(player);
       try { window.dispatchEvent(new CustomEvent('tryoutui:done', { detail:{ player_id: player.player_id, tryout_num: player.tryout_num } })); } catch {}
     }
 
-    // ---------- Station → TryoutUI + drills ----------
     function applyGroupFromStation(){
       const sid = stationId();
       if (POS_STATIONS.includes(sid)) GameContext.setGroup(sid);
       else GameContext.setGroup('');
     }
 
-    // ----- Robust roster selection (like other pages) -----
     function resolvePlayerFromObjOrCard(objOrEl){
-      // payload object
       if (objOrEl && typeof objOrEl === 'object' && !objOrEl.nodeType) {
         const hit = normalizePlayer(objOrEl);
         return hit || null;
       }
-      // DOM card
       const card = objOrEl?.closest?.('.tu-player, .tu-card, [data-player-id]');
       if (!card) return null;
 
@@ -878,12 +883,29 @@
       }, true);
     }
 
-    // Top-level events
+    async function ensureTryoutContext(){
+      const current = ctx().tryout_id;
+      if (current) return current;
+
+      const hinted = getUrlTryoutId();
+      if (hinted){
+        await apiPost({ action:'ctx_set', tryout_id: hinted });
+        return hinted;
+      }
+
+      const ids = [...new Set((roster||[]).map(r => r.tryout_id).filter(Boolean))];
+      if (ids.length === 1){
+        await apiPost({ action:'ctx_set', tryout_id: ids[0] });
+        return ids[0];
+      }
+      return '';
+    }
+
     qs('#coachSelect').addEventListener('change', (e)=> localStorage.setItem('coach_id', e.target.value));
     qs('#stationSelect').addEventListener('change', async ()=>{
       await loadDrills();
       await mountRosterForStation();
-      wireRosterDelegation();     // ensure delegation after remount
+      wireRosterDelegation();
       applyGroupFromStation();
     });
     qs('#coachDrill').addEventListener('change', ()=>{
@@ -895,12 +917,15 @@
     });
     ['A','B','C','D'].forEach(L=> qs('#save'+L).addEventListener('click', ()=> saveLane(L)));
 
-    // ---------- Init ----------
     (async function init(){
       setActiveLane('A');
-      await Promise.all([loadCoaches(), loadRoster(), loadLatestGroups(), loadDrills()]);
+      await loadCoaches();
+      await loadRoster();
+      await ensureTryoutContext();
+      await loadLatestGroups();
+      await loadDrills();
       await mountRosterForStation();
-      wireRosterDelegation();     // initial bind
+      wireRosterDelegation();
       applyGroupFromStation();
     })();
   </script>
