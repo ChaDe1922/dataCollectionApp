@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,7 +15,6 @@
     })();
   </script>
 
-  <!-- Theme + fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -42,10 +40,10 @@
 
     .field{ margin:10px 0; }
     .label{ font-weight:800; font-size:.95rem; opacity:.9; margin-bottom:6px; display:block; }
-    .form-input, .form-select, .form-number{ width:100%; padding:.68rem .8rem; border-radius:12px; border:1px solid rgba(255,255,255,.28);
+    .form-input, .form-select{ width:100%; padding:.68rem .8rem; border-radius:12px; border:1px solid rgba(255,255,255,.28);
       background:rgba(255,255,255,.08); color:#fff; }
     .row{ display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; }
-    .row3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; }
+    .row3{ display:grid; grid-template-columns: 1fr; gap:12px; }
 
     .timer{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
     .time{ font-variant-numeric:tabular-nums; font-weight:900; font-size:1.25rem; min-width:82px; text-align:right; }
@@ -57,33 +55,28 @@
     .btn.warn{ background:linear-gradient(135deg,#F59E0B,#F59E0B); color:#2A1400; border:0; }
     .btn.ghost{ background:transparent; }
     .btn:disabled{ opacity:.55; cursor:not-allowed; }
-
-    /* Counter control */
-    .counter-control { display:flex; align-items:center; gap:8px; }
-    .counter-btn {
-      width:40px; height:40px; display:flex; align-items:center; justify-content:center;
-      border-radius:8px; border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08);
-      color:#fff; font-size:20px; font-weight:800; cursor:pointer; transition:all .2s ease; user-select:none;
-    }
-    .counter-btn:hover{ background:rgba(255,255,255,.15); transform:scale(1.05); }
-    .counter-btn:active{ transform:scale(0.95); }
-    .counter-value{ min-width:60px; text-align:center; font-size:24px; font-weight:900; color:#C4B5FD; font-variant-numeric:tabular-nums; }
-
-    /* Toggle switch for boolean inputs */
-    .toggle-switch{ display:inline-flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
-    .toggle-switch input[type="checkbox"]{ position:absolute; opacity:0; width:0; height:0; }
-    .toggle-slider{ position:relative; width:50px; height:26px; background:rgba(255,255,255,.15); border-radius:999px; transition:all .3s ease; border:1px solid rgba(255,255,255,.25); }
-    .toggle-slider::before{ content:''; position:absolute; width:20px; height:20px; border-radius:50%; background:#fff; top:2px; left:3px; transition:all .3s ease; box-shadow:0 2px 4px rgba(0,0,0,.2); }
-    .toggle-switch input:checked + .toggle-slider{ background:linear-gradient(135deg,#16A34A,#10B981); border-color:#16A34A; }
-    .toggle-switch input:checked + .toggle-slider::before{ transform:translateX(23px); }
-    .toggle-label{ font-weight:700; font-size:.9rem; }
-
-    /* Save indicator */
     .btn.loading{ position:relative; pointer-events:none; }
     .btn.loading .spin{ width:14px; height:14px; border:2px solid rgba(255,255,255,.45);
                         border-top-color:#fff; border-radius:50%; display:inline-block;
                         margin-right:8px; vertical-align:-2px; animation:spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Counters */
+    .counter-control{ display:flex; align-items:center; gap:8px; }
+    .counter-btn{
+      width:40px; height:40px; display:flex; align-items:center; justify-content:center;
+      border-radius:8px; border:1px solid rgba(255,255,255,.25);
+      background:rgba(255,255,255,.08); color:#fff; font-size:20px; font-weight:800;
+      cursor:pointer; transition:all .2s ease; user-select:none;
+    }
+    .counter-btn:hover{ background:rgba(255,255,255,.15); transform:scale(1.05); }
+    .counter-btn:active{ transform:scale(0.95); }
+    .counter-value{ min-width:60px; text-align:center; font-size:24px; font-weight:900; color:#C4B5FD; font-variant-numeric:tabular-nums; }
+
+    .rate-display{ margin-top:8px; padding:8px 12px; background:rgba(139,92,246,.15);
+      border:1px solid rgba(139,92,246,.3); border-radius:8px; text-align:center; }
+    .rate-value{ font-size:28px; font-weight:900; color:#C4B5FD; font-variant-numeric:tabular-nums; }
+    .rate-label{ font-size:11px; opacity:.7; margin-top:2px; }
 
     .lane-title{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-weight:900; letter-spacing:.04em; opacity:.9; }
     .lane-chip{ display:inline-flex; align-items:center; gap:8px; padding:4px 8px; border-radius:999px;
@@ -100,10 +93,6 @@
     .table{ width:100%; border-collapse:collapse; font-size:.95rem; }
     .table th,.table td{ padding:6px 8px; border-bottom:1px solid rgba(255,255,255,.12); text-align:left; }
 
-    .muted{ opacity:.75; }
-    .tu-log{ display:none !important; }
-
-    /* Rating badges */
     .rating-above{ background:linear-gradient(135deg,#16A34A,#10B981); color:#061710; padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; }
     .rating-avg{ background:linear-gradient(135deg,#8B5CF6,#A78BFA); color:#071018; padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; }
     .rating-below{ background:linear-gradient(135deg,#DC2626,#EF4444); color:#fff; padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; }
@@ -123,15 +112,12 @@
 
   <main>
     <div class="container">
-      <!-- Shared: context bar, filter chips, roster chips (filter to WR) -->
       <div id="tryout-shared" style="margin-bottom:12px"></div>
 
-      <!-- Top control bar -->
       <section class="card" style="margin-bottom:14px">
         <div class="toolbar">
           <span class="chip">Station: <strong>WR</strong></span>
 
-          <!-- Drill dropdown from Drill Dictionary -->
           <div class="field" style="min-width:280px; margin:0;">
             <label class="label">WR Drill</label>
             <select id="wrDrillSel" class="form-select"></select>
@@ -140,7 +126,6 @@
 
           <span id="drillBadge" class="chip badge">Drill: —</span>
 
-          <!-- Assign selection to lane -->
           <div class="assign" style="margin-left:auto">
             <span class="chip ghost small">Assign selection to:</span>
             <div class="seg" role="tablist" aria-label="Active lane">
@@ -150,28 +135,25 @@
           </div>
         </div>
 
-        <!-- Picker + shared notes -->
         <div class="row" style="margin-top:10px">
           <div>
             <label class="label">Player (search by number or name)</label>
-            <input id="playerPicker" class="form-input" list="wr_roster" placeholder="e.g., 14 • Jayden Cole"/>
+            <input id="playerPicker" class="form-input" list="wr_roster" placeholder="e.g., 8 • Jalen Carter"/>
             <datalist id="wr_roster"></datalist>
           </div>
           <div>
             <label class="label">Notes (optional, applies to next save)</label>
-            <input id="sharedNotes" class="form-input" placeholder="windy, wet gloves, slip, etc."/>
+            <input id="sharedNotes" class="form-input" placeholder="windy, contested, boundary hash, etc."/>
           </div>
         </div>
 
-        <!-- Current lane assignments -->
         <div class="toolbar" style="margin-top:10px;gap:12px">
           <span id="chipLaneA" class="lane-chip" style="display:none"></span>
           <span id="chipLaneB" class="lane-chip" style="display:none"></span>
-          <span class="small muted">Tip: time drills show timers; rate drills show success/failure; attempts auto-increment.</span>
+          <span class="small muted">Time drills use a timer; rate drills use two simple counters. Attempts auto-calc.</span>
         </div>
       </section>
 
-      <!-- Two lanes -->
       <section class="grid-2">
         <!-- LANE A -->
         <div id="laneA" class="card lane-card lane-active">
@@ -188,17 +170,8 @@
                 <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
               </select>
             </div>
-            <div>
-              <label class="label">Extra 1 (opt)</label>
-              <input id="aExtra1" class="form-input" placeholder="Route / side / hash"/>
-            </div>
-            <div>
-              <label class="label">Extra 2 (opt)</label>
-              <input id="aExtra2" class="form-input" placeholder="Coverage / tags / notes"/>
-            </div>
           </div>
 
-          <!-- Dynamic primary/secondary -->
           <div class="field">
             <div id="aTimerBlock">
               <label class="label">Primary: <span id="aPrimaryLabel">Time</span></label>
@@ -238,17 +211,8 @@
                 <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
               </select>
             </div>
-            <div>
-              <label class="label">Extra 1 (opt)</label>
-              <input id="bExtra1" class="form-input" placeholder="Route / side / hash"/>
-            </div>
-            <div>
-              <label class="label">Extra 2 (opt)</label>
-              <input id="bExtra2" class="form-input" placeholder="Coverage / tags / notes"/>
-            </div>
           </div>
 
-          <!-- Dynamic primary/secondary -->
           <div class="field">
             <div id="bTimerBlock">
               <label class="label">Primary: <span id="bPrimaryLabel">Time</span></label>
@@ -274,14 +238,12 @@
         </div>
       </section>
 
-      <!-- Start both (below lanes, above writes) -->
       <section id="bothStartCard" class="card" style="margin-top:8px; display:none">
         <div class="toolbar" style="justify-content:center">
           <button id="bothStart" class="btn primary">Start Both</button>
         </div>
       </section>
 
-      <!-- Recent writes (bottom) -->
       <section class="card" style="margin-top:14px">
         <div class="toolbar">
           <button id="toggleRecent" class="btn ghost">Recent Writes ▾</button>
@@ -291,6 +253,7 @@
           <ul id="recentList" style="margin:0; padding-left:18px"></ul>
         </div>
       </section>
+
     </div>
   </main>
 
@@ -303,21 +266,26 @@
   <script src="../js/tryout-ui.js"></script>
 
   <script>
-    // ---------- Boot shared context/UI ----------
+    // API base + context
     (function(){
       const meta = document.querySelector('meta[name="gsds-api-base"]');
       window.API_BASE = (meta && meta.content || '').trim();
     })();
     GameContext.configure({ apiBase: window.API_BASE, server: true, pollMs: 1000 });
 
-    // WR group filter in the shared Tryout UI
+    // Shared tryout header
     TryoutUI.init('#tryout-shared', { showGroup:true, filterMode:'groups', allowPresence:false });
     GameContext.setGroup('WR');
 
-    // ---------- WR Station logic (dictionary-driven) ----------
+    // Station constants
     const STATION_ID = 'WR';
     const AFTER_SAVE = { clearLane:false, markDone:true };
 
+    // Identify this device/app in the sheet (aligns with RB/QB pages)
+    const SOURCE_APP = 'web.tryout.station';
+    const CLIENT_ID  = (localStorage.client_id ||= (self.crypto?.randomUUID?.() || String(Date.now())));
+
+    // State
     let roster = [];
     const groupLatest = new Map();
     const pageLog = [];
@@ -328,103 +296,77 @@
     const timers = new Map();
     let WR_DRILLS = [], WR_CURR = null;
 
-    // ------- helpers -------
+    // utils
     const qs  = (s,p=document)=>p.querySelector(s);
     const qsa = (s,p=document)=>[...p.querySelectorAll(s)];
-    const labelFor = (r)=> [r.tryout_num, '•', r.display_name, r.primary_pos?`(${r.primary_pos})`:'' ].filter(Boolean).join(' ');
+    const labelFor = (r)=> [r.tryout_num,'•',r.display_name, r.primary_pos?`(${r.primary_pos})`:'' ].filter(Boolean).join(' ');
     function ctx(){ return GameContext.get ? GameContext.get() : {}; }
     const fmtTime = (d)=>{ const pad=n=>String(n).padStart(2,'0'); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
     const isTimeDrill = d => /sec/i.test(String(d?.measurement_unit||''));
     const isRateDrill = d => /percentage|percent|rate/i.test(String(d?.measurement_unit||'')) || String(d?.drill_type||'').toUpperCase()==='RATE';
+    const pretty = s => String(s||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
 
-    // ------ Threshold parsing and evaluation (3-tier system) ------
-    function parseThreshold(str) {
+    // label helpers
+    function successLabelFor(meas){
+      const m=String(meas||'').toLowerCase();
+      if (m.includes('catch_rate')) return 'Catches';
+      if (m.includes('contested_catch_rate')) return 'Wins';
+      if (m.includes('break_success_rate')) return 'Successful Breaks';
+      if (m.includes('success')) return 'Successes';
+      return 'Good Reps';
+    }
+    function failureLabelFor(meas){
+      const m=String(meas||'').toLowerCase();
+      if (m.includes('catch_rate')) return 'Drops';
+      if (m.includes('contested_catch_rate')) return 'Drops';
+      if (m.includes('error_rate')) return 'Errors';
+      if (m.includes('break_success_rate')) return 'Errors';
+      return 'Bad Reps';
+    }
+
+    // thresholds / evaluation
+    function parseThreshold(str){
       if (!str) return null;
-      const s = String(str).trim();
-      if (/^(yes|true)$/i.test(s)) return { type: 'bool', value: true };
-      if (/^(no|false)$/i.test(s)) return { type: 'bool', value: false };
-
-      const rangeMatch = s.match(/^(-?\d+(?:\.\d+)?)\s*[-–]\s*(-?\d+(?:\.\d+)?)$/);
-      if (rangeMatch) return { type: 'range', min: parseFloat(rangeMatch[1]), max: parseFloat(rangeMatch[2]) };
-
-      const compMatch = s.match(/^(<=|>=|<|>|=|≤|≥)\s*(-?\d+(?:\.\d+)?)$/);
-      if (compMatch) {
-        const op = compMatch[1].replace('≤','<=').replace('≥','>=');
-        return { type:'comp', op, value: parseFloat(compMatch[2]) };
-      }
-
-      if (!isNaN(parseFloat(s))) return { type:'comp', op:'>=', value: parseFloat(s) };
+      const s=String(str).trim();
+      const r=s.match(/^(-?\d+(?:\.\d+)?)\s*[-–]\s*(-?\d+(?:\.\d+)?)$/);
+      if(r) return {type:'range',min:parseFloat(r[1]),max:parseFloat(r[2])};
+      const c=s.match(/^(<=|>=|<|>|=|≤|≥)\s*(-?\d+(?:\.\d+)?)$/);
+      if(c){ const op=c[1].replace('≤','<=').replace('≥','>=');
+        return {type:'comp',op,value:parseFloat(c[2])}; }
+      if(!isNaN(parseFloat(s))) return {type:'comp',op:'>=',value:parseFloat(s)};
       return null;
     }
-
-    function meetsThreshold(threshold, value) {
-      if (!threshold || value == null) return null;
-      if (threshold.type === 'bool') return !!value === threshold.value;
-      if (threshold.type === 'range') return value >= threshold.min && value <= threshold.max;
-      if (threshold.type === 'comp') {
-        switch(threshold.op){
-          case '<=': return value <= threshold.value;
-          case '>=': return value >= threshold.value;
-          case '<':  return value <  threshold.value;
-          case '>':  return value >  threshold.value;
-          case '=':  return value === threshold.value;
-        }
+    function meets(th,v){
+      if(!th||v==null) return null;
+      if(th.type==='range') return v>=th.min && v<=th.max;
+      if(th.type==='comp'){
+        switch(th.op){case'<=':return v<=th.value;case'>=':return v>=th.value;case'<':return v<th.value;case'>':return v>th.value;case'=':return v===th.value;}
       }
       return null;
     }
+    function evaluateDrill(drill, p1, p2){
+      const ok  = meets(parseThreshold(drill.success_threshold), p1);
+      const bad = meets(parseThreshold(drill.failure_threshold), p1);
 
-    // ---------- Rating (ignore "attempts" on rate drills) ----------
-    function evaluateDrill(drill, primaryVal, secondaryVal){
-      try{
-        if (window.Rules?.evaluateRep){
-          const res = Rules.evaluateRep(drill, primaryVal, secondaryVal);
-          if (res && typeof res.is_success==='boolean'){
-            return {
-              rating: res.is_success ? 'above' : (res.is_failure ? 'below' : 'average'),
-              ratingText: res.is_success ? 'Above Average' : (res.is_failure ? 'Below Average' : 'Average'),
-              ratingClass: res.is_success ? 'rating-above' : (res.is_failure ? 'rating-below' : 'rating-avg')
-            };
-          }
-        }
-      }catch(_){}
+      // If secondary is just an attempts goal, ignore it for rating
+      const ignoreSecondary = isRateDrill(drill) && /attempt/i.test(String(drill.secondary_measurement||''));
+      const secOk = ignoreSecondary ? true : (drill.secondary_threshold ? meets(parseThreshold(drill.secondary_threshold), p2) : true);
 
-      const primaryOk   = meetsThreshold(parseThreshold(drill.success_threshold), primaryVal);
-      const primaryFail = meetsThreshold(parseThreshold(drill.failure_threshold), primaryVal);
-
-      // If it's a rate drill and secondary is "attempts", treat as goal only (not part of rating)
-      const ignoreSecondaryForRating = isRateDrill(drill) && /attempt/i.test(String(drill.secondary_measurement||''));
-      const secT  = ignoreSecondaryForRating ? null : parseThreshold(drill.secondary_threshold);
-      const secOk = secT ? meetsThreshold(secT, secondaryVal) : true;
-
-      if (primaryOk && secOk) return { rating:'above', ratingText:'Above Average',  ratingClass:'rating-above' };
-      if (primaryFail || !secOk) return { rating:'below',  ratingText:'Below Average', ratingClass:'rating-below' };
-      return { rating:'average', ratingText:'Average', ratingClass:'rating-avg' };
-    }
-
-    function normalizeValue(unit, raw){
-      if (raw === '' || raw == null) return null;
-      if (typeof raw === 'boolean') return raw;
-      const u = String(unit||'').toLowerCase();
-      if (u.includes('bool') || u==='boolean'){
-        if (typeof raw === 'string') return /^(yes|true|1)$/i.test(raw.trim());
-        return !!raw;
-      }
-      const n = parseFloat(raw);
-      if (!isNaN(n)) return n;
-      return raw;
+      if(ok && secOk) return {rating:'above', ratingText:'Above Average', ratingClass:'rating-above'};
+      if(bad || !secOk) return {rating:'below', ratingText:'Below Average', ratingClass:'rating-below'};
+      return {rating:'average', ratingText:'Average', ratingClass:'rating-avg'};
     }
 
     // timers
-    function makeTimer(timeEl, onState){
-      let running=false, t0=0, acc=0, raf=null;
-      const fmt = ms => (ms/1000).toFixed(2);
-      const tick = ()=>{ const now=performance.now(); const ms=acc + (running ? (now-t0) : 0); timeEl.textContent = fmt(ms); if(running) raf=requestAnimationFrame(tick); };
-      const start = ()=>{ if(running) return; running=true; t0=performance.now(); tick(); onState?.(true); };
-      const stop  = ()=>{ if(!running) return; running=false; acc += performance.now()-t0; cancelAnimationFrame(raf); tick(); onState?.(false); };
-      const reset = ()=>{ running=false; acc=0; cancelAnimationFrame(raf); tick(); onState?.(false); };
-      const toggle= ()=> running ? stop() : start();
-      tick();
-      return { start, stop, reset, toggle, isRunning:()=>running };
+    function makeTimer(el,onState){
+      let running=false,t0=0,acc=0,raf=null;
+      const fmt=ms=>(ms/1000).toFixed(2);
+      const tick=()=>{ const now=performance.now(); const ms=acc+(running?(now-t0):0); el.textContent=fmt(ms); if(running) raf=requestAnimationFrame(tick); };
+      const start=()=>{ if(running) return; running=true; t0=performance.now(); tick(); onState?.(true); };
+      const stop=()=>{ if(!running) return; running=false; acc+=performance.now()-t0; cancelAnimationFrame(raf); tick(); onState?.(false); };
+      const reset=()=>{ running=false; acc=0; cancelAnimationFrame(raf); tick(); onState?.(false); };
+      const toggle=()=>running?stop():start();
+      tick(); return {start,stop,reset,toggle,isRunning:()=>running};
     }
 
     // roster datalist
@@ -433,40 +375,25 @@
       if(!res?.ok) return;
       const tid = ctx().tryout_id || '';
       roster = (res.roster||[]).filter(r => !tid || String(r.tryout_id||'')===String(tid));
-      const dl = document.getElementById('wr_roster');
-      dl.innerHTML = '';
+      const dl = document.getElementById('wr_roster'); dl.innerHTML='';
       roster.forEach(r=>{
-        const rec = {
-          player_id: r.player_id || '',
-          display_name: r.display_name || r.player_name || '',
-          primary_pos: r.primary_pos || r.position || '',
-          tryout_num: r.tryout_num || r.jersey_number || '',
-          group_code: r.group_code || r.primary_pos || ''
-        };
-        const opt = document.createElement('option');
-        opt.value = labelFor(rec);
-        opt.dataset.pid = rec.player_id;
-        dl.appendChild(opt);
+        const rec={ player_id:r.player_id||'', display_name:r.display_name||r.player_name||'', primary_pos:r.primary_pos||r.position||'', tryout_num:r.tryout_num||r.jersey_number||'', group_code:r.group_code||r.primary_pos||'' };
+        const opt=document.createElement('option'); opt.value=labelFor(rec); opt.dataset.pid=rec.player_id; dl.appendChild(opt);
       });
     }
-
     async function loadLatestGroups(){
       const res = await API.tryout.read.groupsLatest(ctx().tryout_id);
       if(!res?.ok || !Array.isArray(res.latest)) return;
       groupLatest.clear();
-      res.latest.forEach(row => { if(row.player_id && row.group_code) groupLatest.set(String(row.player_id).trim(), String(row.group_code).trim()); });
+      res.latest.forEach(row=>{ if(row.player_id&&row.group_code) groupLatest.set(String(row.player_id).trim(), String(row.group_code).trim()); });
     }
     function resolveGroupCode(pid, fallback, rec){
-      if (pid) {
-        const direct = groupLatest.get(String(pid).trim());
-        if (direct) return direct;
-        const r = roster.find(x => String(x.player_id).trim() === String(pid).trim());
-        return r?.group_code || r?.primary_pos || fallback || '';
-      }
-      return rec?.group_code || rec?.primary_pos || fallback || '';
+      if(pid){ const direct=groupLatest.get(String(pid).trim()); if(direct) return direct;
+        const r=roster.find(x=>String(x.player_id).trim()===String(pid).trim()); return r?.group_code||r?.primary_pos||fallback||''; }
+      return rec?.group_code||rec?.primary_pos||fallback||'';
     }
 
-    // Active lane highlight
+    // lane UI
     function setActiveLane(l){
       activeLane = (l==='B') ? 'B' : 'A';
       document.getElementById('segA').setAttribute('aria-pressed', activeLane==='A' ? 'true':'false');
@@ -479,559 +406,417 @@
     qs('#laneA').addEventListener('click', ()=> setActiveLane('A'));
     qs('#laneB').addEventListener('click', ()=> setActiveLane('B'));
 
-    // Resets
     function softResetLane(lane){
       const p = lane==='A' ? 'a' : 'b';
-      qs(`#${p}Time`).textContent = '0.00';
-      const t = timers.get(p); t && t.reset();
-
-      // clear dynamic inputs
-      const box = qs(`#${p}InputsBlock`);
-      if (box){
+      qs(`#${p}Time`).textContent='0.00';
+      const t=timers.get(p); t&&t.reset();
+      const box=qs(`#${p}InputsBlock`);
+      if(box){
         box.querySelectorAll('[data-counter-value]').forEach(el=> el.textContent='0');
-        box.querySelectorAll('input[type="checkbox"]').forEach(el=> el.checked=false);
+        box.querySelectorAll('.rate-display .rate-value').forEach(el=> el.textContent='0%');
+        box.querySelectorAll('[id$="SuccCount"], [id$="AttCount"]').forEach(el=> el.textContent='0');
       }
-      qs(`#${p}Status`).textContent = '';
+      qs(`#${p}Status`).textContent='';
     }
     function hardResetLane(lane){
-      const p = lane==='A' ? 'a' : 'b';
-      qs(`#${p}Attempt`).value = '1';
-      qs(`#${p}Log`).innerHTML = '';
-      qs(`#${p}Extra1`).value = '';
-      qs(`#${p}Extra2`).value = '';
+      const p=lane==='A'?'a':'b';
+      qs(`#${p}Attempt`).value='1';
+      qs(`#${p}Log`).innerHTML='';
       softResetLane(lane);
     }
 
     function renderLaneChips(){
-      const a = lanePlayers.A, b = lanePlayers.B;
-      const aEl = document.getElementById('laneAWho');
-      const bEl = document.getElementById('laneBWho');
-      const topA= document.getElementById('chipLaneA');
-      const topB= document.getElementById('chipLaneB');
-
-      if(a){
-        const txt = `${a.tryout_num||''} • ${a.display_name||a.player_id}${a.primary_pos?` (${a.primary_pos})`:''}`;
-        aEl.innerHTML = `${txt} <span class="x" title="Clear" aria-label="Clear" data-clear="A">✕</span>`;
-        aEl.style.display = '';
-        topA.textContent = `Lane A: ${txt}`; topA.style.display = '';
-        document.getElementById('aSave').disabled = false;
-      } else {
-        aEl.style.display = 'none'; topA.style.display = 'none';
-        document.getElementById('aSave').disabled = true;
-      }
-      if(b){
-        const txt = `${b.tryout_num||''} • ${b.display_name||b.player_id}${b.primary_pos?` (${b.primary_pos})`:''}`;
-        bEl.innerHTML = `${txt} <span class="x" title="Clear" aria-label="Clear" data-clear="B">✕</span>`;
-        bEl.style.display = '';
-        topB.textContent = `Lane B: ${txt}`; topB.style.display = '';
-        document.getElementById('bSave').disabled = false;
-      } else {
-        bEl.style.display = 'none'; topB.style.display = 'none';
-        document.getElementById('bSave').disabled = true;
-      }
-
-      document.querySelectorAll('[data-clear="A"]').forEach(x=> x.onclick = ()=>{ lanePlayers.A = null; renderLaneChips(); hardResetLane('A'); });
-      document.querySelectorAll('[data-clear="B"]').forEach(x=> x.onclick = ()=>{ lanePlayers.B = null; renderLaneChips(); hardResetLane('B'); });
+      const a=lanePlayers.A, b=lanePlayers.B;
+      const aEl=qs('#laneAWho'), bEl=qs('#laneBWho'), topA=qs('#chipLaneA'), topB=qs('#chipLaneB');
+      if(a){ const txt=`${a.tryout_num||''} • ${a.display_name||a.player_id}${a.primary_pos?` (${a.primary_pos})`:''}`;
+        aEl.innerHTML=`${txt} <span class="x" data-clear="A">✕</span>`; aEl.style.display=''; topA.textContent=`Lane A: ${txt}`; topA.style.display=''; qs('#aSave').disabled=false;
+      }else{ aEl.style.display='none'; topA.style.display='none'; qs('#aSave').disabled=true; }
+      if(b){ const txt=`${b.tryout_num||''} • ${b.display_name||b.player_id}${b.primary_pos?` (${b.primary_pos})`:''}`;
+        bEl.innerHTML=`${txt} <span class="x" data-clear="B">✕</span>`; bEl.style.display=''; topB.textContent=`Lane B: ${txt}`; topB.style.display=''; qs('#bSave').disabled=false;
+      }else{ bEl.style.display='none'; topB.style.display='none'; qs('#bSave').disabled=true; }
+      qsa('[data-clear="A"]').forEach(x=> x.onclick=()=>{ lanePlayers.A=null; renderLaneChips(); hardResetLane('A'); });
+      qsa('[data-clear="B"]').forEach(x=> x.onclick=()=>{ lanePlayers.B=null; renderLaneChips(); hardResetLane('B'); });
     }
-
-    // Assign to active lane
     function assignToActiveLane(rec){
-      lanePlayers[activeLane] = rec;
-      document.getElementById('playerPicker').value = labelFor(rec);
+      lanePlayers[activeLane]=rec;
+      qs('#playerPicker').value=labelFor(rec);
       renderLaneChips();
       hardResetLane(activeLane);
     }
 
-    // Selection sources
     window.addEventListener('tryoutui:select', (e)=>{
-      const d = e?.detail?.player; if(!d) return;
-      const hit = roster.find(r => r.player_id===d.player_id) || d;
+      const d=e?.detail?.player; if(!d) return;
+      const hit=roster.find(r=>r.player_id===d.player_id)||d;
       assignToActiveLane(hit);
     });
-    document.getElementById('playerPicker').addEventListener('change', (e)=>{
-      const txt = (e.target.value||'').toLowerCase();
-      const hit = roster.find(r => labelFor(r).toLowerCase() === txt) ||
-                  roster.find(r => String(r.tryout_num||'').toLowerCase() === txt) ||
-                  roster.find(r => String(r.display_name||'').toLowerCase() === txt);
+    qs('#playerPicker').addEventListener('change', (e)=>{
+      const txt=(e.target.value||'').toLowerCase();
+      const hit=roster.find(r=>labelFor(r).toLowerCase()===txt) ||
+                roster.find(r=>String(r.tryout_num||'').toLowerCase()===txt) ||
+                roster.find(r=>String(r.display_name||'').toLowerCase()===txt);
       if(hit) assignToActiveLane(hit);
     });
 
-    // ---- Drill Dictionary hookup ----
+    // ---- Drill dictionary + inputs (aligned with RB/QB) ----
+    // ---- Drill dictionary + inputs (Good vs Bad, attempts auto) ----
     function renderInputs(prefix, drill){
       const isTime = isTimeDrill(drill);
       const isRate = isRateDrill(drill);
-      const timerBlk = qs(`#${prefix}TimerBlock`);
-      const inputBlk = qs(`#${prefix}InputsBlock`);
-      const bothCard = qs('#bothStartCard');
-      const primaryLabel = qs(`#${prefix}PrimaryLabel`);
-      const primaryHelp = qs(`#${prefix}PrimaryHelp`);
 
-      // Update primary label/help
-      primaryLabel.textContent = isRate ? `${drill.primary_measurement} (calculated %)` : (drill.primary_measurement || 'Time');
-      const parts = [];
-      if (drill.drill_category) parts.push(drill.drill_category);
-      if (drill.success_threshold) parts.push(`Above Avg: ${drill.success_threshold}`);
-      if (drill.failure_threshold) parts.push(`Below Avg: ${drill.failure_threshold}`);
-      primaryHelp.textContent = parts.join(' • ');
+      const timerBlk   = qs(`#${prefix}TimerBlock`);
+      const inputBlk   = qs(`#${prefix}InputsBlock`);
+      const bothCard   = qs('#bothStartCard');
+      const primaryLbl = qs(`#${prefix}PrimaryLabel`);
+      const primaryHelp= qs(`#${prefix}PrimaryHelp`);
 
-      // Toggle timer vs inputs
+      const pm = String(drill.primary_measurement||'').toLowerCase();
+      const errorLike = pm.includes('error_rate');
+
+      const friendly =
+        errorLike ? 'Error Rate' :
+        pm.includes('catch_rate') ? 'Catch Rate' :
+        pm.includes('contested_catch_rate') ? 'Contested Catch Rate' :
+        pm.includes('break_success_rate') ? 'Break Success Rate' :
+        pretty(drill.primary_measurement||'Primary');
+
+      primaryLbl.textContent = isRate ? `${friendly} (calculated %)` : (drill.primary_measurement || 'Time');
+
+      const hint=[];
+      if(drill.drill_category)     hint.push(drill.drill_category);
+      if(drill.success_threshold)  hint.push(`Above Avg: ${drill.success_threshold}`);
+      if(drill.failure_threshold)  hint.push(`Below Avg: ${drill.failure_threshold}`);
+      primaryHelp.textContent = hint.join(' • ');
+
       timerBlk.style.display = isTime ? '' : 'none';
-      inputBlk.style.display = isTime ? 'none' : '';
+      inputBlk.style.display  = isTime ? 'none' : '';
 
-      // Update table head
-      const head = qs(`#${prefix}Head`);
+      const head=qs(`#${prefix}Head`);
       head.innerHTML = `<tr>
         <th>Drill</th><th>Att</th>
-        <th>${drill.primary_measurement || 'Primary'}</th>
-        <th>${drill.secondary_measurement || 'Secondary'}</th>
+        <th>${pretty(drill.primary_measurement) || 'Primary'}</th>
+        <th>${drill.secondary_measurement ? pretty(drill.secondary_measurement) : 'Secondary'}</th>
         <th>Rating</th>
       </tr>`;
 
-      // Start Both only for time drills
       bothCard.style.display = isTime ? '' : 'none';
-
-      // Build inputs if not time
       inputBlk.innerHTML = '';
-      if (!isTime){
-        if (isRate){
-          const succId = `${prefix}Successes`;
-          const failId = `${prefix}Failures`;
 
-          // Label mapping for WR context
-          let successLabel = 'Successes';
-          let failureLabel = 'Failures';
-          const meas = String(drill.primary_measurement||'').toLowerCase();
-          if (meas.includes('catch')) { successLabel='Catches'; failureLabel='Drops'; }
-          else if (meas.includes('win')) { successLabel='Wins'; failureLabel='Losses'; }
-          else if (meas.includes('error')) { successLabel='Clean reps'; failureLabel='Errors / Faults'; }
+      if (!isTime && isRate){
+        const succId = `${prefix}Successes`;
+        const failId = `${prefix}Failures`;
 
-          // If secondary is "attempts" with a threshold, treat it as a goal chip (not part of rating)
-          const attemptsIsGoal = /attempt/i.test(String(drill.secondary_measurement||'')) && drill.secondary_threshold;
-          const secT = attemptsIsGoal ? parseThreshold(drill.secondary_threshold) : null;
-          const goalValue = (secT && secT.type==='comp') ? secT.value : null;
+        // Clear, drill-aware labels
+        const succLabel = (()=> {
+          if (pm.includes('catch_rate')) return 'Catches';
+          if (pm.includes('contested_catch_rate')) return 'Wins';
+          if (pm.includes('break_success_rate')) return 'Successful Breaks';
+          if (pm.includes('success')) return 'Successes';
+          return 'Good Reps';
+        })();
 
-          inputBlk.innerHTML = `
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-              <div>
-                <label class="label">${successLabel}</label>
-                <div class="counter-control">
-                  <button class="counter-btn" data-counter-dec="${succId}" type="button">−</button>
-                  <div class="counter-value" data-counter-value="${succId}">0</div>
-                  <button class="counter-btn" data-counter-inc="${succId}" type="button">+</button>
-                </div>
-              </div>
-              <div>
-                <label class="label">${failureLabel}</label>
-                <div class="counter-control">
-                  <button class="counter-btn" data-counter-dec="${failId}" type="button">−</button>
-                  <div class="counter-value" data-counter-value="${failId}">0</div>
-                  <button class="counter-btn" data-counter-inc="${failId}" type="button">+</button>
-                </div>
-              </div>
-            </div>
+        const failLabel = (()=> {
+          if (pm.includes('catch_rate')) return 'Drops';
+          if (pm.includes('contested_catch_rate')) return 'Drops';
+          if (pm.includes('error_rate')) return 'Errors';
+          if (pm.includes('break_success_rate')) return 'Errors';
+          return 'Bad Reps';
+        })();
 
-            <div class="small" style="margin-top:8px; display:flex; align-items:center; gap:10px;">
-              <span>Attempts: <strong data-rate="${prefix}-att">0</strong></span>
-              <span>• <strong data-rate="${prefix}-label">Success rate</strong>: <strong data-rate="${prefix}-pct">0.0%</strong></span>
-              <span data-rate="${prefix}-goal" class="chip ghost small" style="display:${attemptsIsGoal?'inline-flex':'none'}"></span>
-            </div>
-          `;
+        // If the drill’s secondary is attempts with a threshold, show a goal chip
+        const attemptsIsGoal = /attempt/i.test(String(drill.secondary_measurement||'')) && drill.secondary_threshold;
+        const secT = attemptsIsGoal ? parseThreshold(drill.secondary_threshold) : null;
+        const goalValue = (secT && secT.type==='comp') ? secT.value : null;
 
-          const update = ()=>{
-            const s = parseInt(inputBlk.querySelector(`[data-counter-value="${succId}"]`)?.textContent||'0');
-            const f = parseInt(inputBlk.querySelector(`[data-counter-value="${failId}"]`)?.textContent||'0');
-            const att = s + f;
-
-            const pm = String(drill.primary_measurement||'').toLowerCase();
-            const isErrorRate = pm.includes('error');
-            const pct = att>0 ? (isErrorRate ? (f/att)*100 : (s/att)*100) : 0;
-
-            inputBlk.querySelector(`[data-rate="${prefix}-att"]`).textContent = att;
-            inputBlk.querySelector(`[data-rate="${prefix}-pct"]`).textContent = pct.toFixed(1)+'%';
-            inputBlk.querySelector(`[data-rate="${prefix}-label"]`).textContent = isErrorRate ? 'Error rate' : (pm.includes('catch') ? 'Catch rate' : 'Success rate');
-
-            const goalEl = inputBlk.querySelector(`[data-rate="${prefix}-goal"]`);
-            if (goalEl){
-              if (goalValue!=null){
-                const met = att >= goalValue;
-                goalEl.textContent = met ? 'Goal met ✓' : `Goal ≥ ${goalValue} attempts`;
-                goalEl.classList.toggle('badge', met);
-              } else {
-                goalEl.style.display = 'none';
-              }
-            }
-          };
-          inputBlk.querySelectorAll('[data-counter-inc],[data-counter-dec]').forEach(btn=>{
-            const isInc = btn.hasAttribute('data-counter-inc');
-            btn.addEventListener('click', ()=>{
-              const id = btn.getAttribute(isInc ? 'data-counter-inc' : 'data-counter-dec');
-              const el = inputBlk.querySelector(`[data-counter-value="${id}"]`);
-              const cur = parseInt(el.textContent)||0;
-              el.textContent = String(isInc ? cur+1 : Math.max(0,cur-1));
-              update();
-            });
-          });
-
-          // Label/help override for clarity at top
-          const pm = String(drill.primary_measurement||'').toLowerCase();
-          primaryLabel.textContent =
-            pm.includes('error') ? 'Error rate (calculated %)'
-            : pm.includes('catch') ? 'Catch rate (calculated %)'
-            : 'Success rate (calculated %)';
-          const parts2 = [];
-          if (drill.drill_category) parts2.push(drill.drill_category);
-          if (drill.success_threshold) parts2.push(`Above Avg: ${drill.success_threshold}`);
-          if (drill.failure_threshold) parts2.push(`Below Avg: ${drill.failure_threshold}`);
-          primaryHelp.textContent = parts2.join(' • ');
-
-          update();
-
-        } else {
-          // Non-rate counters/toggles
-          const makeCounter = (id, label, help='') => `
+        // Two counters only: Good and Bad. Attempts = Good + Bad (computed, not editable)
+        inputBlk.innerHTML = `
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
             <div>
-              <label class="label">${label}</label>
-              ${help ? `<div class="measure-help">${help}</div>` : ''}
+              <label class="label">${succLabel}</label>
               <div class="counter-control">
-                <button class="counter-btn" data-counter-dec="${id}" type="button">−</button>
-                <div class="counter-value" data-counter-value="${id}">0</div>
-                <button class="counter-btn" data-counter-inc="${id}" type="button">+</button>
+                <button class="counter-btn" data-counter-dec="${succId}" type="button">−</button>
+                <div class="counter-value" data-counter-value="${succId}">0</div>
+                <button class="counter-btn" data-counter-inc="${succId}" type="button">+</button>
               </div>
-            </div>`;
-          const makeToggle = (id, label, help='') => `
+            </div>
             <div>
-              <label class="label" style="margin-bottom:8px">${label}</label>
-              ${help ? `<div class="measure-help" style="margin-bottom:6px">${help}</div>` : ''}
-              <label class="toggle-switch">
-                <input type="checkbox" id="${id}">
-                <span class="toggle-slider"></span>
-                <span class="toggle-label">Yes</span>
-              </label>
-            </div>`;
+              <label class="label">${failLabel}</label>
+              <div class="counter-control">
+                <button class="counter-btn" data-counter-dec="${failId}" type="button">−</button>
+                <div class="counter-value" data-counter-value="${failId}">0</div>
+                <button class="counter-btn" data-counter-inc="${failId}" type="button">+</button>
+              </div>
+            </div>
+          </div>
 
-          const primId = `${prefix}PrimVal`;
-          const secId  = `${prefix}SecVal`;
-          const primIsBool = /bool/i.test(drill.measurement_unit||'') || (String(drill.measurement_unit||'').toLowerCase()==='boolean');
-          const secIsBool  = /bool/i.test(drill.secondary_unit||'') || (String(drill.secondary_unit||'').toLowerCase()==='boolean');
+          <div class="rate-display" style="margin-top:8px;">
+            <div class="rate-value" id="${prefix}RateVal">0%</div>
+            <div class="rate-label">
+              ${drill.primary_measurement || 'Rate'}
+              (<span id="${prefix}SuccCount">0</span> / Attempts: <span id="${prefix}AttCount">0</span>)
+            </div>
+          </div>
+          <div class="small" style="margin-top:6px;">
+            <span data-rate="${prefix}-goal" class="chip ghost small" style="display:${attemptsIsGoal?'inline-flex':'none'}"></span>
+          </div>
+        `;
 
-          inputBlk.innerHTML += (primIsBool
-            ? makeToggle(primId, drill.primary_measurement || 'Primary', drill.success_threshold?`Target: ${drill.success_threshold}`:'')
-            : makeCounter(primId, drill.primary_measurement || 'Primary', drill.success_threshold?`Target: ${drill.success_threshold}`:''));
+        const update=()=>{
+          const s = parseInt(inputBlk.querySelector(`[data-counter-value="${succId}"]`)?.textContent||'0');
+          const f = parseInt(inputBlk.querySelector(`[data-counter-value="${failId}"]`)?.textContent||'0');
+          const att = s + f;
 
-          if (drill.secondary_measurement){
-            inputBlk.innerHTML += (secIsBool
-              ? makeToggle(secId, drill.secondary_measurement, drill.secondary_threshold?`Target: ${drill.secondary_threshold}`:'')
-              : makeCounter(secId, drill.secondary_measurement, drill.secondary_threshold?`Target: ${drill.secondary_threshold}`:''));
+          // error_rate is bad/attempts, others are good/attempts
+          const pct = att>0 ? (errorLike ? (f/att)*100 : (s/att)*100) : 0;
+
+          inputBlk.querySelector(`#${prefix}RateVal`).textContent = pct.toFixed(1)+'%';
+          inputBlk.querySelector(`#${prefix}SuccCount`).textContent = String(s);
+          inputBlk.querySelector(`#${prefix}AttCount`).textContent  = String(att);
+
+          const goalEl=inputBlk.querySelector(`[data-rate="${prefix}-goal"]`);
+          if(goalEl && goalValue!=null){
+            const met = att>=goalValue;
+            goalEl.textContent = met ? 'Attempts goal met ✓' : `Goal ≥ ${goalValue} attempts`;
+            goalEl.classList.toggle('badge', met);
           }
+        };
 
-          inputBlk.querySelectorAll('[data-counter-inc]').forEach(btn=>{
-            btn.addEventListener('click', ()=>{
-              const id = btn.getAttribute('data-counter-inc');
-              const el = inputBlk.querySelector(`[data-counter-value="${id}"]`);
-              el.textContent = String((parseInt(el.textContent)||0)+1);
-            });
+        inputBlk.querySelectorAll('[data-counter-inc],[data-counter-dec]').forEach(btn=>{
+          const isInc = btn.hasAttribute('data-counter-inc');
+          btn.addEventListener('click', ()=>{
+            const id = btn.getAttribute(isInc?'data-counter-inc':'data-counter-dec');
+            const el = inputBlk.querySelector(`[data-counter-value="${id}"]`);
+            const cur = parseInt(el.textContent)||0;
+            el.textContent = String(isInc ? cur+1 : Math.max(0,cur-1));
+            update();
           });
-          inputBlk.querySelectorAll('[data-counter-dec]').forEach(btn=>{
-            btn.addEventListener('click', ()=>{
-              const id = btn.getAttribute('data-counter-dec');
-              const el = inputBlk.querySelector(`[data-counter-value="${id}"]`);
-              const cur = parseInt(el.textContent)||0;
-              if (cur>0) el.textContent = String(cur-1);
-            });
-          });
-        }
+        });
+        update();
       }
     }
 
     async function loadWRDrills(){
-      try {
+      try{
         const res = await API.tryout.read.drills();
-        if (res?.ok) {
-          const all = res.drills || res.rows || [];
-          WR_DRILLS = all.filter(d => {
-            const pg = String(d.position_group || '').toUpperCase();
-            const st = String(d.station_id || '').toUpperCase();
-            return pg === 'WR' || st === 'WR' || st === 'WRS';
+        if(res?.ok){
+          const all=res.drills||res.rows||[];
+          WR_DRILLS = all.filter(d=>{
+            const pg=String(d.position_group||'').toUpperCase();
+            const st=String(d.station_id||'').toUpperCase();
+            return pg==='WR' || st==='WR' || st==='WRS';
           });
         }
-      } catch (e) { console.error('Error loading drills:', e); }
-
-      // Fallback set if none returned (includes a rate drill with attempts goal)
-      if (!Array.isArray(WR_DRILLS) || !WR_DRILLS.length){
+      }catch(e){ console.error(e); }
+      if(!Array.isArray(WR_DRILLS) || !WR_DRILLS.length){
+        // Fallback dictionary provided
         WR_DRILLS = [
-          { drill_id:'WR01', drill_name:'Gauntlet (Sideline–Sideline)', station_id:'WR', position_group:'WR', drill_type:'Rate',
-            primary_measurement:'catch_rate', measurement_unit:'percentage', success_threshold:'>=85', failure_threshold:'<=65',
-            secondary_measurement:'attempts', secondary_unit:'count', secondary_threshold:'>=12' },
-          { drill_id:'WR03', drill_name:'Release Wins (1v1)', station_id:'WR', position_group:'WR', drill_type:'Rate',
-            primary_measurement:'win_rate', measurement_unit:'percentage', success_threshold:'>=60', failure_threshold:'<=35',
-            secondary_measurement:'attempts', secondary_unit:'count', secondary_threshold:'>=8' },
-          { drill_id:'WR05', drill_name:'Route Time — 3-Cone', station_id:'WR', position_group:'WR', drill_type:'Time',
-            primary_measurement:'time', measurement_unit:'sec', success_threshold:'<=7.10', failure_threshold:'>=7.80' }
+          { drill_id:'WR01', drill_name:'W-Drill',                  station_id:'WR', position_group:'WR', drill_category:'Agility/Breaks',        drill_type:'Rate', primary_measurement:'break_success_rate',     measurement_unit:'percentage', success_threshold:'>=80', failure_threshold:'<=50', secondary_measurement:'errors_count', secondary_unit:'count', secondary_threshold:'<=1' },
+          { drill_id:'WR02', drill_name:'Ladder Drills',            station_id:'WR', position_group:'WR', drill_category:'Footwork',            drill_type:'Rate', primary_measurement:'error_rate',              measurement_unit:'percentage', success_threshold:'<=10', failure_threshold:'>=25', secondary_measurement:'attempts',     secondary_unit:'count', secondary_threshold:'>=12' },
+          { drill_id:'WR03', drill_name:'Top-of-Route Drill',       station_id:'WR', position_group:'WR', drill_category:'Receiving',           drill_type:'Rate', primary_measurement:'catch_rate',              measurement_unit:'percentage', success_threshold:'>=70', failure_threshold:'<=40', secondary_measurement:'drops',        secondary_unit:'count', secondary_threshold:'<=1' },
+          { drill_id:'WR04', drill_name:'Tennis Ball',              station_id:'WR', position_group:'WR', drill_category:'Hand-Eye',            drill_type:'Rate', primary_measurement:'catch_rate',              measurement_unit:'percentage', success_threshold:'>=80', failure_threshold:'<=50', secondary_measurement:'drops',        secondary_unit:'count', secondary_threshold:'<=2' },
+          { drill_id:'WR05', drill_name:'High-Point Drill',         station_id:'WR', position_group:'WR', drill_category:'Contested Catch',     drill_type:'Rate', primary_measurement:'contested_catch_rate',    measurement_unit:'percentage', success_threshold:'>=55', failure_threshold:'<=35', secondary_measurement:'drops',        secondary_unit:'count', secondary_threshold:'<=1' },
+          { drill_id:'WR06', drill_name:'Over-the-Shoulder Catches',station_id:'WR', position_group:'WR', drill_category:'Receiving',           drill_type:'Rate', primary_measurement:'catch_rate',              measurement_unit:'percentage', success_threshold:'>=65', failure_threshold:'<=35', secondary_measurement:'drops',        secondary_unit:'count', secondary_threshold:'<=1' }
         ];
       }
-
-      const sel = document.getElementById('wrDrillSel');
+      const sel=qs('#wrDrillSel');
       sel.innerHTML = WR_DRILLS.map(d=>`<option value="${d.drill_id}">${d.drill_name}</option>`).join('');
-      if (WR_DRILLS[0]) sel.value = WR_DRILLS[0].drill_id;
+      if(WR_DRILLS[0]) sel.value=WR_DRILLS[0].drill_id;
       sel.dispatchEvent(new Event('change'));
     }
 
-    // Wire drill selection
-    document.getElementById('wrDrillSel').addEventListener('change', ()=>{
-      const sel = document.getElementById('wrDrillSel');
+    qs('#wrDrillSel').addEventListener('change', ()=>{
+      const sel=qs('#wrDrillSel');
       WR_CURR = WR_DRILLS.find(x=>x.drill_id===sel.value) || null;
-      const badge = document.getElementById('drillBadge');
-      const hint  = document.getElementById('wrDrillHint');
-
-      if (WR_CURR){
+      const badge=qs('#drillBadge'); const hint=qs('#wrDrillHint');
+      if(WR_CURR){
         badge.textContent = `Drill: ${WR_CURR.drill_name}`;
-        const hintParts = [];
-        if (WR_CURR.drill_category) hintParts.push(WR_CURR.drill_category);
-        if (WR_CURR.success_threshold) hintParts.push(`Above Avg: ${WR_CURR.success_threshold}`);
-        if (WR_CURR.failure_threshold) hintParts.push(`Below Avg: ${WR_CURR.failure_threshold}`);
+        const hintParts=[];
+        if(WR_CURR.drill_category) hintParts.push(WR_CURR.drill_category);
+        if(WR_CURR.success_threshold) hintParts.push(`Above Avg: ${WR_CURR.success_threshold}`);
+        if(WR_CURR.failure_threshold) hintParts.push(`Below Avg: ${WR_CURR.failure_threshold}`);
         hint.textContent = hintParts.join(' • ');
-
-        renderInputs('a', WR_CURR);
-        renderInputs('b', WR_CURR);
+        renderInputs('a',WR_CURR); renderInputs('b',WR_CURR);
         softResetLane('A'); softResetLane('B');
-      } else {
-        badge.textContent = 'Drill: —'; hint.textContent='';
-      }
+      } else { badge.textContent='Drill: —'; hint.textContent=''; }
     });
 
-    // ----- Recent writes (bottom) -----
+    // recent log
     function addRecent(route, summary){
-      pageLog.unshift({ ts:new Date(), route, summary });
+      pageLog.unshift({ts:new Date(), route, summary});
       pageLog.splice(PAGE_LOG_LIMIT);
       renderRecent();
     }
     function renderRecent(){
-      const ul = qs('#recentList');
-      const cnt = qs('#recentCount');
-      if (!ul) return;
-      ul.innerHTML = pageLog.map(it => `<li><strong>${fmtTime(it.ts)}</strong> — ${it.summary}</li>`).join('');
-      cnt.textContent = pageLog.length ? `${pageLog.length} item${pageLog.length===1?'':'s'}` : '';
+      const ul=qs('#recentList'); const cnt=qs('#recentCount'); if(!ul) return;
+      ul.innerHTML=pageLog.map(it=>`<li><strong>${fmtTime(it.ts)}</strong> — ${it.summary}</li>`).join('');
+      cnt.textContent=pageLog.length ? `${pageLog.length} item${pageLog.length===1?'':'s'}` : '';
     }
     qs('#toggleRecent').addEventListener('click', ()=>{
-      const p = qs('#recentPanel');
-      const open = p.style.display !== 'none';
+      const p=qs('#recentPanel'); const open=p.style.display!=='none';
       p.style.display = open ? 'none' : '';
       qs('#toggleRecent').textContent = open ? 'Recent Writes ▾' : 'Recent Writes ▴';
     });
 
-    /* -------- Saving indicator helpers -------- */
+    // save helpers
     function setSaving(lane, saving){
-      const p = (lane==='A') ? 'a' : 'b';
-      const saveBtn = document.getElementById(p+'Save');
-      const toggleBtn = document.getElementById(p+'Toggle'); // may be hidden if non-time
-      const resetBtn = document.getElementById(p+'Reset');   // may be hidden if non-time
-
-      if (!saveBtn.dataset.label) saveBtn.dataset.label = saveBtn.textContent;
-
-      if (saving){
-        saveBtn.classList.add('loading');
-        saveBtn.disabled = true;
-        if (toggleBtn) toggleBtn.disabled = true;
-        if (resetBtn) resetBtn.disabled = true;
-        saveBtn.innerHTML = '<span class="spin"></span>Saving…';
-      } else {
-        saveBtn.classList.remove('loading');
-        saveBtn.disabled = (lane==='A' ? !lanePlayers.A : !lanePlayers.B);
-        if (toggleBtn) toggleBtn.disabled = false;
-        if (resetBtn)  resetBtn.disabled  = false;
-        saveBtn.textContent = saveBtn.dataset.label || 'Save';
-      }
+      const p=(lane==='A')?'a':'b';
+      const saveBtn=qs('#'+p+'Save'); const toggleBtn=qs('#'+p+'Toggle'); const resetBtn=qs('#'+p+'Reset');
+      if(!saveBtn.dataset.label) saveBtn.dataset.label=saveBtn.textContent;
+      if(saving){ saveBtn.classList.add('loading'); saveBtn.disabled=true; if(toggleBtn) toggleBtn.disabled=true; if(resetBtn) toggleBtn.disabled=true; saveBtn.innerHTML='<span class="spin"></span>Saving…'; }
+      else { saveBtn.classList.remove('loading'); saveBtn.disabled=(lane==='A'? !lanePlayers.A : !lanePlayers.B); if(toggleBtn) toggleBtn.disabled=false; if(resetBtn) resetBtn.disabled=false; saveBtn.textContent=saveBtn.dataset.label||'Save'; }
     }
 
+    // ---- universal lane read (time or rate) — aligns with RB/QB pages + 71_Fact columns ----
+    // ---- Read values (good/bad -> attempts auto). Keeps sheet alignment. ----
     function readLaneValues(prefix, drill){
       const isTime = isTimeDrill(drill);
       const isRate = isRateDrill(drill);
-      let primaryVal = null, secondaryVal = null;
 
-      if (isTime){
-        const timeEl = qs(`#${prefix}Time`);
-        primaryVal = parseFloat((timeEl.textContent||'0').trim());
-        if (isNaN(primaryVal)) primaryVal = null;
+      let primaryVal=null, secondaryVal=null;
+      let successes=0, failures=0, attempts=0;
 
-      } else if (isRate){
-        // successes / failures -> % ; attempts derived (stored if secondary is attempts)
-        const box = qs(`#${prefix}InputsBlock`);
-        const succEl = box?.querySelector(`[data-counter-value="${prefix}Successes"]`);
-        const failEl = box?.querySelector(`[data-counter-value="${prefix}Failures"]`);
-        const s = parseInt(succEl?.textContent||'0');
-        const f = parseInt(failEl?.textContent||'0');
-        const att = s + f;
-
+      if(isTime){
+        const el=qs(`#${prefix}Time`);
+        primaryVal=parseFloat((el.textContent||'0').trim());
+        if(isNaN(primaryVal)) primaryVal=null;
+      } else if(isRate){
         const pm = String(drill.primary_measurement||'').toLowerCase();
-        const isErrorRate = pm.includes('error');
-
-        primaryVal = att>0 ? (isErrorRate ? (f/att)*100 : (s/att)*100) : null;
-        secondaryVal = /attempt/i.test(String(drill.secondary_measurement||'')) ? att : null;
-
-      } else {
+        const errorLike = pm.includes('error_rate');
         const box = qs(`#${prefix}InputsBlock`);
-        const primId = `${prefix}PrimVal`;
-        const secId  = `${prefix}SecVal`;
+        successes = parseInt(box?.querySelector(`[data-counter-value="${prefix}Successes"]`)?.textContent||'0');
+        failures  = parseInt(box?.querySelector(`[data-counter-value="${prefix}Failures"]`)?.textContent||'0');
+        attempts  = successes + failures;
 
-        const primCounter = box?.querySelector(`[data-counter-value="${primId}"]`);
-        const primToggle  = box?.querySelector(`#${primId}`);
-        const secCounter  = box?.querySelector(`[data-counter-value="${secId}"]`);
-        const secToggle   = box?.querySelector(`#${secId}`);
+        primaryVal = attempts>0 ? (errorLike ? (failures/attempts)*100 : (successes/attempts)*100) : 0;
 
-        if (primCounter) primaryVal = parseInt(primCounter.textContent)||0;
-        else if (primToggle) primaryVal = primToggle.checked;
-
-        if (secCounter) secondaryVal = parseInt(secCounter.textContent)||0;
-        else if (secToggle) secondaryVal = secToggle.checked;
-
-        primaryVal = normalizeValue(drill.measurement_unit, primaryVal);
-        secondaryVal = (secondaryVal!=null) ? normalizeValue(drill.secondary_unit, secondaryVal) : null;
+        // Secondary value rules (sheet-aligned):
+        // - If secondary is attempts, send attempts
+        // - Else if secondary is drops/errors_count, send failures
+        if (/attempt/i.test(String(drill.secondary_measurement||''))) secondaryVal = attempts;
+        else if (drill.secondary_measurement) secondaryVal = failures;
       }
-      return { primaryVal, secondaryVal, isTime, isRate };
+      return { primaryVal, secondaryVal, successes, failures, attempts, isTime, isRate };
     }
 
+    // ---- SAVE (aligned to 71_Fact_Tryout_Position) ----
     async function saveAttempt({ lane }){
-      const prefix   = lane==='A' ? 'a' : 'b';
-      const statusEl = document.getElementById(lane==='A' ? 'aStatus' : 'bStatus');
-      const attSel   = document.getElementById(lane==='A' ? 'aAttempt': 'bAttempt');
-      const logTbody = document.getElementById(lane==='A' ? 'aLog'    : 'bLog');
+      const prefix = lane==='A' ? 'a' : 'b';
+      const statusEl = qs(lane==='A' ? '#aStatus' : '#bStatus');
+      const attSel   = qs(lane==='A' ? '#aAttempt' : '#bAttempt');
+      const logTbody = qs(lane==='A' ? '#aLog'     : '#bLog');
 
-      statusEl.textContent = '';
+      statusEl.textContent='';
 
-      const c = ctx();
+      const c=ctx();
       if(!c.tryout_id){ statusEl.textContent='Set a Tryout ID first.'; statusEl.className='status warn'; return; }
       if(!WR_CURR){ statusEl.textContent='Choose a drill.'; statusEl.className='status warn'; return; }
 
-      const player = lanePlayers[lane];
+      const player=lanePlayers[lane];
       if(!(player?.tryout_num || player?.player_id)){
         statusEl.textContent=`Assign a player to Lane ${lane}.`;
-        statusEl.className='status warn';
-        return;
+        statusEl.className='status warn'; return;
       }
 
-      // ensure timer stopped before read
-      const t = timers.get(prefix);
-      if (t?.isRunning()) t.stop();
+      const t=timers.get(prefix); if(t?.isRunning()) t.stop();
 
-      const { primaryVal, secondaryVal, isTime, isRate } = readLaneValues(prefix, WR_CURR);
+      const { primaryVal, secondaryVal, successes, failures, attempts, isTime, isRate } = readLaneValues(prefix, WR_CURR);
       const attempt = Number(attSel.value||1);
-
-      // Evaluate performance
       const evaluation = evaluateDrill(WR_CURR, primaryVal, secondaryVal);
 
       const row = {
+        timestamp:   '', // server fills
         tryout_id:   c.tryout_id || '',
         period_code: c.period_code || '',
-        tryout_num:  String(player.tryout_num || '').trim(),
+
         player_id:   String(player.player_id || '').trim(),
+        tryout_num:  String(player.tryout_num || '').trim(),
         group_code:  resolveGroupCode(player.player_id, '', player) || '',
+
         station_id:  STATION_ID,
         drill_id:    WR_CURR.drill_id,
         attempt:     attempt,
-        metric_1:    (primaryVal===true)?1:(primaryVal===false)?0:primaryVal,
-        metric_2:    (secondaryVal===true)?1:(secondaryVal===false)?0:secondaryVal,
-        pass_flag:   evaluation.rating==='above' ? 1 : 0,
-        notes:       (document.getElementById('sharedNotes').value||'').trim(),
-        extra_1:     (document.getElementById(prefix+'Extra1').value||'').trim(),
-        extra_2:     (document.getElementById(prefix+'Extra2').value||'').trim()
+
+        primary_name:   WR_CURR.primary_measurement || (isTime ? 'time' : 'rate'),
+        primary_unit:   WR_CURR.measurement_unit || (isTime ? 'sec' : 'percentage'),
+        primary_value:  (primaryVal===true)?1:(primaryVal===false)?0:primaryVal,
+        primary_successes: isRate ? successes : '',
+        primary_failures:  isRate ? failures  : '',
+        primary_attempts:  isRate ? attempts  : '',
+
+        secondary_name:  WR_CURR.secondary_measurement || '',
+        secondary_unit:  WR_CURR.secondary_unit || '',
+        secondary_value: (secondaryVal===true)?1:(secondaryVal===false)?0:secondaryVal,
+
+        rating_tier: evaluation.rating,
+        pass_flag:   evaluation.rating==='above'?1:0,
+        score_5:     '',
+
+        notes: (qs('#sharedNotes').value||'').trim(),
+        source_app: `${SOURCE_APP}.${STATION_ID.toLowerCase()}`,
+        client_id:  CLIENT_ID,
+
+        // legacy compatibility
+        metric_1: (primaryVal===true)?1:(primaryVal===false)?0:primaryVal,
+        metric_2: secondaryVal,
+
+        // convenience if present
+        errors_count: isRate ? failures : ''
       };
 
-      setSaving(lane, true);
-      let res;
-      try { res = await API.tryout.write.station(row); }
-      finally { setSaving(lane, false); }
+      setSaving(lane,true);
+      let res; try { res = await API.tryout.write.station(row); } finally { setSaving(lane,false); }
+      if(!res?.ok){ statusEl.textContent = res?.error || 'Save failed.'; statusEl.className='status err'; return; }
 
-      if(!res?.ok){
-        statusEl.textContent = res?.error || 'Save failed.';
-        statusEl.className = 'status err';
-        return;
-      }
-
-      // Add to lane log
-      const primTxt = primaryVal==null ? '—' :
-                      (isTime ? Number(primaryVal).toFixed(2)+' s' :
-                      isRate ? Number(primaryVal).toFixed(1)+'%' : String(primaryVal));
+      const primTxt = isTime ? Number(primaryVal).toFixed(2)+' s' : Number(primaryVal).toFixed(1)+'%';
       const secTxt  = WR_CURR.secondary_measurement ? (secondaryVal==null ? '—' : String(secondaryVal)) : '—';
+      const tr=document.createElement('tr');
+      tr.innerHTML = `<td>${WR_CURR.drill_name}</td><td>${attempt}</td><td>${primTxt}</td><td>${secTxt}</td><td><span class="${evaluation.ratingClass}">${evaluation.ratingText}</span></td>`;
+      logTbody.prepend(tr); while(logTbody.children.length>10) logTbody.removeChild(logTbody.lastChild);
 
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${WR_CURR.drill_name}</td>
-        <td>${attempt}</td>
-        <td>${primTxt}</td>
-        <td>${secTxt}</td>
-        <td><span class="${evaluation.ratingClass}">${evaluation.ratingText}</span></td>`;
-      logTbody.prepend(tr);
-      while(logTbody.children.length > 10) logTbody.removeChild(logTbody.lastChild);
-
-      // Recent Writes
-      const who = player.tryout_num || player.player_id || '—';
+      const who=player.tryout_num||player.player_id||'—';
       addRecent('station', `Write → WR :: ${who} • ${WR_CURR.drill_name} • ${primTxt}${WR_CURR.secondary_measurement?` • ${secTxt}`:''} • ${evaluation.ratingText} (Att ${attempt})`);
 
-      // Mark done in the shared UI
-      if (AFTER_SAVE.markDone) {
-        try { TryoutUI?.markDone?.(player.player_id || player.tryout_num); } catch {}
-        try { window.dispatchEvent(new CustomEvent('tryoutui:done', { detail:{ player_id: player.player_id, tryout_num: player.tryout_num } })); } catch {}
+      if (AFTER_SAVE.markDone){
+        try { TryoutUI?.markDone?.(player.player_id || player.tryout_num); } catch{}
+        try { window.dispatchEvent(new CustomEvent('tryoutui:done', { detail:{ player_id: player.player_id, tryout_num: player.tryout_num } })); } catch{}
       }
 
-      // Increment attempt & soft reset inputs/timer
-      const next = Math.min((attempt % 10) + 1, 10);
-      attSel.value = String(next);
+      const next=Math.min((attempt % 10)+1, 10);
+      attSel.value=String(next);
       softResetLane(lane);
 
       statusEl.textContent = `Saved ✔ • ${evaluation.ratingText}`;
-      statusEl.className = evaluation.rating==='above' ? 'status ok' :
-                           evaluation.rating==='below' ? 'status warn' : 'status avg';
+      statusEl.className = evaluation.rating==='above' ? 'status ok' : evaluation.rating==='below' ? 'status warn' : 'status avg';
     }
 
-    // wire lanes
+    // wiring
     function wireLane(prefix){
-      const toggleBtn = document.getElementById(prefix+'Toggle');
-      const timeEl = document.getElementById(prefix+'Time');
-      const statusEl = document.getElementById(prefix+'Status');
-
-      const t = makeTimer(timeEl, (running)=>{
-        if (toggleBtn){
-          toggleBtn.textContent = running ? 'Stop' : 'Start';
-          toggleBtn.setAttribute('aria-pressed', running ? 'true' : 'false');
-          toggleBtn.classList.toggle('warn', running);
-        }
-        if (!running) statusEl.textContent = '';
+      const toggleBtn=qs('#'+prefix+'Toggle');
+      const timeEl=qs('#'+prefix+'Time');
+      const statusEl=qs('#'+prefix+'Status');
+      const t=makeTimer(timeEl,(running)=>{
+        if(toggleBtn){ toggleBtn.textContent=running?'Stop':'Start'; toggleBtn.setAttribute('aria-pressed',running?'true':'false'); toggleBtn.classList.toggle('warn', running); }
+        if(!running) statusEl.textContent='';
       });
-      timers.set(prefix, t);
-
-      if (toggleBtn) toggleBtn.addEventListener('click', t.toggle);
-      const resetBtn = document.getElementById(prefix+'Reset');
-      if (resetBtn) resetBtn.addEventListener('click', ()=>{ softResetLane(prefix==='a'?'A':'B'); });
-      document.getElementById(prefix+'Save').addEventListener('click', ()=>{ saveAttempt({ lane: (prefix==='a'?'A':'B') }); });
+      timers.set(prefix,t);
+      if(toggleBtn) toggleBtn.addEventListener('click', t.toggle);
+      const resetBtn=qs('#'+prefix+'Reset');
+      if(resetBtn) resetBtn.addEventListener('click', ()=> softResetLane(prefix==='a'?'A':'B'));
+      qs('#'+prefix+'Save').addEventListener('click', ()=> saveAttempt({ lane: (prefix==='a'?'A':'B') }));
     }
-
-    // Start both timers (time drills only)
     function wireBothStart(){
-      const a = () => timers.get('a');
-      const b = () => timers.get('b');
-      const btn = document.getElementById('bothStart');
-      if (!btn) return;
+      const a=()=>timers.get('a'); const b=()=>timers.get('b');
+      const btn=qs('#bothStart'); if(!btn) return;
       btn.addEventListener('click', ()=>{ if(lanePlayers.A) a()?.start(); if(lanePlayers.B) b()?.start(); });
     }
 
-    // Init
     (async function init(){
-      wireLane('a');
-      wireLane('b');
-      wireBothStart();
-      setActiveLane('A');
-
-      await Promise.all([ loadRoster(), loadLatestGroups(), loadWRDrills() ]);
-
-      // Preload selected player from TryoutUI if present
-      if (window.TryoutUI?.getSelectedPlayers) {
-        const cur = TryoutUI.getSelectedPlayers();
-        if (Array.isArray(cur) && cur[0]) assignToActiveLane(cur[0]);
+      wireLane('a'); wireLane('b'); wireBothStart(); setActiveLane('A');
+      await Promise.all([loadRoster(), loadLatestGroups(), loadWRDrills()]);
+      if (window.TryoutUI?.getSelectedPlayers){
+        const cur=TryoutUI.getSelectedPlayers();
+        if(Array.isArray(cur) && cur[0]) assignToActiveLane(cur[0]);
       }
-
-      renderLaneChips();
     })();
   </script>
 </body>
 </html>
-```
