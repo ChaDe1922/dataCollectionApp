@@ -41,10 +41,9 @@
 
     .field{ margin:10px 0; }
     .label{ font-weight:800; font-size:.95rem; opacity:.9; margin-bottom:6px; display:block; }
-    .form-input, .form-select, .form-number{ width:100%; padding:.68rem .8rem; border-radius:12px; border:1px solid rgba(255,255,255,.28);
+    .form-input, .form-select{ width:100%; padding:.68rem .8rem; border-radius:12px; border:1px solid rgba(255,255,255,.28);
       background:rgba(255,255,255,.08); color:#fff; }
     .row{ display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; }
-    .row3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; }
 
     .timer{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
     .time{ font-variant-numeric:tabular-nums; font-weight:900; font-size:1.25rem; min-width:82px; text-align:right; }
@@ -59,7 +58,7 @@
 
     /* Counter control */
     .counter-control { display:flex; align-items:center; gap:8px; }
-    .counter-btn {
+    .counter-btn{
       width:40px; height:40px; display:flex; align-items:center; justify-content:center;
       border-radius:8px; border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08);
       color:#fff; font-size:20px; font-weight:800; cursor:pointer; transition:all .2s ease; user-select:none;
@@ -68,14 +67,11 @@
     .counter-btn:active{ transform:scale(0.95); }
     .counter-value{ min-width:60px; text-align:center; font-size:24px; font-weight:900; color:#C4B5FD; font-variant-numeric:tabular-nums; }
 
-    /* Toggle switch for boolean inputs */
-    .toggle-switch{ display:inline-flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
-    .toggle-switch input[type="checkbox"]{ position:absolute; opacity:0; width:0; height:0; }
-    .toggle-slider{ position:relative; width:50px; height:26px; background:rgba(255,255,255,.15); border-radius:999px; transition:all .3s ease; border:1px solid rgba(255,255,255,.25); }
-    .toggle-slider::before{ content:''; position:absolute; width:20px; height:20px; border-radius:50%; background:#fff; top:2px; left:3px; transition:all .3s ease; box-shadow:0 2px 4px rgba(0,0,0,.2); }
-    .toggle-switch input:checked + .toggle-slider{ background:linear-gradient(135deg,#16A34A,#10B981); border-color:#16A34A; }
-    .toggle-switch input:checked + .toggle-slider::before{ transform:translateX(23px); }
-    .toggle-label{ font-weight:700; font-size:.9rem; }
+    /* Rate display */
+    .rate-display{ margin-top:8px; padding:8px 12px; background:rgba(139,92,246,.15);
+      border:1px solid rgba(139,92,246,.3); border-radius:8px; text-align:center; }
+    .rate-value{ font-size:28px; font-weight:900; color:#C4B5FD; font-variant-numeric:tabular-nums; }
+    .rate-label{ font-size:11px; opacity:.7; margin-top:2px; }
 
     /* Save indicator */
     .btn.loading{ position:relative; pointer-events:none; }
@@ -99,13 +95,9 @@
     .table{ width:100%; border-collapse:collapse; font-size:.95rem; }
     .table th,.table td{ padding:6px 8px; border-bottom:1px solid rgba(255,255,255,.12); text-align:left; }
 
-    .muted{ opacity:.75; }
-    .tu-log{ display:none !important; }
-
-    /* Rating badges */
     .rating-above{ background:linear-gradient(135deg,#16A34A,#10B981); color:#061710; padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; }
-    .rating-avg{ background:linear-gradient(135deg,#8B5CF6,#A78BFA); color:#071018; padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; }
-    .rating-below{ background:linear-gradient(135deg,#DC2626,#EF4444); color:#fff; padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; }
+    .rating-avg{   background:linear-gradient(135deg,#8B5CF6,#A78BFA); color:#071018; padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; }
+    .rating-below{ background:linear-gradient(135deg,#DC2626,#EF4444); color:#fff;    padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; }
 
     .measure-help{ font-size:11px; opacity:.7; font-weight:500; margin-top:2px; font-style:italic; }
   </style>
@@ -130,7 +122,6 @@
         <div class="toolbar">
           <span class="chip">Station: <strong>LB</strong></span>
 
-          <!-- Drill dropdown from Drill Dictionary -->
           <div class="field" style="min-width:280px; margin:0;">
             <label class="label">LB Drill</label>
             <select id="lbDrillSel" class="form-select"></select>
@@ -139,7 +130,6 @@
 
           <span id="drillBadge" class="chip badge">Drill: —</span>
 
-          <!-- Assign selection to lane -->
           <div class="assign" style="margin-left:auto">
             <span class="chip ghost small">Assign selection to:</span>
             <div class="seg" role="tablist" aria-label="Active lane">
@@ -149,7 +139,6 @@
           </div>
         </div>
 
-        <!-- Picker + shared notes -->
         <div class="row" style="margin-top:10px">
           <div>
             <label class="label">Player (search by number or name)</label>
@@ -162,11 +151,10 @@
           </div>
         </div>
 
-        <!-- Current lane assignments -->
         <div class="toolbar" style="margin-top:10px;gap:12px">
           <span id="chipLaneA" class="lane-chip" style="display:none"></span>
           <span id="chipLaneB" class="lane-chip" style="display:none"></span>
-          <span class="small muted">Tip: time drills show timers; rate drills use success/failure and auto-calc attempts; attempts goal isn’t part of rating.</span>
+          <span class="small muted">Time drills use a timer; rate drills use Good/Bad and auto-calc attempts. Attempts goals don’t affect rating.</span>
         </div>
       </section>
 
@@ -179,25 +167,14 @@
             <span id="laneAWho" class="lane-chip" style="display:none"></span>
           </div>
 
-          <div class="row3 field">
-            <div>
-              <label class="label">Attempt</label>
-              <select id="aAttempt" class="form-select">
-                <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
-                <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
-              </select>
-            </div>
-            <div>
-              <label class="label">Extra 1 (opt)</label>
-              <input id="aExtra1" class="form-input" placeholder="gap/match, pursuit angle, etc."/>
-            </div>
-            <div>
-              <label class="label">Extra 2 (opt)</label>
-              <input id="aExtra2" class="form-input" placeholder="tags, footing, notes, etc."/>
-            </div>
+          <div class="field">
+            <label class="label">Attempt</label>
+            <select id="aAttempt" class="form-select">
+              <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+              <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+            </select>
           </div>
 
-          <!-- Dynamic primary/secondary -->
           <div class="field">
             <div id="aTimerBlock">
               <label class="label">Primary: <span id="aPrimaryLabel">Time</span></label>
@@ -229,25 +206,14 @@
             <span id="laneBWho" class="lane-chip" style="display:none"></span>
           </div>
 
-          <div class="row3 field">
-            <div>
-              <label class="label">Attempt</label>
-              <select id="bAttempt" class="form-select">
-                <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
-                <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
-              </select>
-            </div>
-            <div>
-              <label class="label">Extra 1 (opt)</label>
-              <input id="bExtra1" class="form-input" placeholder="gap/match, pursuit angle, etc."/>
-            </div>
-            <div>
-              <label class="label">Extra 2 (opt)</label>
-              <input id="bExtra2" class="form-input" placeholder="tags, footing, notes, etc."/>
-            </div>
+          <div class="field">
+            <label class="label">Attempt</label>
+            <select id="bAttempt" class="form-select">
+              <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+              <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+            </select>
           </div>
 
-          <!-- Dynamic primary/secondary -->
           <div class="field">
             <div id="bTimerBlock">
               <label class="label">Primary: <span id="bPrimaryLabel">Time</span></label>
@@ -273,14 +239,14 @@
         </div>
       </section>
 
-      <!-- Start both (below lanes, above writes) -->
+      <!-- Start both (time drills only) -->
       <section id="bothStartCard" class="card" style="margin-top:8px; display:none">
         <div class="toolbar" style="justify-content:center">
           <button id="bothStart" class="btn primary">Start Both</button>
         </div>
       </section>
 
-      <!-- Recent writes (bottom) -->
+      <!-- Recent writes -->
       <section class="card" style="margin-top:14px">
         <div class="toolbar">
           <button id="toggleRecent" class="btn ghost">Recent Writes ▾</button>
@@ -333,47 +299,40 @@
     const labelFor = (r)=> [r.tryout_num, '•', r.display_name, r.primary_pos?`(${r.primary_pos})`:'' ].filter(Boolean).join(' ');
     function ctx(){ return GameContext.get ? GameContext.get() : {}; }
     const fmtTime = (d)=>{ const pad=n=>String(n).padStart(2,'0'); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
+    const pretty = s=>String(s||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
     const isTimeDrill = d => /sec/i.test(String(d?.measurement_unit||''));
     const isRateDrill = d => /percentage|percent|rate/i.test(String(d?.measurement_unit||'')) || String(d?.drill_type||'').toUpperCase()==='RATE';
 
-    // ------ Threshold parsing and evaluation (3-tier system) ------
+    // ------ Threshold parsing & evaluation ------
     function parseThreshold(str) {
       if (!str) return null;
       const s = String(str).trim();
-      if (/^(yes|true)$/i.test(s)) return { type: 'bool', value: true };
-      if (/^(no|false)$/i.test(s)) return { type: 'bool', value: false };
-
       const rangeMatch = s.match(/^(-?\d+(?:\.\d+)?)\s*[-–]\s*(-?\d+(?:\.\d+)?)$/);
       if (rangeMatch) return { type: 'range', min: parseFloat(rangeMatch[1]), max: parseFloat(rangeMatch[2]) };
-
       const compMatch = s.match(/^(<=|>=|<|>|=|≤|≥)\s*(-?\d+(?:\.\d+)?)$/);
       if (compMatch) {
         const op = compMatch[1].replace('≤','<=').replace('≥','>=');
         return { type:'comp', op, value: parseFloat(compMatch[2]) };
       }
-
       if (!isNaN(parseFloat(s))) return { type:'comp', op:'>=', value: parseFloat(s) };
       return null;
     }
-
-    function meetsThreshold(threshold, value) {
-      if (!threshold || value == null) return null;
-      if (threshold.type === 'bool') return !!value === threshold.value;
-      if (threshold.type === 'range') return value >= threshold.min && value <= threshold.max;
-      if (threshold.type === 'comp') {
-        switch(threshold.op){
-          case '<=': return value <= threshold.value;
-          case '>=': return value >= threshold.value;
-          case '<':  return value <  threshold.value;
-          case '>':  return value >  threshold.value;
-          case '=':  return value === threshold.value;
+    function meetsThreshold(th, value) {
+      if (!th || value == null) return null;
+      if (th.type === 'range') return value >= th.min && value <= th.max;
+      if (th.type === 'comp') {
+        switch(th.op){
+          case '<=': return value <= th.value;
+          case '>=': return value >= th.value;
+          case '<':  return value <  th.value;
+          case '>':  return value >  th.value;
+          case '=':  return value === th.value;
         }
       }
       return null;
     }
-
     function evaluateDrill(drill, primaryVal, secondaryVal){
-      // Prefer centralized Rules if available
+      // Use centralized Rules if present
       try{
         if (window.Rules?.evaluateRep){
           const res = Rules.evaluateRep(drill, primaryVal, secondaryVal);
@@ -387,31 +346,15 @@
         }
       }catch(_){}
 
-      // Fallback local evaluator using thresholds on primary + optional secondary
+      // Local fallback: primary thresholds + optional secondary (ignored if it's "attempts")
+      const ignoreSecondaryForRating = isRateDrill(drill) && /attempt/i.test(String(drill.secondary_measurement||''));
       const primaryOk   = meetsThreshold(parseThreshold(drill.success_threshold), primaryVal);
       const primaryFail = meetsThreshold(parseThreshold(drill.failure_threshold), primaryVal);
-
-      // If it's a rate drill and secondary is "attempts", treat as goal only (not part of rating)
-      const ignoreSecondaryForRating = isRateDrill(drill) && /attempt/i.test(String(drill.secondary_measurement||''));
-      const secT  = ignoreSecondaryForRating ? null : parseThreshold(drill.secondary_threshold);
-      const secOk = secT ? meetsThreshold(secT, secondaryVal) : true;
+      const secOk = ignoreSecondaryForRating ? true : (drill.secondary_threshold ? meetsThreshold(parseThreshold(drill.secondary_threshold), secondaryVal) : true);
 
       if (primaryOk && secOk) return { rating:'above', ratingText:'Above Average',  ratingClass:'rating-above' };
       if (primaryFail || !secOk) return { rating:'below',  ratingText:'Below Average', ratingClass:'rating-below' };
       return { rating:'average', ratingText:'Average', ratingClass:'rating-avg' };
-    }
-
-    function normalizeValue(unit, raw){
-      if (raw === '' || raw == null) return null;
-      if (typeof raw === 'boolean') return raw;
-      const u = String(unit||'').toLowerCase();
-      if (u.includes('bool') || u==='boolean'){
-        if (typeof raw === 'string') return /^(yes|true|1)$/i.test(raw.trim());
-        return !!raw;
-      }
-      const n = parseFloat(raw);
-      if (!isNaN(n)) return n;
-      return raw;
     }
 
     // timers
@@ -489,7 +432,9 @@
       const box = qs(`#${p}InputsBlock`);
       if (box){
         box.querySelectorAll('[data-counter-value]').forEach(el=> el.textContent='0');
-        box.querySelectorAll('input[type="checkbox"]').forEach(el=> el.checked=false);
+        const rv=box.querySelector(`#${p}RateVal`); if(rv) rv.textContent='0%';
+        const sc=box.querySelector(`#${p}SuccCount`); if(sc) sc.textContent='0';
+        const ac=box.querySelector(`#${p}AttCount`); if(ac) ac.textContent='0';
       }
       qs(`#${p}Status`).textContent = '';
     }
@@ -497,8 +442,6 @@
       const p = lane==='A' ? 'a' : 'b';
       qs(`#${p}Attempt`).value = '1';
       qs(`#${p}Log`).innerHTML = '';
-      qs(`#${p}Extra1`).value = '';
-      qs(`#${p}Extra2`).value = '';
       softResetLane(lane);
     }
 
@@ -566,8 +509,13 @@
       const primaryLabel = qs(`#${prefix}PrimaryLabel`);
       const primaryHelp = qs(`#${prefix}PrimaryHelp`);
 
+      const pm=(drill.primary_measurement||'').toLowerCase();
+      const isErrorRate = pm.includes('error_rate');
+
       // Update primary label/help
-      primaryLabel.textContent = isRate ? `${drill.primary_measurement} (calculated %)` : (drill.primary_measurement || 'Time');
+      const friendly = isRate ? (isErrorRate ? 'Error Rate' : 'Success Rate') : (drill.primary_measurement || 'Time');
+      primaryLabel.textContent = isRate ? `${friendly} (calculated %)` : (drill.primary_measurement || 'Time');
+
       const parts = [];
       if (drill.drill_category) parts.push(drill.drill_category);
       if (drill.success_threshold) parts.push(`Above Avg: ${drill.success_threshold}`);
@@ -582,8 +530,8 @@
       const head = qs(`#${prefix}Head`);
       head.innerHTML = `<tr>
         <th>Drill</th><th>Att</th>
-        <th>${drill.primary_measurement || 'Primary'}</th>
-        <th>${drill.secondary_measurement || 'Secondary'}</th>
+        <th>${pretty(drill.primary_measurement) || 'Primary'}</th>
+        <th>${drill.secondary_measurement ? pretty(drill.secondary_measurement) : 'Secondary'}</th>
         <th>Rating</th>
       </tr>`;
 
@@ -592,155 +540,76 @@
 
       // Build inputs if not time
       inputBlk.innerHTML = '';
-      if (!isTime){
-        if (isRate){
-          const succId = `${prefix}Successes`;
-          const failId = `${prefix}Failures`;
+      if (!isTime && isRate){
+        const succId = `${prefix}Successes`;
+        const failId = `${prefix}Failures`;
 
-          // Label mapping for LB context
-          let successLabel = 'Successes';
-          let failureLabel = 'Failures';
-          const pmLower = String(drill.primary_measurement||'').toLowerCase();
-          if (pmLower.includes('tackle')) { successLabel='Makes'; failureLabel='Misses'; }
-          else if (pmLower.includes('win')) { successLabel='Wins'; failureLabel='Losses'; }
-          else if (pmLower.includes('error')) { successLabel='Clean reps'; failureLabel='Errors'; }
-          else if (pmLower.includes('pbu') || pmLower.includes('breakup')) { successLabel='PBUs'; failureLabel='Targets missed'; }
+        // LB-specific labels
+        const successLabel = isErrorRate ? 'Clean Reps' : 'Good Reps';
+        const failureLabel = isErrorRate ? 'Errors'     : 'Bad Reps';
 
-          // If secondary is "attempts" with a threshold, treat it as a goal chip (not part of rating)
-          const attemptsIsGoal = /attempt/i.test(String(drill.secondary_measurement||'')) && drill.secondary_threshold;
-          const secT = attemptsIsGoal ? parseThreshold(drill.secondary_threshold) : null;
-          const goalValue = (secT && secT.type==='comp') ? secT.value : null;
+        // If secondary is "attempts" with a threshold, treat as a goal chip (not part of rating)
+        const attemptsIsGoal = /attempt/i.test(String(drill.secondary_measurement||'')) && drill.secondary_threshold;
+        const secT = attemptsIsGoal ? parseThreshold(drill.secondary_threshold) : null;
+        const goalValue = (secT && secT.type==='comp') ? secT.value : null;
 
-          inputBlk.innerHTML = `
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-              <div>
-                <label class="label">${successLabel}</label>
-                <div class="counter-control">
-                  <button class="counter-btn" data-counter-dec="${succId}" type="button">−</button>
-                  <div class="counter-value" data-counter-value="${succId}">0</div>
-                  <button class="counter-btn" data-counter-inc="${succId}" type="button">+</button>
-                </div>
-              </div>
-              <div>
-                <label class="label">${failureLabel}</label>
-                <div class="counter-control">
-                  <button class="counter-btn" data-counter-dec="${failId}" type="button">−</button>
-                  <div class="counter-value" data-counter-value="${failId}">0</div>
-                  <button class="counter-btn" data-counter-inc="${failId}" type="button">+</button>
-                </div>
-              </div>
-            </div>
-
-            <div class="small" style="margin-top:8px; display:flex; align-items:center; gap:10px;">
-              <span>Attempts: <strong data-rate="${prefix}-att">0</strong></span>
-              <span>• <strong data-rate="${prefix}-label">Success rate</strong>: <strong data-rate="${prefix}-pct">0.0%</strong></span>
-              <span data-rate="${prefix}-goal" class="chip ghost small" style="display:${attemptsIsGoal?'inline-flex':'none'}"></span>
-            </div>
-          `;
-
-          const update = ()=>{
-            const s = parseInt(inputBlk.querySelector(`[data-counter-value="${succId}"]`)?.textContent||'0');
-            const f = parseInt(inputBlk.querySelector(`[data-counter-value="${failId}"]`)?.textContent||'0');
-            const att = s + f;
-
-            const isErrorRate = pmLower.includes('error');
-            const pct = att>0 ? (isErrorRate ? (f/att)*100 : (s/att)*100) : 0;
-
-            inputBlk.querySelector(`[data-rate="${prefix}-att"]`).textContent = att;
-            inputBlk.querySelector(`[data-rate="${prefix}-pct"]`).textContent = pct.toFixed(1)+'%';
-            inputBlk.querySelector(`[data-rate="${prefix}-label"]`).textContent =
-              isErrorRate ? 'Error rate' : (pmLower.includes('win') ? 'Win rate' :
-              pmLower.includes('pbu')||pmLower.includes('breakup') ? 'Breakup rate' : 'Success rate');
-
-            const goalEl = inputBlk.querySelector(`[data-rate="${prefix}-goal"]`);
-            if (goalEl){
-              if (goalValue!=null){
-                const met = att >= goalValue;
-                goalEl.textContent = met ? 'Goal met ✓' : `Goal ≥ ${goalValue} attempts`;
-                goalEl.classList.toggle('badge', met);
-              } else {
-                goalEl.style.display = 'none';
-              }
-            }
-          };
-          inputBlk.querySelectorAll('[data-counter-inc],[data-counter-dec]').forEach(btn=>{
-            const isInc = btn.hasAttribute('data-counter-inc');
-            btn.addEventListener('click', ()=>{
-              const id = btn.getAttribute(isInc ? 'data-counter-inc' : 'data-counter-dec');
-              const el = inputBlk.querySelector(`[data-counter-value="${id}"]`);
-              const cur = parseInt(el.textContent)||0;
-              el.textContent = String(isInc ? cur+1 : Math.max(0,cur-1));
-              update();
-            });
-          });
-
-          // Override label/help for clarity
-          primaryLabel.textContent =
-            pmLower.includes('error') ? 'Error rate (calculated %)'
-            : pmLower.includes('win') ? 'Win rate (calculated %)'
-            : pmLower.includes('pbu') || pmLower.includes('breakup') ? 'Breakup rate (calculated %)'
-            : 'Success rate (calculated %)';
-          const parts2 = [];
-          if (drill.drill_category) parts2.push(drill.drill_category);
-          if (drill.success_threshold) parts2.push(`Above Avg: ${drill.success_threshold}`);
-          if (drill.failure_threshold) parts2.push(`Below Avg: ${drill.failure_threshold}`);
-          primaryHelp.textContent = parts2.join(' • ');
-          update();
-
-        } else {
-          // Non-rate counters/toggles
-          const makeCounter = (id, label, help='') => `
+        inputBlk.innerHTML = `
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
             <div>
-              <label class="label">${label}</label>
-              ${help ? `<div class="measure-help">${help}</div>` : ''}
+              <label class="label">${successLabel}</label>
               <div class="counter-control">
-                <button class="counter-btn" data-counter-dec="${id}" type="button">−</button>
-                <div class="counter-value" data-counter-value="${id}">0</div>
-                <button class="counter-btn" data-counter-inc="${id}" type="button">+</button>
+                <button class="counter-btn" data-counter-dec="${succId}" type="button">−</button>
+                <div class="counter-value" data-counter-value="${succId}">0</div>
+                <button class="counter-btn" data-counter-inc="${succId}" type="button">+</button>
               </div>
-            </div>`;
-          const makeToggle = (id, label, help='') => `
+            </div>
             <div>
-              <label class="label" style="margin-bottom:8px">${label}</label>
-              ${help ? `<div class="measure-help" style="margin-bottom:6px">${help}</div>` : ''}
-              <label class="toggle-switch">
-                <input type="checkbox" id="${id}">
-                <span class="toggle-slider"></span>
-                <span class="toggle-label">Yes</span>
-              </label>
-            </div>`;
+              <label class="label">${failureLabel}</label>
+              <div class="counter-control">
+                <button class="counter-btn" data-counter-dec="${failId}" type="button">−</button>
+                <div class="counter-value" data-counter-value="${failId}">0</div>
+                <button class="counter-btn" data-counter-inc="${failId}" type="button">+</button>
+              </div>
+            </div>
+          </div>
 
-          const primId = `${prefix}PrimVal`;
-          const secId  = `${prefix}SecVal`;
-          const primIsBool = /bool/i.test(drill.measurement_unit||'') || (String(drill.measurement_unit||'').toLowerCase()==='boolean');
-          const secIsBool  = /bool/i.test(drill.secondary_unit||'') || (String(drill.secondary_unit||'').toLowerCase()==='boolean');
+          <div class="rate-display" style="margin-top:8px;">
+            <div class="rate-value" id="${prefix}RateVal">0%</div>
+            <div class="rate-label">${friendly} (<span id="${prefix}SuccCount">0</span> / Attempts: <span id="${prefix}AttCount">0</span>)</div>
+          </div>
+          <div class="small" style="margin-top:6px;">
+            <span data-rate="${prefix}-goal" class="chip ghost small" style="display:${attemptsIsGoal?'inline-flex':'none'}"></span>
+          </div>
+        `;
 
-          inputBlk.innerHTML += (primIsBool
-            ? makeToggle(primId, drill.primary_measurement || 'Primary', drill.success_threshold?`Target: ${drill.success_threshold}`:'')
-            : makeCounter(primId, drill.primary_measurement || 'Primary', drill.success_threshold?`Target: ${drill.success_threshold}`:''));
+        const update = ()=>{
+          const s = parseInt(inputBlk.querySelector(`[data-counter-value="${succId}"]`)?.textContent||'0');
+          const f = parseInt(inputBlk.querySelector(`[data-counter-value="${failId}"]`)?.textContent||'0');
+          const att = s + f;
+          const pct = att>0 ? (isErrorRate ? (f/att)*100 : (s/att)*100) : 0;
 
-          if (drill.secondary_measurement){
-            inputBlk.innerHTML += (secIsBool
-              ? makeToggle(secId, drill.secondary_measurement, drill.secondary_threshold?`Target: ${drill.secondary_threshold}`:'')
-              : makeCounter(secId, drill.secondary_measurement, drill.secondary_threshold?`Target: ${drill.secondary_threshold}`:''));
+          inputBlk.querySelector(`#${prefix}RateVal`).textContent = pct.toFixed(1)+'%';
+          inputBlk.querySelector(`#${prefix}SuccCount`).textContent = s;
+          inputBlk.querySelector(`#${prefix}AttCount`).textContent = att;
+
+          const goalEl = inputBlk.querySelector(`[data-rate="${prefix}-goal"]`);
+          if (goalEl && goalValue!=null){
+            const met = att >= goalValue;
+            goalEl.textContent = met ? 'Attempts goal met ✓' : `Goal ≥ ${goalValue} attempts`;
+            goalEl.classList.toggle('badge', met);
           }
-
-          inputBlk.querySelectorAll('[data-counter-inc]').forEach(btn=>{
-            btn.addEventListener('click', ()=>{
-              const id = btn.getAttribute('data-counter-inc');
-              const el = inputBlk.querySelector(`[data-counter-value="${id}"]`);
-              el.textContent = String((parseInt(el.textContent)||0)+1);
-            });
+        };
+        inputBlk.querySelectorAll('[data-counter-inc],[data-counter-dec]').forEach(btn=>{
+          const isInc = btn.hasAttribute('data-counter-inc');
+          btn.addEventListener('click', ()=>{
+            const id = btn.getAttribute(isInc ? 'data-counter-inc' : 'data-counter-dec');
+            const el = inputBlk.querySelector(`[data-counter-value="${id}"]`);
+            const cur = parseInt(el.textContent)||0;
+            el.textContent = String(isInc ? cur+1 : Math.max(0,cur-1));
+            update();
           });
-          inputBlk.querySelectorAll('[data-counter-dec]').forEach(btn=>{
-            btn.addEventListener('click', ()=>{
-              const id = btn.getAttribute('data-counter-dec');
-              const el = inputBlk.querySelector(`[data-counter-value="${id}"]`);
-              const cur = parseInt(el.textContent)||0;
-              if (cur>0) el.textContent = String(cur-1);
-            });
-          });
-        }
+        });
+        update();
       }
     }
 
@@ -757,19 +626,16 @@
         }
       } catch (e) { console.error('Error loading drills:', e); }
 
-      // Fallback set if none returned (includes a rate drill with attempts goal)
+      // Fallback set (your provided LB01/LB02)
       if (!Array.isArray(LB_DRILLS) || !LB_DRILLS.length){
         LB_DRILLS = [
-          { drill_id:'LB01', drill_name:'Pursuit — 5-10-5 Shuttle', station_id:'LB', position_group:'LB', drill_type:'Time',
-            drill_category:'Agility', primary_measurement:'time', measurement_unit:'sec',
-            success_threshold:'<=4.50', failure_threshold:'>=5.40' },
-          { drill_id:'LB02', drill_name:'Open Field Tackle — Make Rate', station_id:'LB', position_group:'LB', drill_type:'Rate',
-            drill_category:'Tackling', primary_measurement:'tackle_make_rate', measurement_unit:'percentage',
-            success_threshold:'>=70', failure_threshold:'<=50',
-            secondary_measurement:'attempts', secondary_unit:'count', secondary_threshold:'>=10' },
-          { drill_id:'LB03', drill_name:'Zone Drop & Break — Time', station_id:'LB', position_group:'LB', drill_type:'Time',
-            drill_category:'Coverage', primary_measurement:'time', measurement_unit:'sec',
-            success_threshold:'<=3.90', failure_threshold:'>=4.80' }
+          { drill_id:'LB01', drill_name:'4-Cone — Shuffle/45/Shuffle', station_id:'LB', position_group:'LB', drill_type:'Time',
+            drill_category:'Change of Direction', primary_measurement:'time', measurement_unit:'sec',
+            success_threshold:'<=9.8', failure_threshold:'>=12.0' },
+          { drill_id:'LB02', drill_name:'Low Hurdles Circuit', station_id:'LB', position_group:'LB', drill_type:'Rate',
+            drill_category:'Footwork/Agility', primary_measurement:'error_rate', measurement_unit:'percentage',
+            success_threshold:'<=15', failure_threshold:'>=30',
+            secondary_measurement:'attempts', secondary_unit:'count', secondary_threshold:'>=10' }
         ];
       }
 
@@ -797,6 +663,7 @@
         renderInputs('a', LB_CURR);
         renderInputs('b', LB_CURR);
         softResetLane('A'); softResetLane('B');
+        document.getElementById('bothStartCard').style.display = isTimeDrill(LB_CURR) ? '' : 'none';
       } else {
         badge.textContent = 'Drill: —'; hint.textContent='';
       }
@@ -806,20 +673,16 @@
     function addRecent(route, summary){
       pageLog.unshift({ ts:new Date(), route, summary });
       pageLog.splice(PAGE_LOG_LIMIT);
-      renderRecent();
-    }
-    function renderRecent(){
       const ul = qs('#recentList');
       const cnt = qs('#recentCount');
-      if (!ul) return;
       ul.innerHTML = pageLog.map(it => `<li><strong>${fmtTime(it.ts)}</strong> — ${it.summary}</li>`).join('');
       cnt.textContent = pageLog.length ? `${pageLog.length} item${pageLog.length===1?'':'s'}` : '';
     }
-    qs('#toggleRecent').addEventListener('click', ()=>{
+    document.getElementById('toggleRecent').addEventListener('click', ()=>{
       const p = qs('#recentPanel');
       const open = p.style.display !== 'none';
       p.style.display = open ? 'none' : '';
-      qs('#toggleRecent').textContent = open ? 'Recent Writes ▾' : 'Recent Writes ▴';
+      document.getElementById('toggleRecent').textContent = open ? 'Recent Writes ▾' : 'Recent Writes ▴';
     });
 
     /* -------- Saving indicator helpers -------- */
@@ -835,7 +698,7 @@
         saveBtn.classList.add('loading');
         saveBtn.disabled = true;
         if (toggleBtn) toggleBtn.disabled = true;
-        if (resetBtn) toggleBtn && (resetBtn.disabled = true);
+        if (resetBtn)  resetBtn.disabled = true;
         saveBtn.innerHTML = '<span class="spin"></span>Saving…';
       } else {
         saveBtn.classList.remove('loading');
@@ -849,7 +712,7 @@
     function readLaneValues(prefix, drill){
       const isTime = isTimeDrill(drill);
       const isRate = isRateDrill(drill);
-      let primaryVal = null, secondaryVal = null;
+      let primaryVal = null, secondaryVal = null, successes=0, failures=0, attempts=0;
 
       if (isTime){
         const timeEl = qs(`#${prefix}Time`);
@@ -857,41 +720,27 @@
         if (isNaN(primaryVal)) primaryVal = null;
 
       } else if (isRate){
-        // successes / failures -> % ; attempts derived (stored if secondary is attempts)
+        const pm = String(drill.primary_measurement||'').toLowerCase();
+        const isErrorRate = pm.includes('error_rate');
+
         const box = qs(`#${prefix}InputsBlock`);
         const succEl = box?.querySelector(`[data-counter-value="${prefix}Successes"]`);
         const failEl = box?.querySelector(`[data-counter-value="${prefix}Failures"]`);
-        const s = parseInt(succEl?.textContent||'0');
-        const f = parseInt(failEl?.textContent||'0');
-        const att = s + f;
+        successes = parseInt(succEl?.textContent||'0');
+        failures  = parseInt(failEl?.textContent||'0');
+        attempts  = successes + failures;
 
-        const pm = String(drill.primary_measurement||'').toLowerCase();
-        const isErrorRate = pm.includes('error');
+        primaryVal = attempts>0 ? (isErrorRate ? (failures/attempts)*100 : (successes/attempts)*100) : 0;
 
-        primaryVal = att>0 ? (isErrorRate ? (f/att)*100 : (s/att)*100) : null;
-        secondaryVal = /attempt/i.test(String(drill.secondary_measurement||'')) ? att : null;
+        // Secondary: attempts (goal only) or a failure-type measure if present
+        if (/attempt/i.test(String(drill.secondary_measurement||''))) secondaryVal = attempts;
+        else if (drill.secondary_measurement) secondaryVal = failures;
 
-      } else {
-        const box = qs(`#${prefix}InputsBlock`);
-        const primId = `${prefix}PrimVal`;
-        const secId  = `${prefix}SecVal`;
-
-        const primCounter = box?.querySelector(`[data-counter-value="${primId}"]`);
-        const primToggle  = box?.querySelector(`#${primId}`);
-        const secCounter  = box?.querySelector(`[data-counter-value="${secId}"]`);
-        const secToggle   = box?.querySelector(`#${secId}`);
-
-        if (primCounter) primaryVal = parseInt(primCounter.textContent)||0;
-        else if (primToggle) primaryVal = primToggle.checked;
-
-        if (secCounter) secondaryVal = parseInt(secCounter.textContent)||0;
-        else if (secToggle) secondaryVal = secToggle.checked;
-
-        primaryVal = normalizeValue(drill.measurement_unit, primaryVal);
-        secondaryVal = (secondaryVal!=null) ? normalizeValue(drill.secondary_unit, secondaryVal) : null;
       }
-      return { primaryVal, secondaryVal, isTime, isRate };
+      return { primaryVal, secondaryVal, successes, failures, attempts, isTime, isRate };
     }
+
+    function score5FromRating(r){ return r==='above'?5 : r==='average'?3 : 1; }
 
     async function saveAttempt({ lane }){
       const prefix   = lane==='A' ? 'a' : 'b';
@@ -916,13 +765,15 @@
       const t = timers.get(prefix);
       if (t?.isRunning()) t.stop();
 
-      const { primaryVal, secondaryVal, isTime, isRate } = readLaneValues(prefix, LB_CURR);
+      const vals = readLaneValues(prefix, LB_CURR);
+      const { primaryVal, secondaryVal, successes, failures, attempts, isTime, isRate } = vals;
       const attempt = Number(attSel.value||1);
 
       // Evaluate performance
       const evaluation = evaluateDrill(LB_CURR, primaryVal, secondaryVal);
 
       const row = {
+        timestamp:   new Date().toISOString(),
         tryout_id:   c.tryout_id || '',
         period_code: c.period_code || '',
         tryout_num:  String(player.tryout_num || '').trim(),
@@ -931,12 +782,32 @@
         station_id:  STATION_ID,
         drill_id:    LB_CURR.drill_id,
         attempt:     attempt,
-        metric_1:    (primaryVal===true)?1:(primaryVal===false)?0:primaryVal,
-        metric_2:    (secondaryVal===true)?1:(secondaryVal===false)?0:secondaryVal,
-        pass_flag:   evaluation.rating==='above' ? 1 : 0,
+
+        primary_name:  LB_CURR.primary_measurement || (isRate ? 'rate' : 'time'),
+        primary_unit:  LB_CURR.measurement_unit || (isRate ? 'percentage' : 'sec'),
+        primary_value: primaryVal,
+        primary_successes: isRate ? successes : null,
+        primary_failures:  isRate ? failures  : null,
+        primary_attempts:  isRate ? attempts  : null,
+
+        secondary_name:  LB_CURR.secondary_measurement || '',
+        secondary_unit:  LB_CURR.secondary_unit || '',
+        secondary_value: secondaryVal,
+
+        rating_tier: evaluation.rating,           // 'above' | 'average' | 'below'
+        pass_flag:   evaluation.rating==='above'?1:0,
+        score_5:     score5FromRating(evaluation.rating),
+
         notes:       (document.getElementById('sharedNotes').value||'').trim(),
-        extra_1:     (document.getElementById(prefix+'Extra1').value||'').trim(),
-        extra_2:     (document.getElementById(prefix+'Extra2').value||'').trim()
+        source_app:  'station-lb',
+        client_id:   (localStorage.getItem('client_id')||'web'),
+
+        // mirrors for downstream sheets
+        metric_1:    primaryVal,
+        metric_2:    secondaryVal,
+
+        // expose failure counts when relevant (e.g., error_rate)
+        errors_count: /error_rate/i.test(String(LB_CURR.primary_measurement||'')) ? failures : null
       };
 
       setSaving(lane, true);
