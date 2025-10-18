@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
 
   <!-- Apps Script endpoint -->
-  <meta name="gsds-api-base" content="https://script.google.com/macros/s/AKfycby5dNcnBkZAXcf5lamP0K0B1jjEIYMfnuwGnaL4zHSXHXNMCiSw5BNhalBxZ1VWB3uCbQ/exec"/>
+  <meta name="gsds-api-base" content="https://script.google.com/macros/s/AKfycbxNVeGgLr8opNmDpiLTd2g6cU55bt3RBCUcKpcwS0zaiM5ok_ub7EW2HLGEoaVy66YQEQ/exec"/>
 
   <title>Tryout Roster</title>
 
@@ -132,6 +132,27 @@
         </div>
       </section>
 
+      <!-- Quick Add -->
+      <section class="card">
+        <h2 class="info-title" style="margin:0 0 8px 0">Add Walk-Up Player</h2>
+        <div class="subgrid" style="grid-template-columns:1fr 1fr auto; gap:8px">
+          <div>
+            <label class="form-label" for="add_first">First name</label>
+            <input id="add_first" class="form-input" placeholder="First name"/>
+          </div>
+          <div>
+            <label class="form-label" for="add_last">Last name</label>
+            <input id="add_last" class="form-input" placeholder="Last name"/>
+          </div>
+          <div style="display:flex;align-items:flex-end">
+            <button id="btnAddPlayer" class="btn">＋ Add Player</button>
+          </div>
+        </div>
+        <div class="tiny" style="margin-top:6px;color:var(--muted)">
+          Creates <code>player_id</code> <em>NTD###</em> at the next available number, sets <code>primary_pos</code>/<code>group_code</code> to PV, and uses the current Tryout ID (defaults to <strong>NTD2025-ATL-01</strong> if blank).
+        </div>
+      </section>
+
       <!-- KPIs -->
       <div class="kpis">
         <div class="kpi"><div class="label">Registered</div><div class="val" id="kpiRegistered">0</div></div>
@@ -234,11 +255,13 @@
     const state = { roster:[], positions:new Set(DEFAULT_POSITION_GROUPS), posFilter:'', query:'', filter:'all' };
 
     const UNASSIGNED_CODE = 'PV';
+    const DEFAULT_TRYOUT_ID = 'NTD2025-ATL-01';
 
     /* ---------------- data loading ---------------- */
     function setRosterLoading(on){
       $('#rosterLoading').classList.toggle('active', !!on);
       $('#btnReload').disabled = !!on;
+      $('#btnAddPlayer').disabled = !!on;
     }
 
     async function fetchRoster(){
@@ -350,6 +373,38 @@
       return false;
     }
 
+    // NEW: Add player
+    async function writeAddPlayer({ first_name, last_name }){
+      const ctx = GameContext.get() || {};
+      const tryout_id = (ctx.tryout_id && String(ctx.tryout_id).trim()) || DEFAULT_TRYOUT_ID;
+      const display_name = [first_name,last_name].filter(Boolean).join(' ').trim();
+
+      const qs = new URLSearchParams({
+        action:'tryout_add_player',
+        tryout_id,
+        first_name:first_name||'',
+        last_name:last_name||'',
+        display_name
+      }).toString();
+
+      // Prefer GET (no preflight)
+      try{
+        const r = await fetch(`${window.API_BASE}?${qs}`); const j = await r.json();
+        if (j && j.ok) return j;
+      }catch{}
+
+      // Fallback: text/plain POST
+      try{
+        const res = await apiPostText({
+          action:'tryout_add_player',
+          tryout_id, first_name, last_name, display_name
+        });
+        if (res && res.ok) return res;
+      }catch{}
+
+      return { ok:false, error:'Failed to add player' };
+    }
+
     /* ---------------- render ---------------- */
     function renderFilters(){
       // pos select
@@ -375,7 +430,6 @@
       }
       return true;
     }
-
 
     function renderLists(){
       const total = state.roster.length;
@@ -477,6 +531,30 @@
       $('#positionFilter').addEventListener('change', e => { state.posFilter = e.target.value; renderLists(); });
       $('#nameSearch').addEventListener('input',  e => { state.query = e.target.value || ''; renderLists(); });
       $('#btnReload').addEventListener('click',   loadRoster);
+
+      // Add player handlers
+      const add = async () => {
+        const first = ($('#add_first').value || '').trim();
+        const last  = ($('#add_last').value  || '').trim();
+        if (!first || !last) { toast('Enter first & last name'); return; }
+        const btn = $('#btnAddPlayer');
+        btn.disabled = true; const prevText = btn.textContent; btn.textContent = 'Adding…';
+        const res = await writeAddPlayer({ first_name:first, last_name:last });
+        btn.disabled = false; btn.textContent = prevText;
+        if (!res || !res.ok){ toast(res?.error || 'Failed to add'); return; }
+        // Clear inputs, reload roster
+        $('#add_first').value = ''; $('#add_last').value = '';
+        toast(`Added ${res.display_name} (#${res.tryout_num})`);
+        await loadRoster();
+        // Optional: scroll to end (newest tryout_num is largest)
+        try{
+          const rows = $$('#rosterList .row');
+          if (rows.length) rows[rows.length-1].scrollIntoView({ behavior:'smooth', block:'center' });
+        }catch{}
+      };
+      $('#btnAddPlayer').addEventListener('click', add);
+      $('#add_last').addEventListener('keydown', e => { if (e.key === 'Enter') add(); });
+      $('#add_first').addEventListener('keydown', e => { if (e.key === 'Enter') $('#add_last').focus(); });
     }
 
     (async function init(){
