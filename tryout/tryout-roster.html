@@ -2,58 +2,110 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
 
-  <meta name="gsds-api-base" content="https://script.google.com/macros/s/AKfycbw8Jb7RpQ7j9L2q32YDSBuNSPLFMjPzKdvuI_BgkutfNk5COrEYUdsUWZYXDOJRAeH3kA/exec"/>
+  <!-- Apps Script endpoint -->
+  <meta name="gsds-api-base" content="https://script.google.com/macros/s/AKfycby5dNcnBkZAXcf5lamP0K0B1jjEIYMfnuwGnaL4zHSXHXNMCiSw5BNhalBxZ1VWB3uCbQ/exec"/>
 
   <title>Tryout Roster</title>
 
-  <!-- Fonts + global ATL theme -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../style.css"/>
 
   <style>
-    :root{ --tbl-border: rgba(255,255,255,.14); --panel: rgba(255,255,255,.06); }
-    .roster-card{ background:var(--panel); border:1px solid var(--tbl-border); border-radius:16px; padding:14px; backdrop-filter: blur(6px); }
-    .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0}
-    .kpi{background:rgba(255,255,255,.06);border:1px solid var(--tbl-border);border-radius:12px;padding:10px 12px}
-    .kpi .label{font-size:12px;color:#A5A6B5;text-transform:uppercase;letter-spacing:.05em}
-    .kpi .val{font-size:18px;font-weight:800;margin-top:4px}
-    .grid-table{width:100%}
-    .grid-table thead{position:sticky;top:84px;background:rgba(15,12,25,.85);backdrop-filter:blur(6px);z-index:10}
-    .grid-table thead tr,.grid-table tbody tr{display:grid;grid-template-columns:88px 1.4fr 1fr 130px 140px 1fr;gap:10px;align-items:center}
-    .grid-table thead th{font-size:12px;color:#A5A6B5;text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:6px 8px}
-    .grid-table tbody{display:flex;flex-direction:column;gap:8px;margin-top:8px}
-    .grid-table tbody tr{background:rgba(255,255,255,.06);border:1px solid var(--tbl-border);border-radius:12px;padding:10px}
-    .num{font-variant-numeric:tabular-nums;font-weight:800;text-align:right}
-    .name{display:flex;flex-direction:column;min-width:0}
-    .truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .muted{color:#A5A6B5}
-    .select,.input{width:100%;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;outline:none}
-    .filters{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
-    .btn-mini{padding:8px 10px;border-radius:10px;border:1px solid var(--tbl-border);background:#2b2f3a;color:#fff}
-    .btn-mini[aria-pressed="true"]{background:#43b581;color:#071a12;border-color:#43b581}
-    .switch{display:inline-flex;gap:8px;align-items:center}
-    .switch input{appearance:none;width:40px;height:24px;border-radius:999px;background:#2a3144;position:relative;border:1px solid rgba(255,255,255,.2);cursor:pointer}
-    .switch input:checked{background:#1f3b2a;border-color:#2b5e40}
-    .switch input::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#c9d3ea;transition:.18s}
+    :root{ --panel: rgba(255,255,255,.06); --border: rgba(255,255,255,.14); --muted:#A5A6B5; }
+    .container{max-width:1100px;margin:0 auto;padding:14px}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px}
+
+    /* compact form controls */
+    .form-input,.form-select{width:100%;padding:.6rem .7rem;border-radius:10px;border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.08);color:#fff;font-size:14px}
+    .btn{padding:.55rem .8rem;border-radius:10px;border:1px solid var(--border);background:#2b2f3a;color:#fff;font-weight:800}
+    .btn[disabled]{opacity:.6;cursor:not-allowed}
+
+    /* KPIs */
+    .kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0}
+    .kpi{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:10px;padding:8px 10px}
+    .kpi .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+    .kpi .val{font-size:16px;font-weight:900;margin-top:2px}
+    @media (min-width:760px){ .kpis{grid-template-columns:repeat(4,minmax(0,1fr))} }
+
+    /* layout columns */
+    .layout{display:grid;grid-template-columns:1fr;gap:10px}
+    @media (min-width:960px){ .layout{grid-template-columns:2fr 1fr} }
+
+    /* filters row */
+    .filters{display:grid;grid-template-columns:1fr;gap:8px;margin:8px 0}
+    .chip-row{display:flex;gap:6px;flex-wrap:wrap}
+    .chip{border:1px solid var(--border);background:#222634;color:#fff;border-radius:999px;padding:6px 10px;font-size:13px}
+    .chip[aria-pressed="true"]{background:#6ee7b7;color:#022; border-color:#6ee7b7}
+
+    /* header (md+) */
+    .header{display:none}
+    @media (min-width:900px){
+      .header{
+        position:sticky; top:78px; z-index:5;
+        display:grid;grid-template-columns:80px minmax(220px,1fr) 190px 130px 120px;gap:8px;
+        font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;
+        padding:8px 6px;background:rgba(15,12,25,.85);backdrop-filter:blur(6px);border-radius:10px;border:1px solid var(--border)
+      }
+    }
+
+    /* Compact roster row (mobile-first) */
+    .roster{display:flex;flex-direction:column;gap:8px}
+    .row{
+      display:grid;
+      grid-template-columns:64px 1fr 70px;           /* num | name | toggle */
+      grid-template-areas: "num name toggle"
+                           "pos pos time";
+      gap:8px; align-items:center;
+      background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:10px;padding:10px
+    }
+    .cell-num{grid-area:num;font-variant-numeric:tabular-nums;font-weight:900;text-align:right}
+    .cell-name{grid-area:name;font-weight:800;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .cell-toggle{grid-area:toggle;justify-self:end}
+    .cell-pos{grid-area:pos}
+    .cell-time{grid-area:time;color:var(--muted);font-variant-numeric:tabular-nums;justify-self:end}
+
+    /* md+ → single row table style */
+    @media (min-width:900px){
+      .row{
+        grid-template-columns:80px minmax(220px,1fr) 190px 130px 120px;
+        grid-template-areas: "num name pos toggle time";
+        padding:8px
+      }
+    }
+
+    /* smaller switch */
+    .switch{display:inline-flex;align-items:center}
+    .switch input{appearance:none;width:38px;height:22px;border-radius:999px;background:#2a3144;position:relative;border:1px solid rgba(255,255,255,.25);cursor:pointer}
+    .switch input:checked{background:#1e3a2f;border-color:#2b5e40}
+    .switch input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#c9d3ea;transition:.18s}
     .switch input:checked::after{left:20px;background:#9ce3b0}
-    .badge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.2);gap:6px}
-    .good{background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.35);color:#8ff0b0}
-    .bad{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35);color:#ff99a6}
-    .mini thead tr{display:grid;grid-template-columns:88px 1fr 120px;gap:10px}
-    .mini tbody{display:flex;flex-direction:column;gap:8px;margin-top:8px}
-    .mini tbody tr{display:grid;grid-template-columns:88px 1fr 120px;gap:10px;align-items:center;background:rgba(255,255,255,.06);border:1px solid var(--tbl-border);border-radius:12px;padding:10px}
-    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#141a28;border:1px solid var(--tbl-border);color:#fff;padding:10px 12px;border-radius:10px;display:none;z-index:1000}
+
+    /* right column list */
+    .mini{display:flex;flex-direction:column;gap:8px}
+    .mini .mrow{display:grid;grid-template-columns:64px 1fr 90px;gap:8px;align-items:center;background:rgba(255,255,255,.06);
+      border:1px solid var(--border);border-radius:10px;padding:8px}
+
+    /* loading */
+    .loading-overlay{ position:absolute; inset:42px 8px 8px 8px; display:none; align-items:center; justify-content:center;
+      background:rgba(7,9,18,.55); border:1px dashed var(--border); border-radius:10px; backdrop-filter:blur(2px) }
+    .loading-overlay.active{ display:flex; }
+    .spinner{width:24px;height:24px;border-radius:50%;border:3px solid rgba(255,255,255,.28);border-top-color:#9b87f5;animation:spin .8s linear infinite;margin-right:8px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;background:#141a28;border:1px solid var(--border);
+      color:#fff;padding:8px 10px;border-radius:10px;display:none;z-index:1000}
   </style>
 </head>
 
 <body class="theme-atl practice-page">
   <header class="page-header">
     <h1>TRYOUT ROSTER</h1>
-    <nav class="menu-actions" aria-label="Top navigation">
+    <nav class="menu-actions">
       <a class="menu-btn" href="../index.html">Home</a>
       <a class="menu-btn" href="./index.html">Tryouts Hub</a>
     </nav>
@@ -61,79 +113,75 @@
 
   <main>
     <div class="container">
-      <div id="ctxBanner" class="chip tiny" style="margin:.5rem 0"></div>
+      <div id="ctxBanner" class="chip tiny" style="margin:.5rem 0">Loading…</div>
 
-      <section class="roster-card" style="margin-bottom:12px">
-        <div class="sub-menu-grid" style="grid-template-columns:repeat(3,1fr);gap:10px;margin:0">
+      <!-- Context -->
+      <section class="card">
+        <div class="subgrid" style="grid-template-columns:1fr 1fr auto">
           <div>
             <label class="form-label" for="ctx_tryout">Tryout ID</label>
             <input id="ctx_tryout" class="form-input" placeholder="e.g., NTD2025-ATL-01"/>
           </div>
           <div>
             <label class="form-label" for="ctx_period">Period</label>
-            <select id="ctx_period" class="form-select">
-              <option value="">— Select period —</option>
-            </select>
+            <select id="ctx_period" class="form-select"><option value="">— Select period —</option></select>
           </div>
           <div style="display:flex;align-items:flex-end;gap:8px">
-            <button id="btnReload" class="btn btn-neutral" style="width:100%">↻ Load Roster</button>
+            <button id="btnReload" class="btn">↻ Load</button>
           </div>
         </div>
       </section>
 
-      <div class="kpis" id="kpis">
+      <!-- KPIs -->
+      <div class="kpis">
         <div class="kpi"><div class="label">Registered</div><div class="val" id="kpiRegistered">0</div></div>
         <div class="kpi"><div class="label">Checked In</div><div class="val" id="kpiChecked">0</div></div>
         <div class="kpi"><div class="label">Not Checked In</div><div class="val" id="kpiNotChecked">0</div></div>
         <div class="kpi"><div class="label">Unassigned</div><div class="val" id="kpiUnassigned">0</div></div>
       </div>
 
-      <div class="sub-menu-grid" style="grid-template-columns:2fr 1fr">
-        <section class="roster-card">
-          <h2 class="info-title" style="margin:0 0 8px 0">All Players</h2>
+      <div class="layout">
+        <!-- Left: roster -->
+        <section class="card roster-wrap">
+          <h2 class="info-title" style="margin:0 0 6px 0">All Players</h2>
 
           <div class="filters">
-            <button class="btn-mini" data-filter="all" aria-pressed="true">All</button>
-            <button class="btn-mini" data-filter="checked">Checked In</button>
-            <button class="btn-mini" data-filter="notChecked">Not Checked In</button>
-            <button class="btn-mini" data-filter="unassigned">Unassigned</button>
-            <select class="select" id="positionFilter" style="min-width:220px;margin-left:auto">
+            <div class="chip-row">
+              <button class="chip" data-filter="all" aria-pressed="true">All</button>
+              <button class="chip" data-filter="checked">Checked In</button>
+              <button class="chip" data-filter="notChecked">Not Checked In</button>
+              <button class="chip" data-filter="unassigned">Unassigned</button>
+            </div>
+            <input id="nameSearch" class="form-input" placeholder="Search name or #…" style="min-width:220px">
+            <select id="positionFilter" class="form-select" style="min-width:220px">
               <option value="">Filter by position group…</option>
             </select>
           </div>
 
-          <table class="grid-table" aria-label="Roster table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Position Group</th>
-                <th>Check In</th>
-                <th>Registered At</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody id="rosterBody"></tbody>
-          </table>
+          <!-- header row (md+) -->
+          <div class="header" aria-hidden="true">
+            <div>#</div><div>Name</div><div>Position Group</div><div>Check In</div><div>Time</div>
+          </div>
+
+          <div id="rosterList" class="roster" aria-live="polite"></div>
+
+          <!-- Loading overlay -->
+          <div id="rosterLoading" class="loading-overlay" aria-live="polite">
+            <div class="spinner" role="progressbar" aria-label="Loading"></div>
+            <div>Loading roster…</div>
+          </div>
         </section>
 
-        <aside class="roster-card">
-          <h2 class="info-title" style="margin:0 0 8px 0">Registered • Not Checked In</h2>
-          <table class="mini">
-            <thead>
-              <tr><th>#</th><th>Name</th><th>Pos</th></tr>
-            </thead>
-            <tbody id="notCheckedBody"></tbody>
-          </table>
+        <!-- Right: not checked in -->
+        <aside class="card">
+          <h2 class="info-title" style="margin:0 0 6px 0">Registered • Not Checked In</h2>
+          <div id="notCheckedList" class="mini"></div>
         </aside>
       </div>
     </div>
   </main>
 
-  <footer class="site-footer">
-    <p>&copy; 2025 Game Speed Data Systems</p>
-  </footer>
-
+  <footer class="site-footer"><p>&copy; 2025 Game Speed Data Systems</p></footer>
   <div id="toast" class="toast"></div>
 
   <!-- Shared libs -->
@@ -141,12 +189,38 @@
   <script src="../js/context.js"></script>
 
   <script>
-    /* ---------- helpers ---------- */
-    const $ = (s, r=document)=>r.querySelector(s);
+    /* ---------------- helpers ---------------- */
+    const $  = (s, r=document)=>r.querySelector(s);
     const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
-    const toast = (m,ms=1400)=>{ const t=$('#toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',ms); };
+    const toast = (m,ms=1300)=>{ const t=$('#toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',ms); };
 
-    /* ---------- GameContext bootstrap ---------- */
+    const timeOnly = v => {
+      if (!v) return '';
+      try{
+        const d = typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(v) ? new Date(v)
+                : typeof v === 'string' && /^\d{2}:\d{2}/.test(v)       ? new Date(`1970-01-01T${v}:00`)
+                : new Date(v);
+        if (isNaN(d)) return '';
+        return d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+      }catch{ return ''; }
+    };
+
+    async function apiGet(params){
+      const url = new URL(window.API_BASE);
+      Object.entries(params||{}).forEach(([k,v])=> url.searchParams.set(k, v));
+      const r = await fetch(url, { credentials:'omit' });
+      return r.json();
+    }
+    async function apiPostText(payload){
+      const r = await fetch(window.API_BASE, {
+        method:'POST',
+        headers:{ 'Content-Type':'text/plain', 'Accept':'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return r.json().catch(()=>({ ok: r.ok }));
+    }
+
+    /* ---------------- GameContext bootstrap ---------------- */
     (function(){
       const meta = document.querySelector('meta[name="gsds-api-base"]');
       window.API_BASE = (window.API_BASE || (meta && meta.content) || '').trim();
@@ -155,277 +229,260 @@
       GameContext.bindInputs({ tryout_id:'#ctx_tryout', period_code:'#ctx_period' });
     })();
 
-    /* ---------- state ---------- */
-    const DEFAULT_POSITION_GROUPS = ['QB','RB','WR','TE','OL','DL','LB','DB','ST'];
-    const state = {
-      roster: [],
-      positions: new Set(DEFAULT_POSITION_GROUPS),
-      filter: 'all',
-      posFilter: ''
-    };
+    /* ---------------- state ---------------- */
+    const DEFAULT_POSITION_GROUPS = ['QB','RB','WR','TE','OL','DL','LB','DB','ST','PV'];
+    const state = { roster:[], positions:new Set(DEFAULT_POSITION_GROUPS), posFilter:'', query:'', filter:'all' };
 
-    /* ---------- period inheritance ---------- */
-    function readInheritedPeriod(){
-      const ctx = GameContext.get() || {};
-      const url = new URL(location.href);
-      const urlPeriod = url.searchParams.get('period_code') || url.searchParams.get('period');
-      const storePeriod =
-        sessionStorage.getItem('period_code') || localStorage.getItem('period_code') ||
-        sessionStorage.getItem('period')      || localStorage.getItem('period');
-      return (ctx.period_code || ctx.period || urlPeriod || storePeriod || '').trim();
+    const UNASSIGNED_CODE = 'PV';
+
+    /* ---------------- data loading ---------------- */
+    function setRosterLoading(on){
+      $('#rosterLoading').classList.toggle('active', !!on);
+      $('#btnReload').disabled = !!on;
     }
 
-    /* ---------- data loading ---------- */
     async function fetchRoster(){
+      // Preferred shared API
       try{
         if (API?.tryout?.read?.roster){
           const res = await API.tryout.read.roster();
-          if (res && res.ok && Array.isArray(res.roster)) return res.roster;
+          if (res?.ok && Array.isArray(res.roster)) return res.roster;
         }
-      }catch(e){ /* fall through */ }
+      }catch(e){ console.debug('API.tryout.read.roster failed:', e); }
 
-      const base = window.API_BASE;
-      const ctx  = GameContext.get() || {};
-      const eventId = ctx.tryout_id || new URL(location.href).searchParams.get('tryout_id') || new URL(location.href).searchParams.get('event_id') || '';
-      const url = `${base}?route=tryout.roster${eventId ? `&event_id=${encodeURIComponent(eventId)}`:''}`;
-      const r = await fetch(url);
-      if (!r.ok) return [];
-      const j = await r.json();
-      return j.roster || j.rows || Array.isArray(j) ? j : [];
+      // Fallback: Apps Script action (pre-filter by tryout_id if present)
+      try{
+        const ctx = GameContext.get() || {};
+        const qs = new URLSearchParams({ action:'tryout_roster' });
+        if (ctx.tryout_id) qs.set('tryout_id', ctx.tryout_id);
+        const r = await fetch(`${window.API_BASE}?${qs.toString()}`);
+        if (r.ok){ const j = await r.json(); return j.roster || j.rows || []; }
+      }catch(e){ console.error('Apps Script tryout_roster failed:', e); }
+      return [];
+    }
+
+    function mapRoster(raw){
+      return (raw||[]).map(x => {
+        const checkTs = x.checked_in_at || x.checkin_at || x.checkin_ts || x.ts_checkin || x.checked_in_time || x.checkin_time || null;
+        return {
+          tryout_id:      x.tryout_id || x.event_id || x.event || '',
+          id:             x.id || x.player_id || x.roster_player_id || '',
+          tryout_number:  String(x.tryout_number || x.tryout_num || x.jersey_number || '').padStart(3,'0'),
+          display_name:   x.display_name || x.player_name || `${x.legal_first_name||''} ${x.legal_last_name||''}`.trim(),
+          position_group: x.position_group || x.group_code || x.position || x.primary_pos || '',
+          checked_in:     !!(x.checked_in || x.checkin || x.is_checked_in),
+          checkin_time:   timeOnly(checkTs)
+        };
+      });
     }
 
     async function loadRoster(){
-      const raw = await fetchRoster();
-      state.roster = (raw || []).map(x => ({
-        id:               x.id || x.player_id || x.roster_player_id || x.tryout_id || x.key || '',
-        tryout_number:    x.tryout_number || x.tryout_num || x.jersey_number || '',
-        display_name:     x.display_name || x.player_name || `${x.legal_first_name||''} ${x.legal_last_name||''}`.trim(),
-        position_group:   x.position_group || x.group_code || x.position || x.primary_pos || '',
-        checked_in:       !!(x.checked_in || x.checkin || x.is_checked_in),
-        registration_site:x.registration_site || x.event_site || x.site || '',
-        notes:            x.notes || ''
-      }));
+      try{
+        setRosterLoading(true);
+        const ctx = GameContext.get() || {};
+        const all = mapRoster(await fetchRoster());
 
-      state.positions = new Set([
-        ...DEFAULT_POSITION_GROUPS,
-        ...state.roster.map(r => r.position_group).filter(Boolean)
-      ]);
+        const hasTryoutId = all.some(r => String(r.tryout_id||'').trim() !== '');
+        state.roster = (ctx.tryout_id && hasTryoutId)
+          ? all.filter(r => String(r.tryout_id||'').trim() === String(ctx.tryout_id||'').trim())
+          : all;
 
-      renderPositionsFilter();
-      renderTables();
+        state.positions = new Set([...DEFAULT_POSITION_GROUPS, ...state.roster.map(r=>r.position_group).filter(Boolean)]);
+        renderFilters();
+        renderLists();
+
+        if (!state.roster.length){
+          console.warn('No roster rows after filtering', { ctx_tryout: ctx.tryout_id, totalFetched: all.length, sample: all.slice(0,3) });
+          toast('No roster found for this Tryout ID');
+        }
+      }finally{
+        setRosterLoading(false);
+      }
     }
 
-    /* ---------- writers (check-in + assign) ---------- */
-    async function writeCheckin({id, checked_in}){
+    /* ---------------- writers ---------------- */
+    async function writeCheckin({ id, tryout_number, display_name, checked_in }){
       const ctx = GameContext.get() || {};
-      const tryoutId = (ctx.tryout_id || '').trim();
+      const params = new URLSearchParams({
+        action:'tryout_checkin',
+        tryout_id: ctx.tryout_id || '',
+        period_code: ctx.period_code || '',
+        id,
+        tryout_num: tryout_number || '',
+        display_name: display_name || '',
+        checked_in: checked_in ? '1':'0',
+        ts_utc: new Date().toISOString()
+      }).toString();
 
-      // 1) Preferred: API.tryout.write.checkin
-      if (API?.tryout?.write?.checkin){
-        const res = await API.tryout.write.checkin({ id, checked_in, tryout_id: tryoutId });
-        if (res && (res.ok || res.success !== false)) return true;
-      }
-
-      // 2) Generic action endpoint
-      if (typeof apiPost === 'function'){
-        try{
-          const res = await apiPost({ action:'tryout_checkin', id, checked_in, tryout_id: tryoutId });
-          if (res && (res.ok || res.success || res.status==='ok')) return true;
-        }catch(e){}
-      }
-
-      // 3) Legacy route endpoint (JSON)
+      // 1) GET (no preflight)
       try{
-        const res = await fetch(`${window.API_BASE}?route=tryout.checkin`, {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ id, checked_in, tryout_id: tryoutId, event_id: tryoutId })
-        });
-        if (res.ok){
-          const j = await res.json().catch(()=>({ok:true}));
-          if (j == null || j.ok !== false) return true;
-        }
-      }catch(e){}
-
-      // 4) Last resort: form-encoded (Apps Script friendly)
+        const r = await fetch(`${window.API_BASE}?${params}`); const j = await r.json();
+        if (j && (j.ok || j.success)) return j;
+      }catch{}
+      // 2) text/plain POST fallback
       try{
-        const form = new URLSearchParams({ id, checked_in: String(checked_in ? 1 : 0), tryout_id: tryoutId, event_id: tryoutId });
-        const res = await fetch(`${window.API_BASE}?route=tryout.checkin`, {
-          method:'POST',
-          headers:{'Content-Type':'application/x-www-form-urlencoded'},
-          body: form.toString()
+        const res = await apiPostText(Object.fromEntries(new URLSearchParams(params)));
+        if (res && (res.ok || res.success)) return res;
+      }catch{}
+      // 3) JSON route
+      try{
+        const r = await fetch(`${window.API_BASE}?route=tryout.checkin`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(Object.fromEntries(new URLSearchParams(params)))
         });
-        if (res.ok) return true;
-      }catch(e){}
+        const j = await r.json().catch(()=>({ok:r.ok}));
+        if (j && (j.ok || r.ok)) return j;
+      }catch{}
+      return { ok:false };
+    }
 
+    async function writeAssignPosition({ id, position_group }){
+      const ctx = GameContext.get() || {};
+      try{
+        const res = await apiPostText({ action:'tryout_assign_position', tryout_id: ctx.tryout_id || '', id, position_group });
+        if (res && (res.ok || res.success)) return true;
+      }catch{}
+      try{
+        const qs = new URLSearchParams({ action:'tryout_assign_position', tryout_id: ctx.tryout_id || '', id, position_group }).toString();
+        const r = await fetch(`${window.API_BASE}?${qs}`); const j = await r.json();
+        if (j && (j.ok || j.success)) return true;
+      }catch{}
       return false;
     }
 
-    async function writeAssignPosition({id, position_group}){
-      const ctx = GameContext.get() || {};
-      const tryoutId = (ctx.tryout_id || '').trim();
-
-      if (API?.tryout?.write?.assignPosition){
-        const res = await API.tryout.write.assignPosition({ id, position_group, tryout_id: tryoutId });
-        return !!(res && (res.ok || res.success));
-      }
-      if (typeof apiPost === 'function'){
-        try{
-          const res = await apiPost({ action:'tryout_assign_position', id, position_group, tryout_id: tryoutId });
-          return !!(res && (res.ok || res.success));
-        }catch(e){}
-      }
-      try{
-        const res = await fetch(`${window.API_BASE}?route=tryout.assignPosition`, {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ id, position_group, tryout_id: tryoutId, event_id: tryoutId })
-        });
-        return res.ok;
-      }catch(e){ return false; }
-    }
-
-    /* ---------- rendering ---------- */
-    function renderPositionsFilter(){
+    /* ---------------- render ---------------- */
+    function renderFilters(){
+      // pos select
       const sel = $('#positionFilter');
-      const current = state.posFilter;
+      const cur = state.posFilter;
       sel.innerHTML = '<option value="">Filter by position group…</option>' +
-        [...state.positions].sort().map(p => `<option ${p===current?'selected':''}>${p}</option>`).join('');
+        [...state.positions].sort().map(p => `<option ${p===cur?'selected':''}>${p}</option>`).join('');
+      // chip states
+      $$('.chip[data-filter]').forEach(b => b.setAttribute('aria-pressed', b.dataset.filter===state.filter ? 'true':'false'));
     }
 
-    function matchesFilter(r){
-      if (state.filter==='checked'   && !r.checked_in) return false;
-      if (state.filter==='notChecked'&&  r.checked_in) return false;
-      if (state.filter==='unassigned'&&  r.position_group) return false;
+    function filterMatch(r){
+      if (state.filter==='checked'    && !r.checked_in) return false;
+      if (state.filter==='notChecked' &&  r.checked_in) return false;
+      if (state.filter==='unassigned' &&  r.position_group !== UNASSIGNED_CODE) return false; // PV only
+
       if (state.posFilter && r.position_group !== state.posFilter) return false;
-      const q = ($('#ctxSearch')?.value || '').trim().toLowerCase();
+
+      const q = state.query.trim().toLowerCase();
       if (q){
-        const hay = `${r.display_name} ${r.tryout_number}`.toLowerCase();
-        if (!hay.includes(q)) return false;
+        if (!(r.display_name||'').toLowerCase().includes(q) &&
+            !(r.tryout_number||'').toLowerCase().includes(q)) return false;
       }
       return true;
     }
 
-    function renderTables(){
+
+    function renderLists(){
       const total = state.roster.length;
       const checked = state.roster.filter(r=>r.checked_in).length;
-      const unassigned = state.roster.filter(r=>!r.position_group).length;
+      const unassigned = state.roster.filter(r=>r.position_group === UNASSIGNED_CODE).length; // PV count
       $('#kpiRegistered').textContent = total;
       $('#kpiChecked').textContent = checked;
       $('#kpiNotChecked').textContent = total - checked;
       $('#kpiUnassigned').textContent = unassigned;
 
-      $$('.btn-mini[data-filter]').forEach(b => b.setAttribute('aria-pressed', b.dataset.filter===state.filter ? 'true':'false'));
+      const list = $('#rosterList'); list.innerHTML = '';
+      state.roster.filter(filterMatch).sort((a,b)=> (a.tryout_number||'').localeCompare(b.tryout_number||'')).
+        forEach(r => list.appendChild(renderRow(r)));
 
-      const body = $('#rosterBody'); body.innerHTML = '';
-      state.roster.filter(matchesFilter).sort((a,b)=>(a.tryout_number||'').localeCompare(b.tryout_number||''))
-        .forEach(r => body.appendChild(renderRow(r)));
+      const ncl = $('#notCheckedList'); ncl.innerHTML = '';
+      state.roster.filter(r=>!r.checked_in).sort((a,b)=> (a.tryout_number||'').localeCompare(b.tryout_number||'')).
+        forEach(r => {
+          const row = document.createElement('div');
+          row.className = 'mrow';
+          row.innerHTML = `
+            <div class="cell-num">${r.tryout_number||''}</div>
+            <div>${r.display_name||''}</div>
+            <div>${r.position_group||'<span style="color:var(--muted)">—</span>'}</div>`;
+          ncl.appendChild(row);
+        });
 
-      const ncb = $('#notCheckedBody'); ncb.innerHTML = '';
-      state.roster.filter(r=>!r.checked_in).sort((a,b)=>(a.tryout_number||'').localeCompare(b.tryout_number||''))
-        .forEach(r => ncb.appendChild(renderMiniRow(r)));
+      // update chip pressed state
+      renderFilters();
     }
 
     function renderRow(r){
-      const tr = document.createElement('tr'); tr.dataset.id = r.id;
-      tr.innerHTML = `
-        <td class="num">${r.tryout_number || ''}</td>
-        <td class="name">
-          <div class="truncate">${r.display_name || ''}</div>
-          <div class="muted truncate">ID: ${r.id || '—'}</div>
-        </td>
-        <td>${ positionCellHTML(r) }</td>
-        <td>
-          <label class="switch" title="Toggle check-in">
-            <input type="checkbox" ${r.checked_in?'checked':''} aria-label="Check-in for ${r.display_name}">
-            <span>${r.checked_in?'<span class="badge good">Checked In</span>':'<span class="badge bad">Not In</span>'}</span>
-          </label>
-        </td>
-        <td class="muted">${r.registration_site || '-'}</td>
-        <td><input class="input note" placeholder="Notes…" value="${r.notes?String(r.notes).replace(/"/g,'&quot;'):''}"></td>
+      const row = document.createElement('div');
+      row.className = 'row'; row.dataset.id = r.id;
+
+      const posOptions = ['',''].concat([...state.positions]).map(p =>
+        `<option value="${p}" ${r.position_group===p?'selected':''}>${p||'— Select —'}</option>`
+      ).join('');
+
+      row.innerHTML = `
+        <div class="cell-num">${r.tryout_number||''}</div>
+        <div class="cell-name">${r.display_name||''}</div>
+        <div class="cell-toggle">
+          <label class="switch"><input type="checkbox" ${r.checked_in?'checked':''} aria-label="Check-in"></label>
+        </div>
+        <div class="cell-pos"><select class="form-select pos">${posOptions}</select></div>
+        <div class="cell-time"><span class="time">${r.checkin_time || '—'}</span></div>
       `;
 
-      // position select
-      tr.querySelector('select.pos')?.addEventListener('change', async (e)=>{
-        const old = r.position_group; const val = e.target.value;
-        r.position_group = val; // optimistic
+      // position change
+      row.querySelector('select.pos')?.addEventListener('change', async (e)=>{
+        const old = r.position_group, val = e.target.value;
+        r.position_group = val;
         const ok = await writeAssignPosition({ id:r.id, position_group: val });
         if (!ok){ r.position_group = old; e.target.value = old || ''; toast('Failed to set position'); }
-        else { toast(`Set ${r.display_name} → ${val || '—'}`); renderTables(); }
+        else { toast(`Set ${r.display_name} → ${val || '—'}`); renderLists(); }
       });
 
       // check-in toggle
-      const toggle = tr.querySelector('input[type="checkbox"]');
-      toggle.addEventListener('change', async (e)=>{
-        const val = e.target.checked; const prev = r.checked_in; r.checked_in = val; // optimistic
-        const ok = await writeCheckin({ id:r.id, checked_in: val });
-        if (!ok){ r.checked_in = prev; e.target.checked = prev; toast('Failed to update check-in'); }
-        else { toast(`${r.display_name} ${val?'checked in':'set to not in'}`); renderTables(); }
+      row.querySelector('input[type="checkbox"]').addEventListener('change', async (e)=>{
+        const val = e.target.checked; const prev = r.checked_in; r.checked_in = val;
+        const res = await writeCheckin({ id:r.id, tryout_number:r.tryout_number, display_name:r.display_name, checked_in: val });
+        if (!res || res.ok === false){
+          r.checked_in = prev; e.target.checked = prev; toast('Failed to update check-in'); return;
+        }
+        const serverTime = res.checked_in_at || res.ts || res.ts_utc || null;
+        r.checkin_time = val ? timeOnly(serverTime || new Date()) : '';
+        row.querySelector('.time').textContent = r.checkin_time || '—';
+        renderLists();
       });
 
-      tr.querySelector('.note').addEventListener('change', (e)=>{ r.notes = e.target.value; });
-      return tr;
+      return row;
     }
 
-    function positionCellHTML(r){
-      const options = ['',''].concat([...state.positions]).map(p => `<option value="${p}" ${r.position_group===p?'selected':''}>${p||'— Select —'}</option>`).join('');
-      return `<select class="select pos" aria-label="Position group for ${r.display_name}">${options}</select>`;
-    }
-
-    function renderMiniRow(r){
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="num">${r.tryout_number||''}</td>
-        <td class="truncate">${r.display_name||''}</td>
-        <td>${r.position_group || '<span class="muted">Unassigned</span>'}</td>
-      `;
-      return tr;
-    }
-
-    /* ---------- UI wiring ---------- */
-    function hookUI(){
-      document.addEventListener('click', (e)=>{
-        const btn = e.target.closest('.btn-mini[data-filter]'); if(!btn) return;
-        state.filter = btn.dataset.filter; renderTables();
-      });
-      $('#positionFilter').addEventListener('change', (e)=>{ state.posFilter = e.target.value; renderTables(); });
-      $('#btnReload').addEventListener('click', loadRoster);
-    }
-
-    /* ---------- periods list + inherit ---------- */
+    /* ---------------- periods + init ---------------- */
     async function loadPeriods(){
       try{
         const ctx = GameContext.get();
-        const params = { action:'tryout_periods' };
-        if (ctx.tryout_id) params.tryout_id = ctx.tryout_id;
-        const res = await apiGet(params);
-        if (!res || !res.ok) return;
+        const res = await apiGet({ action:'tryout_periods', tryout_id: ctx.tryout_id||'' });
+        if (!res?.ok) return;
         const list = (res.periods||[]).map(x => ({
           code: x.period_code || x.code || '',
           label: x.label || x.period_label || (x.period_code || '')
         })).filter(x => x.code);
-
         const sel = $('#ctx_period');
         sel.innerHTML = '<option value="">— Select period —</option>' +
           list.map(p => `<option value="${p.code}">${p.code} — ${p.label}</option>`).join('');
-
-        // inherit AFTER options exist
-        const inherited = readInheritedPeriod();
-        if (inherited && list.some(p=>p.code===inherited)) {
-          sel.value = inherited;
-          GameContext.setPeriod(inherited);
-        } else if (ctx.period_code && list.some(p=>p.code===ctx.period_code)){
-          sel.value = ctx.period_code;
-        }
-      }catch{/* ignore */}
+        const ctxNow = GameContext.get() || {};
+        if (ctxNow.period_code && list.some(p=>p.code===ctxNow.period_code)) sel.value = ctxNow.period_code;
+      }catch{}
     }
     $('#ctx_period').addEventListener('change', () => GameContext.setPeriod($('#ctx_period').value || ''));
 
-    /* ---------- init ---------- */
+    function hookUI(){
+      // chip filters
+      document.addEventListener('click', (e)=>{
+        const chip = e.target.closest('.chip[data-filter]'); if (!chip) return;
+        state.filter = chip.dataset.filter; renderLists();
+      });
+      $('#positionFilter').addEventListener('change', e => { state.posFilter = e.target.value; renderLists(); });
+      $('#nameSearch').addEventListener('input',  e => { state.query = e.target.value || ''; renderLists(); });
+      $('#btnReload').addEventListener('click',   loadRoster);
+    }
+
     (async function init(){
       hookUI();
 
-      // Accept ?tryout_id= or ?event_id=
+      // carry ?tryout_id forward if provided
       const url = new URL(location.href);
       const qTry = url.searchParams.get('tryout_id') || url.searchParams.get('event_id');
       if (qTry) { $('#ctx_tryout').value = qTry; GameContext.setTryoutId(qTry); }

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
   <!-- Apps Script base -->
-  <meta name="gsds-api-base" content="https://script.google.com/macros/s/AKfycbw8Jb7RpQ7j9L2q32YDSBuNSPLFMjPzKdvuI_BgkutfNk5COrEYUdsUWZYXDOJRAeH3kA/exec">
+  <meta name="gsds-api-base" content="https://script.google.com/macros/s/AKfycbz2m5h4t5O5x9XdvNnMVMFWAZHBHdo4TnTy0W22e1jYF6jkzOHKc9vnwWCu7Q5a8HLOPg/exec">
 
   <title>Coaches Corner — Tryouts</title>
 
@@ -34,7 +34,6 @@
     .chip{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px;
            border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.06); font-weight:700; }
     .chip.badge{ background:linear-gradient(135deg,#7C4DFF,#8B5CF6); color:#071018; border:0; }
-    .chip.ghost{ background:transparent; }
     .chip.tiny{ font-size:.8rem; padding:4px 8px; }
     .label{ font-weight:800; font-size:.95rem; opacity:.9; margin-bottom:6px; display:block; }
     .form-input, .form-select{ width:100%; padding:.68rem .8rem; border-radius:12px; border:1px solid rgba(255,255,255,.28);
@@ -51,57 +50,41 @@
     .lane-chip .x{ opacity:.7; cursor:pointer; padding:0 .25rem; }
     .lane-card{ transition: box-shadow .15s ease, border-color .15s ease; }
     .lane-card.lane-active{ border-color:#8B5CF6; box-shadow:0 0 0 2px rgba(139,92,246,.35) inset; }
-    .muted{ opacity:.75; }
 
-    /* ===== Bigger, touch-friendly sliders ===== */
-    .crit{ display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:center; }
+    /* 4-lane segmented switch */
+    .seg{ display:inline-flex; border:1px solid rgba(255,255,255,.18); border-radius:12px; overflow:hidden; }
+    .seg .seg-btn{
+      appearance:none; border:0; background:rgba(255,255,255,.06); color:#fff;
+      padding:.5rem .8rem; font-weight:800; cursor:pointer;
+      border-right:1px solid rgba(255,255,255,.18);
+    }
+    .seg .seg-btn:last-child{ border-right:0; }
+    .seg .seg-btn.is-active{ background:linear-gradient(135deg,#7C4DFF,#8B5CF6); color:#071018; }
+
+    /* ===== 1–5 rating buttons ===== */
+    .crit{ display:grid; grid-template-columns: 1fr auto auto; gap:10px; align-items:center; }
     .crit label{ font-weight:800; font-size:.95rem; }
-    .crit .val{ width:36px; text-align:right; font-variant-numeric:tabular-nums; font-weight:900; opacity:.9; }
-
-    input[type="range"]{
-      width:100%;
-      height:38px; /* taller hit target */
-      background:transparent;
+    .crit .val{ width:40px; text-align:right; font-variant-numeric:tabular-nums; font-weight:900; opacity:.9; }
+    .rating-group{ display:flex; gap:10px; }
+    .rating-btn{
+      width:52px; height:52px; border-radius:12px; border:1px solid rgba(255,255,255,.28);
+      background:rgba(255,255,255,.08); color:#fff; font-weight:900; font-size:1.05rem; line-height:1;
+      cursor:pointer; user-select:none; display:inline-flex; align-items:center; justify-content:center;
+      transition:transform .06s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
     }
-    /* WebKit */
-    input[type="range"]::-webkit-slider-runnable-track{
-      height:12px; border-radius:999px;
-      background:linear-gradient(90deg, #8B5CF6, #7C4DFF);
-      opacity:.75;
-    }
-    input[type="range"]::-webkit-slider-thumb{
-      -webkit-appearance:none; appearance:none;
-      width:26px; height:26px; border-radius:50%;
-      background:#fff; border:3px solid #8B5CF6; margin-top:-7px;
-      box-shadow:0 2px 6px rgba(0,0,0,.25);
-    }
-    /* Firefox */
-    input[type="range"]::-moz-range-track{
-      height:12px; border-radius:999px; background:linear-gradient(90deg, #8B5CF6, #7C4DFF); opacity:.75;
-    }
-    input[type="range"]::-moz-range-thumb{
-      width:26px; height:26px; border-radius:50%;
-      background:#fff; border:3px solid #8B5CF6; box-shadow:0 2px 6px rgba(0,0,0,.25);
+    .rating-btn:active{ transform:scale(.96); }
+    .rating-btn:focus-visible{ outline:2px solid #8B5CF6; outline-offset:2px; }
+    .rating-btn[aria-pressed="true"]{
+      background:linear-gradient(135deg,#7C4DFF,#8B5CF6); color:#071018; border-color:transparent;
+      box-shadow:0 0 0 2px rgba(139,92,246,.35) inset;
     }
 
     .btn{ appearance:none; border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08); color:#fff;
           padding:.55rem .8rem; border-radius:10px; font-weight:800; cursor:pointer; transition:.2s ease; }
-    .btn.primary{ background:linear-gradient(135deg,#7C4DFF,#8B5CF6); color:#071018; border:0; }
     .btn.success{ background:linear-gradient(135deg,#16A34A,#10B981); color:#061710; border:0; }
-    .btn.warn{ background:linear-gradient(135deg,#F59E0B,#F59E0B); color:#2A1400; border:0; }
-    .btn.ghost{ background:transparent; }
     .btn:disabled{ opacity:.55; cursor:not-allowed; }
 
-    .btn.loading{ position:relative; pointer-events:none; }
-    .btn.loading .spin{ width:14px; height:14px; border:2px solid rgba(255,255,255,.45);
-                        border-top-color:#fff; border-radius:50%; display:inline-block;
-                        margin-right:8px; vertical-align:-2px; animation:spin .8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .status{ margin-top:8px; font-weight:700; }
-    .status.ok{ color:#34D399; } .status.err{ color:#F87171; } .status.warn{ color:#F59E0B; }
-
-    /* TryoutUI shell + spinner + roster visibility control */
+    /* Spinner overlay */
     .shared-wrap{ position:relative; }
     .tu-loading{
       position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
@@ -110,9 +93,24 @@
     }
     .tu-loading .ring{ width:28px; height:28px; border:3px solid rgba(255,255,255,.35);
       border-top-color:#fff; border-radius:50%; animation:spin .9s linear infinite; }
-    .roster-hidden .tu-roster{ display:none; }
-    .tu-hint{ padding:10px 12px; border:1px dashed rgba(255,255,255,.18); border-radius:12px; opacity:.85; margin-top:8px; }
-    .tu-limit{ margin-top:8px; font-size:.85rem; opacity:.8; font-weight:700; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Pagination + done visuals */
+    .cc-pager{ display:flex; gap:8px; justify-content:flex-end; align-items:center; margin-top:10px; }
+    .cc-pager .cc-btn{ padding:.35rem .6rem; border:1px solid rgba(255,255,255,.25); border-radius:8px; background:rgba(255,255,255,.08); color:#fff; font-weight:800; }
+    .cc-pager .cc-btn:disabled{ opacity:.45; cursor:not-allowed; }
+    .cc-pager .cc-meta{ font-weight:800; opacity:.9; }
+
+    .tu-player.cc-done, .tu-card.cc-done{ opacity:.45; filter:grayscale(1); position:relative; }
+    .tu-player.cc-done::after, .tu-card.cc-done::after{
+      content:'✓'; position:absolute; top:6px; right:6px; width:22px; height:22px; display:flex; align-items:center; justify-content:center;
+      border-radius:999px; background:#10B981; color:#061710; font-weight:900; border:1px solid rgba(0,0,0,.25);
+    }
+
+    .status{ margin-top:8px; font-weight:700; }
+    .status.ok{ color:#34D399; }
+    .status.err{ color:#F87171; }
+    .status.warn{ color:#F59E0B; }
   </style>
 </head>
 
@@ -130,7 +128,7 @@
       <div id="ctxBanner" class="chip tiny" aria-live="polite">Loading context…</div>
 
       <section class="card" aria-labelledby="coachHdr">
-        <div class="toolbar">
+        <div class="toolbar" style="width:100%; align-items:flex-end; gap:14px">
           <span class="chip">Mode: <strong>Coach Ratings</strong></span>
 
           <div style="min-width:220px">
@@ -160,12 +158,20 @@
             <select id="coachDrill" class="form-select"></select>
           </div>
 
+          <!-- Assign selection to lane -->
+          <div id="laneSegWrap" class="seg" role="group" aria-label="Assign selection to lane">
+            <button type="button" class="seg-btn is-active" data-lane="A" aria-pressed="true">Lane A</button>
+            <button type="button" class="seg-btn" data-lane="B" aria-pressed="false">Lane B</button>
+            <button type="button" class="seg-btn" data-lane="C" aria-pressed="false">Lane C</button>
+            <button type="button" class="seg-btn" data-lane="D" aria-pressed="false">Lane D</button>
+          </div>
+
           <span id="coachBadge" class="chip badge">Active Lane: A</span>
         </div>
         <div class="muted" id="stationHint"></div>
       </section>
 
-      <!-- Roster mount + spinner -->
+      <!-- Shared Tryout UI -->
       <section class="card">
         <div class="shared-wrap">
           <div id="tryout-shared"></div>
@@ -176,9 +182,9 @@
         </div>
       </section>
 
-      <!-- Four lanes (2x2 at md+) -->
+      <!-- Four lanes -->
       <section class="grid-4">
-        <!-- Lane template repeated A-D -->
+        <!-- Lane A -->
         <div id="laneA" class="card lane-card lane-active" data-lane="A">
           <div class="lane-title">
             <span>Lane A</span>
@@ -205,6 +211,7 @@
           <div id="statusA" class="status"></div>
         </div>
 
+        <!-- Lane B -->
         <div id="laneB" class="card lane-card" data-lane="B">
           <div class="lane-title">
             <span>Lane B</span>
@@ -231,6 +238,7 @@
           <div id="statusB" class="status"></div>
         </div>
 
+        <!-- Lane C -->
         <div id="laneC" class="card lane-card" data-lane="C">
           <div class="lane-title">
             <span>Lane C</span>
@@ -257,6 +265,7 @@
           <div id="statusC" class="status"></div>
         </div>
 
+        <!-- Lane D -->
         <div id="laneD" class="card lane-card" data-lane="D">
           <div class="lane-title">
             <span>Lane D</span>
@@ -319,10 +328,11 @@
     }
 
     // ---------- Constants ----------
-    const MAX_CARDS = 10;
+    const PAGE_SIZE = 10;
+    const POS_STATIONS = ['QB','RB','WR','TE','OL','DL','LB','DB'];
 
     // ---------- State ----------
-    const savedPlayers = new Set();
+    const savedPlayers = new Set();           // mark roster cards after save
     let roster = [];
     const groupLatest = new Map();
     let drills = [];
@@ -333,17 +343,6 @@
     const laneAttempt = { A:1, B:1, C:1, D:1 };
     let activeLane = 'A';
 
-    // Prevent auto-assign on load: only assign after user interacts in the roster area.
-    let allowSelectAssignments = false;
-
-    // Capture the *actual* clicked card so we can trust its number/id over any stale event payload.
-    let lastClickedCandidate = null;
-
-    // Guard so we only accept selects that immediately follow a card click
-    let pendingCardPick = false;
-    let candidateTimer = null;
-    let lastCandidateAt = 0;
-
     // ---------- Helpers ----------
     const qs  = (s,p=document)=>p.querySelector(s);
     const qsa = (s,p=document)=>[...p.querySelectorAll(s)];
@@ -353,22 +352,14 @@
     });
     function stationId(){ return String(qs('#stationSelect')?.value || 'AGILITY').toUpperCase(); }
     function coachDrillId(){ return String(qs('#coachDrill')?.value || ''); }
+    const toTri = v => (/^\d{1,3}$/.test(String(v||'').trim()) ? String(v).padStart(3,'0') : String(v||'').trim());
 
-    // Pad a numeric-looking tryout number to 3 digits (e.g., "2" -> "002")
-    function toTri(v){
-      const s = String(v ?? '').trim();
-      return /^\d{1,3}$/.test(s) ? s.padStart(3,'0') : s;
-    }
-
-    // Exact match ONLY (PID first, then 3-digit number). No fallback synth.
     function normalizePlayer(rec){
       if (!rec) return null;
       const pid  = String(rec.player_id || rec.id || '').trim();
       const tnum = toTri(rec.tryout_num || rec.number || rec.jersey_number || '');
-
       const byPid  = pid  ? roster.find(r => String(r.player_id||'').trim() === pid) : null;
       const byTnum = tnum ? roster.find(r => toTri(r.tryout_num) === tnum) : null;
-
       return byPid || byTnum || null;
     }
 
@@ -378,24 +369,18 @@
       const add = v => { if(!v) return; tokens.add(String(v).trim().toLowerCase()); };
       const keys = ['auth_user','auth_username','auth_email','user_email','email','username','user','display_name','coach_id','coach_name'];
       keys.forEach(k => add(localStorage.getItem(k)));
-      try {
-        const obj = JSON.parse(localStorage.getItem('auth_user') || '{}');
-        ['username','email','name','id','display_name'].forEach(k=> add(obj?.[k]));
-      } catch {}
+      try { const obj = JSON.parse(localStorage.getItem('auth_user') || '{}');
+            ['username','email','name','id','display_name'].forEach(k=> add(obj?.[k])); } catch(e){}
       return tokens;
     }
 
     async function loadCoaches(){
       const sel = qs('#coachSelect');
       let rows = [];
-      try{
-        const res = await apiGet('coaches_get');
-        if (res?.ok) rows = res.coaches || [];
-      }catch(e){}
+      try{ const res = await apiGet('coaches_get'); if (res?.ok) rows = res.coaches || []; }catch(e){}
       if (!rows.length) rows = [{ coach_id:'coach.unknown', coach_name:'Coach' }];
       sel.innerHTML = rows.map(r=> `<option value="${r.coach_id}">${r.coach_name}</option>`).join('');
 
-      // Default based on identity / last choice
       const tokens = getAuthIdentityTokens();
       let picked = null;
       if (tokens.size){
@@ -431,6 +416,7 @@
         }))
         .sort((a,b)=> (parseInt(a.tryout_num,10)||0) - (parseInt(b.tryout_num,10)||0));
     }
+
     async function loadLatestGroups(){
       const res = await apiGet('tryout_groups_get', { latest: '1', tryout_id: ctx().tryout_id||'' });
       if(!res?.ok || !Array.isArray(res.latest)) return;
@@ -490,7 +476,6 @@
     function labelsFromDrill(d){
       const fromIndex = (criteriaIndex[d.drill_id] || []).map((c,i)=>({ id:c.criterion_id||`${d.drill_id}::C${i+1}`, label:c.criterion_label||`Trait ${i+1}`, weight:c.weight||1, order:c.order||i+1 }));
       if (fromIndex.length) return fromIndex;
-
       const sources = [d.rating_labels, d.criteria_labels, d.coach_criteria, d.criteria, d.labels];
       let raw = sources.map(s=> (typeof s==='string'? s : Array.isArray(s)? s.join('|') : '')).filter(Boolean).shift() || '';
       let arr = raw.split(/[|,;/]/).map(t=>t.trim()).filter(Boolean).slice(0,8);
@@ -506,251 +491,158 @@
       if (!box) return;
 
       const use = labelsFromDrill(d);
+      const def = 3;
+
       box.innerHTML = use.map(c => `
         <div class="crit" data-crit-id="${c.id}">
           <label>${c.label}</label>
-          <input type="range" min="1" max="5" step="1" value="3" aria-label="${c.label}">
-          <span class="val">3</span>
+          <div class="rating-group" role="group" aria-label="${c.label}">
+            ${[1,2,3,4,5].map(v =>
+              `<button type="button" class="rating-btn"
+                       data-val="${v}" aria-pressed="${v===def?'true':'false'}"
+                       aria-label="${c.label} ${v}">${v}</button>`
+            ).join('')}
+          </div>
+          <span class="val">${def}</span>
         </div>
       `).join('');
 
-      [...box.querySelectorAll('input[type="range"]')].forEach(r=>{
-        const v = r.parentElement.querySelector('.val');
-        r.addEventListener('input', ()=> v.textContent = r.value);
-      });
-    }
-
-    // ---------- TryoutUI (number bands + selection → lane, robust click capture + exact 3-digit match) ----------
-    (function mountRoster(){
-      const mount   = document.getElementById('tryout-shared');
-      const overlay = document.getElementById('tryout-loading');
-
-      // Number-band filtering (1–10, 11–20, …)
-      TryoutUI.init('#tryout-shared', { showGroup:false, filterMode:'numberBands', allowPresence:false });
-
-      // Helper DOM getters
-      function getWrap(){ return mount.querySelector('.tu-wrap') || mount; }
-      function getRosterBox(){ return mount.querySelector('#tuRoster') || mount.querySelector('.tu-roster'); }
-      function getChipsWrap(){ return mount.querySelector('#tuChips') || mount.querySelector('.tu-chips'); }
-      function getSearch(){ return mount.querySelector('#tuSearch') || mount.querySelector('input[type="search"]'); }
-      function anyChipPressed(){
-        const cw = getChipsWrap();
-        return !!cw && !!cw.querySelector('.tu-chip[aria-pressed="true"]');
-      }
-
-      // Mark when the user has interacted so we can allow assignment
-      function bindUserIntent(){
-        const wrap = getWrap();
-        if (!wrap || wrap.dataset.boundIntent) return;
-        wrap.dataset.boundIntent = '1';
-        ['click','pointerdown','touchstart','keydown'].forEach(evt=>{
-          wrap.addEventListener(evt, ()=> { allowSelectAssignments = true; }, { once:true, passive:true });
+      [...box.querySelectorAll('.rating-group')].forEach(group=>{
+        group.addEventListener('click', e=>{
+          const btn = e.target.closest('.rating-btn'); if(!btn) return;
+          group.querySelectorAll('.rating-btn').forEach(b=> b.setAttribute('aria-pressed', b===btn ? 'true' : 'false'));
+          group.parentElement.querySelector('.val').textContent = btn.dataset.val;
         });
-      }
-
-      // Robust card click capture (works even if event payload truncates the number)
-      mount.addEventListener('pointerdown', (e)=>{
-        // Ignore filter chip clicks
-        if (e.target.closest('.tu-chip')) {
-          pendingCardPick = false;
-          lastClickedCandidate = null;
-          return;
-        }
-
-        // Accept several DOM shapes
-        const card = e.target.closest('[data-player-id], [data-tryout-num], [data-number], [data-num], .tu-card');
-        if (!card) {
-          pendingCardPick = false;
-          lastClickedCandidate = null;
-          return;
-        }
-
-        const pid = String(card.getAttribute('data-player-id')||'').trim();
-
-        // Prefer explicit attributes, fallback to visible text
-        let tnum = toTri(
-          card.getAttribute('data-tryout-num')
-          || card.getAttribute('data-number')
-          || card.getAttribute('data-num')
-          || ''
-        );
-        if (!tnum) {
-          const txt = (card.querySelector('.tu-num,.tu-badge,.tu-tag')?.textContent || card.textContent || '').trim();
-          const m = txt.match(/\b\d{1,3}\b/);
-          if (m) tnum = toTri(m[0]);
-        }
-
-        // Only store if we have some identity
-        if (pid || tnum){
-          lastClickedCandidate = { player_id: pid || null, tryout_num: tnum || null };
-          pendingCardPick = true;
-          lastCandidateAt = Date.now();
-
-          clearTimeout(candidateTimer);
-          candidateTimer = setTimeout(()=>{
-            if (Date.now() - lastCandidateAt > 600) {
-              pendingCardPick = false;
-              lastClickedCandidate = null;
-            }
-          }, 650);
-        }
-      }, true);
-
-      // Limit cards to MAX_CARDS and show a hint
-      function enforceMaxCards(){
-        const box = getRosterBox(); if (!box) return;
-        const cards = [...box.querySelectorAll('.tu-card, [data-player-id]')];
-        const total = cards.length;
-        cards.forEach((c,i)=> c.style.display = (i < MAX_CARDS) ? '' : 'none');
-
-        let hint = box.querySelector('.tu-limit');
-        if (!hint){ hint = document.createElement('div'); hint.className='tu-limit'; box.appendChild(hint); }
-        hint.textContent = total > MAX_CARDS ? `Showing ${MAX_CARDS} of ${total}. Use filters or search to narrow.` : '';
-      }
-
-      // Observe roster for changes to re-apply cap and bind intent
-      const rosterMO = new MutationObserver(()=> { enforceMaxCards(); bindUserIntent(); });
-
-      const mo = new MutationObserver(() => {
-        const wrap = getWrap();
-        const chipsWrap = getChipsWrap();
-        const rosterBox = getRosterBox();
-
-        if (!wrap || !chipsWrap || !rosterBox) return;
-
-        // Spinner off once the shell appears
-        if (overlay) overlay.style.display = 'none';
-
-        // Start hidden (no cards until filter/search)
-        wrap.classList.add('roster-hidden');
-
-        // Rename ALL -> Clear
-        const allChip = chipsWrap.querySelector('[data-band="ALL"]') || [...chipsWrap.querySelectorAll('.tu-chip')].find(b => (b.textContent||'').trim().toUpperCase()==='ALL');
-        if (allChip) allChip.textContent = 'Clear';
-
-        // Bind once
-        if (!chipsWrap.dataset.boundClear) {
-          chipsWrap.dataset.boundClear = '1';
-
-          // Intercept clicks so "ALL" works like Clear
-          chipsWrap.addEventListener('click', (ev) => {
-            const btn = ev.target.closest('.tu-chip');
-            if (!btn) return;
-
-            const band = btn.getAttribute('data-band') || (btn.textContent||'').trim().toUpperCase();
-            const isClear = band === 'ALL' || band === 'CLEAR';
-
-            if (isClear) {
-              ev.stopImmediatePropagation();
-              ev.preventDefault();
-
-              // De-select any chips
-              chipsWrap.querySelectorAll('.tu-chip').forEach(x => x.removeAttribute('aria-pressed'));
-
-              // Clear search
-              const search = getSearch();
-              if (search) { search.value = ''; search.dispatchEvent(new Event('input', { bubbles:true })); }
-
-              // Hide roster and show hint
-              wrap.classList.add('roster-hidden');
-              const box = getRosterBox();
-              if (box){
-                box.innerHTML = `<div class="tu-hint">Use number bands or search to show players.</div>`;
-              }
-            } else {
-              wrap.classList.remove('roster-hidden');
-              setTimeout(enforceMaxCards, 0);
-            }
-          }, true);
-        }
-
-        // Show roster when searching; hide if cleared and no chip selected
-        const search = getSearch();
-        if (search && !search.dataset.boundShow) {
-          search.dataset.boundShow = '1';
-          search.addEventListener('input', () => {
-            const val = (search.value || '').trim();
-            if (val) {
-              wrap.classList.remove('roster-hidden');
-              setTimeout(enforceMaxCards, 0);
-            } else if (!anyChipPressed()) {
-              wrap.classList.add('roster-hidden');
-            }
-          });
-        }
-
-        // Watch the roster box for re-renders
-        rosterMO.disconnect();
-        if (rosterBox) rosterMO.observe(rosterBox, { childList:true, subtree:true });
-
-        // Bind the user intent guard
-        bindUserIntent();
-
-        mo.disconnect();
-      });
-
-      mo.observe(mount, { childList:true, subtree:true });
-
-      // Hide spinner when TryoutUI says it's ready
-      window.addEventListener('tryoutui:ready', ()=>{
-        if (overlay) overlay.style.display = 'none';
-        setTimeout(enforceMaxCards, 0);
-      }, { once:true });
-
-      // Selection → assign to active lane (ONLY after user intent + recent card click)
-      window.addEventListener('tryoutui:select', (e)=>{
-        if (!allowSelectAssignments) return;
-        if (!pendingCardPick || !lastClickedCandidate) return;
-
-        const d = { ...(e?.detail?.player || {}) };
-
-        // Prefer the clicked card's values; force 3-digit tnum
-        if (lastClickedCandidate.tryout_num) d.tryout_num = toTri(lastClickedCandidate.tryout_num);
-        else if (d.tryout_num) d.tryout_num = toTri(d.tryout_num);
-
-        if (lastClickedCandidate.player_id) d.player_id = lastClickedCandidate.player_id;
-
-        const hit = normalizePlayer(d);
-        if (hit) assignToActiveLane(hit);
-
-        // Clear flags for next interaction
-        pendingCardPick = false;
-        lastClickedCandidate = null;
-      });
-    })();
-
-    // ---------- Active lane ----------
-    function setActiveLane(l){
-      activeLane = ['A','B','C','D'].includes(l) ? l : 'A';
-      qs('#coachBadge').textContent = `Active Lane: ${activeLane}`;
-      ['A','B','C','D'].forEach(L=>{
-        qs('#lane'+L).classList.toggle('lane-active', L===activeLane);
+        group.addEventListener('keydown', e=>{
+          if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key)) return;
+          e.preventDefault();
+          const buttons = [...group.querySelectorAll('.rating-btn')];
+          let idx = buttons.findIndex(b=>b.getAttribute('aria-pressed')==='true');
+          if (idx < 0) idx = def - 1;
+          if (e.key==='ArrowRight' || e.key==='ArrowUp')   idx = Math.min(4, idx+1);
+          if (e.key==='ArrowLeft'  || e.key==='ArrowDown') idx = Math.max(0, idx-1);
+          if (e.key==='Home') idx = 0;
+          if (e.key==='End')  idx = 4;
+          buttons.forEach((b,i)=> b.setAttribute('aria-pressed', String(i===idx)));
+          group.parentElement.querySelector('.val').textContent = buttons[idx].dataset.val;
+          buttons[idx].focus();
+        });
       });
     }
 
-    // Delegate lane activation (click anywhere in a lane)
+    // ---------- Shared Tryout UI mounting ----------
+    async function mountRosterForStation(){
+      const overlay = document.getElementById('tryout-loading');
+      const mountSel = '#tryout-shared';
+      const sid = stationId();
+
+      overlay.style.display = 'flex';
+      document.querySelector(mountSel).innerHTML = '';
+
+      const isPos = POS_STATIONS.includes(sid);
+      const opts = isPos
+        ? { showGroup:true,  filterMode:'groups',      allowPresence:false, clickSelects:true, showHideDoneToggle:true }
+        : { showGroup:false, filterMode:'numberBands', allowPresence:false, clickSelects:true, showHideDoneToggle:true };
+
+      await TryoutUI.init(mountSel, opts);
+
+      // Immediately filter on position stations
+      if (isPos) GameContext.setGroup(sid); else GameContext.setGroup('');
+
+      // Ensure roster clicks/keys assign to lanes
+      wireRosterDelegation();
+
+      setupPagination();
+      overlay.style.display = 'none';
+    }
+
+    // ---------- Pagination ----------
+    function setupPagination(){
+      const root = document.querySelector('#tryout-shared');
+      const rosterBox = root.querySelector('#tuRoster, .tu-roster') || root;
+      if (!rosterBox) return;
+
+      let pager = root.querySelector('#ccPager');
+      if (!pager){
+        pager = document.createElement('div');
+        pager.id = 'ccPager';
+        pager.className = 'cc-pager';
+        pager.innerHTML = `
+          <button class="cc-btn" data-act="prev">Prev</button>
+          <span class="cc-meta" data-role="meta">Page 1 of 1</span>
+          <button class="cc-btn" data-act="next">Next</button>
+        `;
+        root.appendChild(pager);
+      }
+
+      const state = { page:1, pages:1 };
+      const meta = pager.querySelector('[data-role="meta"]');
+      const btnPrev = pager.querySelector('[data-act="prev"]');
+      const btnNext = pager.querySelector('[data-act="next"]');
+
+      function currentCards(){
+        const cards = [...rosterBox.querySelectorAll('.tu-player, .tu-card, [data-player-id]')];
+        return cards.filter(c => c.offsetParent !== null && getComputedStyle(c).display !== 'none');
+      }
+
+      function render(){
+        const cards = currentCards();
+        const total = cards.length;
+        state.pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        state.page  = Math.min(state.pages, Math.max(1, state.page));
+        cards.forEach((c,i)=>{
+          const inPage = i >= (state.page-1)*PAGE_SIZE && i < state.page*PAGE_SIZE;
+          c.style.display = inPage ? '' : 'none';
+        });
+        meta.textContent = `Page ${state.page} of ${state.pages}`;
+        btnPrev.disabled = (state.page <= 1);
+        btnNext.disabled = (state.page >= state.pages);
+        pager.style.display = (total > PAGE_SIZE) ? 'flex' : 'none';
+      }
+
+      btnPrev.onclick = ()=>{ state.page--; render(); };
+      btnNext.onclick = ()=>{ state.page++; render(); };
+
+      const mo = new MutationObserver(()=>{ state.page = 1; render(); });
+      mo.observe(rosterBox, { childList:true, subtree:true, attributes:true, attributeFilter:['style','class'] });
+
+      render();
+    }
+
+    // ---------- Lane activation ----------
+    function setActiveLane(l){
+      const L = ['A','B','C','D'].includes(l) ? l : 'A';
+      activeLane = L;
+      qs('#coachBadge').textContent = `Active Lane: ${L}`;
+      ['A','B','C','D'].forEach(x=>{
+        qs('#lane'+x).classList.toggle('lane-active', x===L);
+      });
+      qsa('#laneSegWrap .seg-btn').forEach(btn=>{
+        const on = btn.dataset.lane === L;
+        btn.classList.toggle('is-active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+    qsa('#laneSegWrap .seg-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=> setActiveLane(btn.dataset.lane));
+    });
     document.addEventListener('click', (e)=>{
-      const laneEl = e.target.closest('.lane-card');
-      if (!laneEl) return;
+      const laneEl = e.target.closest('.lane-card'); if (!laneEl) return;
       const l = laneEl.dataset.lane || (laneEl.id||'').replace(/^lane/,'');
       if (l) setActiveLane(l);
     });
 
-    // Keep lane UI wired
-    ['A','B','C','D'].forEach(L=>{
-      const dsel = qs('#drill'+L);
-      const asel = qs('#att'+L);
-      if (dsel) {
-        dsel.addEventListener('focus',  ()=> setActiveLane(L));
-        dsel.addEventListener('change', ()=> { setActiveLane(L); renderCriteriaUI(L); });
-      }
-      if (asel) {
-        asel.addEventListener('focus',  ()=> setActiveLane(L));
-        asel.addEventListener('change', ()=> setActiveLane(L));
-      }
-      const saveBtn = qs('#save'+L);
-      if (saveBtn) saveBtn.addEventListener('click', ()=> setActiveLane(L));
-    });
+    // ---------- Lane reset helpers ----------
+    function resetLaneUI(l){
+      laneAttempt[l] = 1;
+      const attSel = qs('#att'+l);
+      const notes  = qs('#notes'+l);
+      if (attSel) attSel.value = '1';
+      if (notes)  notes.value  = '';
+      renderCriteriaUI(l);
+      const btn = qs('#save'+l);
+      if (btn) btn.disabled = !lanePlayers[l];
+    }
 
     // ---------- Lane chips / assign / clear ----------
     function renderLaneChip(l){
@@ -762,7 +654,6 @@
         el.innerHTML = `${txt} <span class="x" title="Clear" aria-label="Clear" data-clear="${l}">✕</span>`;
         el.style.display = '';
         saveBtn.disabled = false;
-
         el.querySelector('.x').addEventListener('click', (ev)=> {
           ev.stopPropagation(); ev.preventDefault();
           unassignLane(l);
@@ -772,27 +663,20 @@
         saveBtn.disabled = true;
       }
     }
-
     function assignToActiveLane(rec){
       const L = activeLane;
-      const prev = lanePlayers[L];
       lanePlayers[L] = rec;
-
+      resetLaneUI(L);
       renderLaneChip(L);
-      const attSel = qs('#att'+L);
-      if (attSel) attSel.value = String(laneAttempt[L]||1);
-
-      if (prev && savedPlayers.has(prev.player_id || prev.tryout_num)) {
-        try { TryoutUI?.markDone?.(prev.player_id || prev.tryout_num); } catch {}
-      }
     }
-
     function unassignLane(L){
       const rec = lanePlayers[L];
       lanePlayers[L] = null;
       renderLaneChip(L);
+      resetLaneUI(L);
       if (rec && savedPlayers.has(rec.player_id||rec.tryout_num)) {
         try { TryoutUI?.markDone?.(rec.player_id || rec.tryout_num); } catch {}
+        markCardDoneUI(rec);
       }
     }
 
@@ -808,6 +692,21 @@
         btn.disabled = !lanePlayers[lane];
         btn.textContent = btn.dataset.label || 'Save';
       }
+    }
+
+    function markCardDoneUI(player){
+      try { TryoutUI?.markDone?.(player.player_id || player.tryout_num); } catch {}
+      const root = document.getElementById('tryout-shared');
+      const num = toTri(player.tryout_num||'');
+      const pid = String(player.player_id||'').trim();
+      const sels = [
+        `[data-player-id="${pid}"]`,
+        `[data-id="${pid}"]`,
+        `[data-tryout-num="${num}"]`,
+        `[data-number="${num}"]`,
+        `[data-num="${num}"]`
+      ];
+      root.querySelectorAll(sels.join(',')).forEach(c=> c.classList.add('cc-done'));
     }
 
     async function saveLane(lane){
@@ -838,7 +737,8 @@
       const critRows = [...(critBox?.querySelectorAll('.crit')||[])].map(el => {
         const id = el.getAttribute('data-crit-id');
         const label = el.querySelector('label')?.textContent || id;
-        const val = Number(el.querySelector('input[type="range"]')?.value || 3);
+        const selBtn = el.querySelector('.rating-btn[aria-pressed="true"]');
+        const val = Number(selBtn?.dataset.val || 3);
         return { id, label, value: val, weight: 1 };
       });
 
@@ -874,13 +774,7 @@
           'tryout_num','group_code','position_group','drill_id','criterion_id','criterion_label','rating_value',
           'weight','lane','attempt','rep_id','notes','source_app','client_id'
         ],
-        row: {
-          ...base,
-          criterion_id: cr.id,
-          criterion_label: cr.label,
-          rating_value: cr.value,
-          weight: cr.weight
-        }
+        row: { ...base, criterion_id: cr.id, criterion_label: cr.label, rating_value: cr.value, weight: cr.weight }
       }));
 
       setSaving(lane, true);
@@ -892,50 +786,123 @@
       } catch(e){ ok=false; err = e?.message || 'Save failed.'; }
       setSaving(lane, false);
 
-      if(!ok){
-        statusEl.textContent = err;
-        statusEl.className = 'status err';
-        return;
-      }
+      if(!ok){ statusEl.textContent = err; statusEl.className = 'status err'; return; }
 
-      statusEl.textContent = `Saved ✔ · ${ops.length} slider${ops.length===1?'':'s'} recorded`;
+      statusEl.textContent = `Saved ✔ · ${ops.length} rating${ops.length===1?'':'s'} recorded`;
       statusEl.className = 'status ok';
 
+      // auto-increment attempt for multiple reps (same player)
       const next = (att % 3) + 1; laneAttempt[lane] = next;
       qs('#att'+lane).value = String(next);
 
+      // mark roster card, allow lane to be cleared with ✓ showing on roster
       savedPlayers.add(player.player_id || player.tryout_num);
-      try { TryoutUI?.markDone?.(player.player_id || player.tryout_num); } catch {}
+      markCardDoneUI(player);
       try { window.dispatchEvent(new CustomEvent('tryoutui:done', { detail:{ player_id: player.player_id, tryout_num: player.tryout_num } })); } catch {}
     }
 
-    // ---------- Top-level events ----------
+    // ---------- Station → TryoutUI + drills ----------
+    function applyGroupFromStation(){
+      const sid = stationId();
+      if (POS_STATIONS.includes(sid)) GameContext.setGroup(sid);
+      else GameContext.setGroup('');
+    }
+
+    // ----- Robust roster selection (like other pages) -----
+    function resolvePlayerFromObjOrCard(objOrEl){
+      // payload object
+      if (objOrEl && typeof objOrEl === 'object' && !objOrEl.nodeType) {
+        const hit = normalizePlayer(objOrEl);
+        return hit || null;
+      }
+      // DOM card
+      const card = objOrEl?.closest?.('.tu-player, .tu-card, [data-player-id]');
+      if (!card) return null;
+
+      const pid = card.getAttribute('data-player-id')
+                || card.getAttribute('data-id')
+                || card.dataset?.playerId
+                || card.dataset?.id
+                || '';
+      const tnum = toTri(
+        card.getAttribute('data-tryout-num')
+        || card.getAttribute('data-number')
+        || card.getAttribute('data-num')
+        || card.dataset?.tryoutNum
+        || card.dataset?.number
+        || ''
+      );
+
+      let rec = null;
+      if (pid) rec = roster.find(r => String(r.player_id).trim() === String(pid).trim());
+      if (!rec && tnum) rec = roster.find(r => toTri(r.tryout_num) === tnum);
+
+      if (!rec) {
+        rec = { player_id: pid || '', tryout_num: tnum || '', display_name: (card.getAttribute('data-name') || card.textContent || '').trim() };
+      }
+      return rec;
+    }
+
+    function onTryoutUISelect(e){
+      const rec = resolvePlayerFromObjOrCard(e?.detail?.player || e?.detail);
+      if (rec) assignToActiveLane(rec);
+    }
+    window.addEventListener('tryoutui:select', onTryoutUISelect);
+
+    function wireRosterDelegation(){
+      const root = document.getElementById('tryout-shared');
+      if (!root || root.dataset.boundSelect === '1') return;
+      root.dataset.boundSelect = '1';
+
+      root.addEventListener('click', (ev)=>{
+        const card = ev.target.closest('.tu-player, .tu-card, [data-player-id]');
+        if (!card) return;
+        const rec = resolvePlayerFromObjOrCard(card);
+        if (rec) {
+          assignToActiveLane(rec);
+          ev.stopPropagation();
+          ev.preventDefault();
+        }
+      }, true);
+
+      root.addEventListener('keydown', (ev)=>{
+        if (ev.key !== 'Enter' && ev.key !== ' ') return;
+        const card = ev.target.closest('.tu-player, .tu-card, [data-player-id]');
+        if (!card) return;
+        const rec = resolvePlayerFromObjOrCard(card);
+        if (rec) {
+          assignToActiveLane(rec);
+          ev.stopPropagation();
+          ev.preventDefault();
+        }
+      }, true);
+    }
+
+    // Top-level events
     qs('#coachSelect').addEventListener('change', (e)=> localStorage.setItem('coach_id', e.target.value));
     qs('#stationSelect').addEventListener('change', async ()=>{
-      await loadDrills(); // reload drills + criteria
+      await loadDrills();
+      await mountRosterForStation();
+      wireRosterDelegation();     // ensure delegation after remount
+      applyGroupFromStation();
     });
     qs('#coachDrill').addEventListener('change', ()=>{
       const did = coachDrillId();
       ['A','B','C','D'].forEach(L=>{
         const sel = qs('#drill'+L);
-        if (sel && [...sel.options].some(o=>o.value===did)) {
-          sel.value = did;
-          renderCriteriaUI(L);
-        }
+        if (sel && [...sel.options].some(o=>o.value===did)) { sel.value = did; renderCriteriaUI(L); }
       });
     });
-
-    ['A','B','C','D'].forEach(L=>{
-      qs('#save'+L).addEventListener('click', ()=> saveLane(L));
-    });
+    ['A','B','C','D'].forEach(L=> qs('#save'+L).addEventListener('click', ()=> saveLane(L)));
 
     // ---------- Init ----------
     (async function init(){
       setActiveLane('A');
       await Promise.all([loadCoaches(), loadRoster(), loadLatestGroups(), loadDrills()]);
-      // No "honor existing selection" here — prevents auto-assign on load.
+      await mountRosterForStation();
+      wireRosterDelegation();     // initial bind
+      applyGroupFromStation();
     })();
   </script>
-
 </body>
 </html>
