@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <!-- Apps Script base -->
+  <meta name="gsds-api-base" content="https://script.google.com/macros/s/AKfycbw8Jb7RpQ7j9L2q32YDSBuNSPLFMjPzKdvuI_BgkutfNk5COrEYUdsUWZYXDOJRAeH3kA/exec">
+
+  <title>Coaches Corner — Tryouts</title>
+
+  <!-- Auth guard -->
+  <script>
+    (function () {
+      const ok = localStorage.getItem('auth_ok') === '1' &&
+                 Number(localStorage.getItem('auth_until') || 0) > Date.now();
+      if (!ok) location.href = '../index.html#login';
+    })();
+  </script>
+
+  <!-- Theme + fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css"/>
+
+  <style>
+    :root { --gap:12px; }
+    .container{ max-width:1100px; margin:0 auto; padding:16px; }
+    .stack{ display:flex; flex-direction:column; gap:var(--gap); }
+    .card{ background: rgba(255,255,255,.05); border:1px solid var(--border);
+           border-radius:16px; padding:14px; box-shadow: var(--shadow-soft, 0 8px 24px rgba(0,0,0,.18)); }
+    .toolbar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .chip{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px;
+           border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.06); font-weight:700; }
+    .chip.badge{ background:linear-gradient(135deg,#7C4DFF,#8B5CF6); color:#071018; border:0; }
+    .chip.ghost{ background:transparent; }
+    .chip.tiny{ font-size:.8rem; padding:4px 8px; }
+    .label{ font-weight:800; font-size:.95rem; opacity:.9; margin-bottom:6px; display:block; }
+    .form-input, .form-select{ width:100%; padding:.68rem .8rem; border-radius:12px; border:1px solid rgba(255,255,255,.28);
+      background:rgba(255,255,255,.08); color:#fff; }
+    .row{ display:grid; grid-template-columns:1fr; gap:10px; }
+    @media (min-width:760px){ .row{ grid-template-columns: repeat(3, 1fr); } }
+
+    .grid-4{ display:grid; grid-template-columns:1fr; gap:12px; }
+    @media (min-width:900px){ .grid-4{ grid-template-columns:1fr 1fr; } }
+
+    .lane-title{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-weight:900; letter-spacing:.04em; opacity:.9; }
+    .lane-chip{ display:inline-flex; align-items:center; gap:8px; padding:4px 8px; border-radius:999px;
+                border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); font-weight:800; font-size:.9rem; }
+    .lane-chip .x{ opacity:.7; cursor:pointer; padding:0 .25rem; }
+    .lane-card{ transition: box-shadow .15s ease, border-color .15s ease; }
+    .lane-card.lane-active{ border-color:#8B5CF6; box-shadow:0 0 0 2px rgba(139,92,246,.35) inset; }
+    .muted{ opacity:.75; }
+
+    /* ===== Bigger, touch-friendly sliders ===== */
+    .crit{ display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:center; }
+    .crit label{ font-weight:800; font-size:.95rem; }
+    .crit .val{ width:36px; text-align:right; font-variant-numeric:tabular-nums; font-weight:900; opacity:.9; }
+
+    input[type="range"]{
+      width:100%;
+      height:38px; /* taller hit target */
+      background:transparent;
+    }
+    /* WebKit */
+    input[type="range"]::-webkit-slider-runnable-track{
+      height:12px; border-radius:999px;
+      background:linear-gradient(90deg, #8B5CF6, #7C4DFF);
+      opacity:.75;
+    }
+    input[type="range"]::-webkit-slider-thumb{
+      -webkit-appearance:none; appearance:none;
+      width:26px; height:26px; border-radius:50%;
+      background:#fff; border:3px solid #8B5CF6; margin-top:-7px;
+      box-shadow:0 2px 6px rgba(0,0,0,.25);
+    }
+    /* Firefox */
+    input[type="range"]::-moz-range-track{
+      height:12px; border-radius:999px; background:linear-gradient(90deg, #8B5CF6, #7C4DFF); opacity:.75;
+    }
+    input[type="range"]::-moz-range-thumb{
+      width:26px; height:26px; border-radius:50%;
+      background:#fff; border:3px solid #8B5CF6; box-shadow:0 2px 6px rgba(0,0,0,.25);
+    }
+
+    .btn{ appearance:none; border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08); color:#fff;
+          padding:.55rem .8rem; border-radius:10px; font-weight:800; cursor:pointer; transition:.2s ease; }
+    .btn.primary{ background:linear-gradient(135deg,#7C4DFF,#8B5CF6); color:#071018; border:0; }
+    .btn.success{ background:linear-gradient(135deg,#16A34A,#10B981); color:#061710; border:0; }
+    .btn.warn{ background:linear-gradient(135deg,#F59E0B,#F59E0B); color:#2A1400; border:0; }
+    .btn.ghost{ background:transparent; }
+    .btn:disabled{ opacity:.55; cursor:not-allowed; }
+
+    .btn.loading{ position:relative; pointer-events:none; }
+    .btn.loading .spin{ width:14px; height:14px; border:2px solid rgba(255,255,255,.45);
+                        border-top-color:#fff; border-radius:50%; display:inline-block;
+                        margin-right:8px; vertical-align:-2px; animation:spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .status{ margin-top:8px; font-weight:700; }
+    .status.ok{ color:#34D399; } .status.err{ color:#F87171; } .status.warn{ color:#F59E0B; }
+
+    /* TryoutUI shell + spinner + roster visibility control */
+    .shared-wrap{ position:relative; }
+    .tu-loading{
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      gap:10px; background:rgba(0,0,0,.35); border:1px solid var(--border); border-radius:14px;
+      z-index:10; font-weight:800; letter-spacing:.02em;
+    }
+    .tu-loading .ring{ width:28px; height:28px; border:3px solid rgba(255,255,255,.35);
+      border-top-color:#fff; border-radius:50%; animation:spin .9s linear infinite; }
+    .roster-hidden .tu-roster{ display:none; }
+    .tu-hint{ padding:10px 12px; border:1px dashed rgba(255,255,255,.18); border-radius:12px; opacity:.85; margin-top:8px; }
+    .tu-limit{ margin-top:8px; font-size:.85rem; opacity:.8; font-weight:700; }
+  </style>
+</head>
+
+<body class="theme-atl practice-page">
+  <header class="page-header">
+    <h1>Coaches Corner</h1>
+    <nav class="menu-actions">
+      <a href="../index.html" class="menu-btn">Home</a>
+      <a href="../tryout/index.html" class="menu-btn">Tryout Hub</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="container stack">
+      <div id="ctxBanner" class="chip tiny" aria-live="polite">Loading context…</div>
+
+      <section class="card" aria-labelledby="coachHdr">
+        <div class="toolbar">
+          <span class="chip">Mode: <strong>Coach Ratings</strong></span>
+
+          <div style="min-width:220px">
+            <label id="coachHdr" for="coachSelect" class="label" style="margin:0">Coach</label>
+            <select id="coachSelect" class="form-select"></select>
+          </div>
+
+          <div style="min-width:180px">
+            <label for="stationSelect" class="label" style="margin:0">Station</label>
+            <select id="stationSelect" class="form-select">
+              <option value="AGILITY">Agility</option>
+              <option value="QB">QB</option>
+              <option value="RB">RB</option>
+              <option value="WR">WR</option>
+              <option value="TE">TE</option>
+              <option value="OL">OL</option>
+              <option value="DL">DL</option>
+              <option value="LB">LB</option>
+              <option value="DB">DB</option>
+              <option value="1V1">1v1</option>
+              <option value="TEAM">Team</option>
+            </select>
+          </div>
+
+          <div style="min-width:260px">
+            <label for="coachDrill" class="label" style="margin:0">Coach Drill (defaults lanes)</label>
+            <select id="coachDrill" class="form-select"></select>
+          </div>
+
+          <span id="coachBadge" class="chip badge">Active Lane: A</span>
+        </div>
+        <div class="muted" id="stationHint"></div>
+      </section>
+
+      <!-- Roster mount + spinner -->
+      <section class="card">
+        <div class="shared-wrap">
+          <div id="tryout-shared"></div>
+          <div id="tryout-loading" class="tu-loading" aria-live="polite" aria-busy="true">
+            <span class="ring" aria-hidden="true"></span>
+            <span>Loading roster…</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Four lanes (2x2 at md+) -->
+      <section class="grid-4">
+        <!-- Lane template repeated A-D -->
+        <div id="laneA" class="card lane-card lane-active" data-lane="A">
+          <div class="lane-title">
+            <span>Lane A</span>
+            <span id="whoA" class="lane-chip" style="display:none"></span>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div>
+              <label class="label">Drill</label>
+              <select id="drillA" class="form-select"></select>
+            </div>
+            <div>
+              <label class="label">Attempt</label>
+              <select id="attA" class="form-select"><option>1</option><option>2</option><option>3</option></select>
+            </div>
+            <div>
+              <label class="label">Notes</label>
+              <input id="notesA" class="form-input" placeholder="coaching note…"/>
+            </div>
+          </div>
+          <div id="critA" style="margin-top:8px"></div>
+          <div class="toolbar" style="margin-top:10px">
+            <button id="saveA" class="btn success" disabled>Save Ratings (A)</button>
+          </div>
+          <div id="statusA" class="status"></div>
+        </div>
+
+        <div id="laneB" class="card lane-card" data-lane="B">
+          <div class="lane-title">
+            <span>Lane B</span>
+            <span id="whoB" class="lane-chip" style="display:none"></span>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div>
+              <label class="label">Drill</label>
+              <select id="drillB" class="form-select"></select>
+            </div>
+            <div>
+              <label class="label">Attempt</label>
+              <select id="attB" class="form-select"><option>1</option><option>2</option><option>3</option></select>
+            </div>
+            <div>
+              <label class="label">Notes</label>
+              <input id="notesB" class="form-input" placeholder="coaching note…"/>
+            </div>
+          </div>
+          <div id="critB" style="margin-top:8px"></div>
+          <div class="toolbar" style="margin-top:10px">
+            <button id="saveB" class="btn success" disabled>Save Ratings (B)</button>
+          </div>
+          <div id="statusB" class="status"></div>
+        </div>
+
+        <div id="laneC" class="card lane-card" data-lane="C">
+          <div class="lane-title">
+            <span>Lane C</span>
+            <span id="whoC" class="lane-chip" style="display:none"></span>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div>
+              <label class="label">Drill</label>
+              <select id="drillC" class="form-select"></select>
+            </div>
+            <div>
+              <label class="label">Attempt</label>
+              <select id="attC" class="form-select"><option>1</option><option>2</option><option>3</option></select>
+            </div>
+            <div>
+              <label class="label">Notes</label>
+              <input id="notesC" class="form-input" placeholder="coaching note…"/>
+            </div>
+          </div>
+          <div id="critC" style="margin-top:8px"></div>
+          <div class="toolbar" style="margin-top:10px">
+            <button id="saveC" class="btn success" disabled>Save Ratings (C)</button>
+          </div>
+          <div id="statusC" class="status"></div>
+        </div>
+
+        <div id="laneD" class="card lane-card" data-lane="D">
+          <div class="lane-title">
+            <span>Lane D</span>
+            <span id="whoD" class="lane-chip" style="display:none"></span>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div>
+              <label class="label">Drill</label>
+              <select id="drillD" class="form-select"></select>
+            </div>
+            <div>
+              <label class="label">Attempt</label>
+              <select id="attD" class="form-select"><option>1</option><option>2</option><option>3</option></select>
+            </div>
+            <div>
+              <label class="label">Notes</label>
+              <input id="notesD" class="form-input" placeholder="coaching note…"/>
+            </div>
+          </div>
+          <div id="critD" style="margin-top:8px"></div>
+          <div class="toolbar" style="margin-top:10px">
+            <button id="saveD" class="btn success" disabled>Save Ratings (D)</button>
+          </div>
+          <div id="statusD" class="status"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 2025 Game Speed Data Systems</p>
+  </footer>
+
+  <!-- libs -->
+  <script src="../js/api.js"></script>
+  <script src="../js/rules.js"></script>
+  <script src="../js/context.js"></script>
+  <script src="../js/tryout-ui.js"></script>
+
+  <script>
+    // ---------- Boot shared context ----------
+    (function(){
+      const meta = document.querySelector('meta[name="gsds-api-base"]');
+      window.API_BASE = (window.API_BASE || (meta && meta.content) || '').trim();
+    })();
+    GameContext.configure({ apiBase: window.API_BASE, server: true, pollMs: 1000 });
+    GameContext.mountBanner('#ctxBanner');
+
+    // ---------- Small API helper ----------
+    async function apiGet(action, params={}) {
+      const url = new URL(window.API_BASE);
+      url.searchParams.set('action', action);
+      Object.entries(params).forEach(([k,v])=> url.searchParams.set(k, v));
+      const r = await fetch(url, { credentials:'omit' });
+      return r.json();
+    }
+    async function apiPost(payload) {
+      const r = await fetch(window.API_BASE, { method:'POST', headers:{'Content-Type':'text/plain','Accept':'application/json'}, body: JSON.stringify(payload) });
+      return r.json();
+    }
+
+    // ---------- Constants ----------
+    const MAX_CARDS = 10;
+
+    // ---------- State ----------
+    const savedPlayers = new Set();
+    let roster = [];
+    const groupLatest = new Map();
+    let drills = [];
+    let drillMap = new Map();
+    let criteriaIndex = {};
+
+    const lanePlayers = { A:null, B:null, C:null, D:null };
+    const laneAttempt = { A:1, B:1, C:1, D:1 };
+    let activeLane = 'A';
+
+    // Prevent auto-assign on load: only assign after user interacts in the roster area.
+    let allowSelectAssignments = false;
+
+    // Capture the *actual* clicked card so we can trust its number/id over any stale event payload.
+    let lastClickedCandidate = null;
+
+    // Guard so we only accept selects that immediately follow a card click
+    let pendingCardPick = false;
+    let candidateTimer = null;
+    let lastCandidateAt = 0;
+
+    // ---------- Helpers ----------
+    const qs  = (s,p=document)=>p.querySelector(s);
+    const qsa = (s,p=document)=>[...p.querySelectorAll(s)];
+    function ctx(){ return GameContext.get ? GameContext.get() : {}; }
+    const uuid = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{
+      const r = Math.random()*16|0, v = c==='x'?r:(r&0x3|0x8); return v.toString(16);
+    });
+    function stationId(){ return String(qs('#stationSelect')?.value || 'AGILITY').toUpperCase(); }
+    function coachDrillId(){ return String(qs('#coachDrill')?.value || ''); }
+
+    // Pad a numeric-looking tryout number to 3 digits (e.g., "2" -> "002")
+    function toTri(v){
+      const s = String(v ?? '').trim();
+      return /^\d{1,3}$/.test(s) ? s.padStart(3,'0') : s;
+    }
+
+    // Exact match ONLY (PID first, then 3-digit number). No fallback synth.
+    function normalizePlayer(rec){
+      if (!rec) return null;
+      const pid  = String(rec.player_id || rec.id || '').trim();
+      const tnum = toTri(rec.tryout_num || rec.number || rec.jersey_number || '');
+
+      const byPid  = pid  ? roster.find(r => String(r.player_id||'').trim() === pid) : null;
+      const byTnum = tnum ? roster.find(r => toTri(r.tryout_num) === tnum) : null;
+
+      return byPid || byTnum || null;
+    }
+
+    // ---------- Coaches ----------
+    function getAuthIdentityTokens(){
+      const tokens = new Set();
+      const add = v => { if(!v) return; tokens.add(String(v).trim().toLowerCase()); };
+      const keys = ['auth_user','auth_username','auth_email','user_email','email','username','user','display_name','coach_id','coach_name'];
+      keys.forEach(k => add(localStorage.getItem(k)));
+      try {
+        const obj = JSON.parse(localStorage.getItem('auth_user') || '{}');
+        ['username','email','name','id','display_name'].forEach(k=> add(obj?.[k]));
+      } catch {}
+      return tokens;
+    }
+
+    async function loadCoaches(){
+      const sel = qs('#coachSelect');
+      let rows = [];
+      try{
+        const res = await apiGet('coaches_get');
+        if (res?.ok) rows = res.coaches || [];
+      }catch(e){}
+      if (!rows.length) rows = [{ coach_id:'coach.unknown', coach_name:'Coach' }];
+      sel.innerHTML = rows.map(r=> `<option value="${r.coach_id}">${r.coach_name}</option>`).join('');
+
+      // Default based on identity / last choice
+      const tokens = getAuthIdentityTokens();
+      let picked = null;
+      if (tokens.size){
+        for (const opt of sel.options) {
+          const val = String(opt.value).toLowerCase();
+          const txt = String(opt.textContent||'').toLowerCase();
+          if (tokens.has(val) || tokens.has(txt)) { picked = opt.value; break; }
+        }
+      }
+      if (!picked) {
+        const last = localStorage.getItem('coach_id');
+        if (last && [...sel.options].some(o=>o.value===last)) picked = last;
+      }
+      if (!picked && sel.options.length === 1) picked = sel.options[0].value;
+      if (picked) sel.value = picked;
+      localStorage.setItem('coach_id', sel.value);
+    }
+
+    // ---------- Roster & groups ----------
+    async function loadRoster(){
+      const res = await apiGet('tryout_roster');
+      if(!res?.ok) return;
+      const tid = ctx().tryout_id || '';
+      roster = (res.roster||res.rows||[])
+        .filter(r => !tid || String(r.tryout_id||'')===String(tid))
+        .map(r => ({
+          player_id:    r.player_id || r.id || '',
+          display_name: r.display_name || r.player_name || r.name || '',
+          primary_pos:  r.primary_pos || r.position || '',
+          tryout_num:   toTri(r.tryout_num || r.jersey_number || r.number || ''),
+          group_code:   r.group_code || r.primary_pos || '',
+          tryout_id:    r.tryout_id || r.tryout || r.session_id || ''
+        }))
+        .sort((a,b)=> (parseInt(a.tryout_num,10)||0) - (parseInt(b.tryout_num,10)||0));
+    }
+    async function loadLatestGroups(){
+      const res = await apiGet('tryout_groups_get', { latest: '1', tryout_id: ctx().tryout_id||'' });
+      if(!res?.ok || !Array.isArray(res.latest)) return;
+      groupLatest.clear();
+      res.latest.forEach(row => { if(row.player_id && row.group_code) groupLatest.set(String(row.player_id).trim(), String(row.group_code).trim()); });
+    }
+    function resolveGroupCode(pid, fallback, rec){
+      if (pid) {
+        const direct = groupLatest.get(String(pid).trim());
+        if (direct) return direct;
+        const r = roster.find(x => String(x.player_id).trim() === String(pid).trim());
+        return r?.group_code || r?.primary_pos || fallback || '';
+      }
+      return rec?.group_code || rec?.primary_pos || fallback || '';
+    }
+
+    // ---------- Drills + Criteria ----------
+    async function loadDrills(){
+      const want = stationId();
+      let rows = [];
+      try{
+        const dd = await apiGet('tryout_drilldict');
+        const all = (dd?.drills||[]).map(d => ({ ...d, station_id:String(d.station_id||'').toUpperCase() }));
+        rows = all.filter(d => d.station_id===want);
+        if (!rows.length) rows = all;
+      }catch(e){}
+      if (!Array.isArray(rows) || !rows.length) rows = [{drill_id:'GEN01', drill_name:`${want} Drill`, station_id:want}];
+
+      rows.sort((a,b)=> String(a.drill_name||a.drill_id).localeCompare(String(b.drill_name||b.drill_id)));
+      drills = rows.map(d => ({...d, drill_id:String(d.drill_id)}));
+      drillMap = new Map(drills.map(d => [String(d.drill_id), d]));
+
+      const coachDrillSel = qs('#coachDrill');
+      coachDrillSel.innerHTML = drills.map(d => `<option value="${d.drill_id}">${d.drill_name || d.name || d.drill_id}</option>`).join('');
+      if (drills[0]) coachDrillSel.value = drills[0].drill_id;
+
+      ['A','B','C','D'].forEach(l=>{
+        const sel = qs('#drill'+l);
+        sel.innerHTML = coachDrillSel.innerHTML;
+        if ([...sel.options].some(o=>o.value===coachDrillSel.value)) sel.value = coachDrillSel.value;
+      });
+
+      qs('#stationHint').textContent = `Loaded ${drills.length} drill${drills.length===1?'':'s'} for ${want}.`;
+
+      await loadCriteriaIndexForStation(want);
+      await Promise.all(['A','B','C','D'].map(renderCriteriaUI));
+    }
+
+    async function loadCriteriaIndexForStation(station){
+      criteriaIndex = {};
+      try{
+        const res = await apiGet('tryout_coach_criteria', { station_id: station });
+        if (res?.ok && res.by_drill) criteriaIndex = res.by_drill;
+      }catch(e){}
+    }
+
+    function labelsFromDrill(d){
+      const fromIndex = (criteriaIndex[d.drill_id] || []).map((c,i)=>({ id:c.criterion_id||`${d.drill_id}::C${i+1}`, label:c.criterion_label||`Trait ${i+1}`, weight:c.weight||1, order:c.order||i+1 }));
+      if (fromIndex.length) return fromIndex;
+
+      const sources = [d.rating_labels, d.criteria_labels, d.coach_criteria, d.criteria, d.labels];
+      let raw = sources.map(s=> (typeof s==='string'? s : Array.isArray(s)? s.join('|') : '')).filter(Boolean).shift() || '';
+      let arr = raw.split(/[|,;/]/).map(t=>t.trim()).filter(Boolean).slice(0,8);
+      if (!arr.length) arr = ['Trait 1','Trait 2','Trait 3'];
+      return arr.map((txt,i)=> ({ id:`${d.drill_id}::C${i+1}`, label:txt, weight:1, order:i+1 }));
+    }
+
+    async function renderCriteriaUI(lane){
+      const sel = qs('#drill'+lane);
+      const drillId = sel?.value || (drills[0]?.drill_id) || '';
+      const d = drillMap.get(drillId) || drills[0] || { drill_id: 'GEN01' };
+      const box = qs('#crit'+lane);
+      if (!box) return;
+
+      const use = labelsFromDrill(d);
+      box.innerHTML = use.map(c => `
+        <div class="crit" data-crit-id="${c.id}">
+          <label>${c.label}</label>
+          <input type="range" min="1" max="5" step="1" value="3" aria-label="${c.label}">
+          <span class="val">3</span>
+        </div>
+      `).join('');
+
+      [...box.querySelectorAll('input[type="range"]')].forEach(r=>{
+        const v = r.parentElement.querySelector('.val');
+        r.addEventListener('input', ()=> v.textContent = r.value);
+      });
+    }
+
+    // ---------- TryoutUI (number bands + selection → lane, robust click capture + exact 3-digit match) ----------
+    (function mountRoster(){
+      const mount   = document.getElementById('tryout-shared');
+      const overlay = document.getElementById('tryout-loading');
+
+      // Number-band filtering (1–10, 11–20, …)
+      TryoutUI.init('#tryout-shared', { showGroup:false, filterMode:'numberBands', allowPresence:false });
+
+      // Helper DOM getters
+      function getWrap(){ return mount.querySelector('.tu-wrap') || mount; }
+      function getRosterBox(){ return mount.querySelector('#tuRoster') || mount.querySelector('.tu-roster'); }
+      function getChipsWrap(){ return mount.querySelector('#tuChips') || mount.querySelector('.tu-chips'); }
+      function getSearch(){ return mount.querySelector('#tuSearch') || mount.querySelector('input[type="search"]'); }
+      function anyChipPressed(){
+        const cw = getChipsWrap();
+        return !!cw && !!cw.querySelector('.tu-chip[aria-pressed="true"]');
+      }
+
+      // Mark when the user has interacted so we can allow assignment
+      function bindUserIntent(){
+        const wrap = getWrap();
+        if (!wrap || wrap.dataset.boundIntent) return;
+        wrap.dataset.boundIntent = '1';
+        ['click','pointerdown','touchstart','keydown'].forEach(evt=>{
+          wrap.addEventListener(evt, ()=> { allowSelectAssignments = true; }, { once:true, passive:true });
+        });
+      }
+
+      // Robust card click capture (works even if event payload truncates the number)
+      mount.addEventListener('pointerdown', (e)=>{
+        // Ignore filter chip clicks
+        if (e.target.closest('.tu-chip')) {
+          pendingCardPick = false;
+          lastClickedCandidate = null;
+          return;
+        }
+
+        // Accept several DOM shapes
+        const card = e.target.closest('[data-player-id], [data-tryout-num], [data-number], [data-num], .tu-card');
+        if (!card) {
+          pendingCardPick = false;
+          lastClickedCandidate = null;
+          return;
+        }
+
+        const pid = String(card.getAttribute('data-player-id')||'').trim();
+
+        // Prefer explicit attributes, fallback to visible text
+        let tnum = toTri(
+          card.getAttribute('data-tryout-num')
+          || card.getAttribute('data-number')
+          || card.getAttribute('data-num')
+          || ''
+        );
+        if (!tnum) {
+          const txt = (card.querySelector('.tu-num,.tu-badge,.tu-tag')?.textContent || card.textContent || '').trim();
+          const m = txt.match(/\b\d{1,3}\b/);
+          if (m) tnum = toTri(m[0]);
+        }
+
+        // Only store if we have some identity
+        if (pid || tnum){
+          lastClickedCandidate = { player_id: pid || null, tryout_num: tnum || null };
+          pendingCardPick = true;
+          lastCandidateAt = Date.now();
+
+          clearTimeout(candidateTimer);
+          candidateTimer = setTimeout(()=>{
+            if (Date.now() - lastCandidateAt > 600) {
+              pendingCardPick = false;
+              lastClickedCandidate = null;
+            }
+          }, 650);
+        }
+      }, true);
+
+      // Limit cards to MAX_CARDS and show a hint
+      function enforceMaxCards(){
+        const box = getRosterBox(); if (!box) return;
+        const cards = [...box.querySelectorAll('.tu-card, [data-player-id]')];
+        const total = cards.length;
+        cards.forEach((c,i)=> c.style.display = (i < MAX_CARDS) ? '' : 'none');
+
+        let hint = box.querySelector('.tu-limit');
+        if (!hint){ hint = document.createElement('div'); hint.className='tu-limit'; box.appendChild(hint); }
+        hint.textContent = total > MAX_CARDS ? `Showing ${MAX_CARDS} of ${total}. Use filters or search to narrow.` : '';
+      }
+
+      // Observe roster for changes to re-apply cap and bind intent
+      const rosterMO = new MutationObserver(()=> { enforceMaxCards(); bindUserIntent(); });
+
+      const mo = new MutationObserver(() => {
+        const wrap = getWrap();
+        const chipsWrap = getChipsWrap();
+        const rosterBox = getRosterBox();
+
+        if (!wrap || !chipsWrap || !rosterBox) return;
+
+        // Spinner off once the shell appears
+        if (overlay) overlay.style.display = 'none';
+
+        // Start hidden (no cards until filter/search)
+        wrap.classList.add('roster-hidden');
+
+        // Rename ALL -> Clear
+        const allChip = chipsWrap.querySelector('[data-band="ALL"]') || [...chipsWrap.querySelectorAll('.tu-chip')].find(b => (b.textContent||'').trim().toUpperCase()==='ALL');
+        if (allChip) allChip.textContent = 'Clear';
+
+        // Bind once
+        if (!chipsWrap.dataset.boundClear) {
+          chipsWrap.dataset.boundClear = '1';
+
+          // Intercept clicks so "ALL" works like Clear
+          chipsWrap.addEventListener('click', (ev) => {
+            const btn = ev.target.closest('.tu-chip');
+            if (!btn) return;
+
+            const band = btn.getAttribute('data-band') || (btn.textContent||'').trim().toUpperCase();
+            const isClear = band === 'ALL' || band === 'CLEAR';
+
+            if (isClear) {
+              ev.stopImmediatePropagation();
+              ev.preventDefault();
+
+              // De-select any chips
+              chipsWrap.querySelectorAll('.tu-chip').forEach(x => x.removeAttribute('aria-pressed'));
+
+              // Clear search
+              const search = getSearch();
+              if (search) { search.value = ''; search.dispatchEvent(new Event('input', { bubbles:true })); }
+
+              // Hide roster and show hint
+              wrap.classList.add('roster-hidden');
+              const box = getRosterBox();
+              if (box){
+                box.innerHTML = `<div class="tu-hint">Use number bands or search to show players.</div>`;
+              }
+            } else {
+              wrap.classList.remove('roster-hidden');
+              setTimeout(enforceMaxCards, 0);
+            }
+          }, true);
+        }
+
+        // Show roster when searching; hide if cleared and no chip selected
+        const search = getSearch();
+        if (search && !search.dataset.boundShow) {
+          search.dataset.boundShow = '1';
+          search.addEventListener('input', () => {
+            const val = (search.value || '').trim();
+            if (val) {
+              wrap.classList.remove('roster-hidden');
+              setTimeout(enforceMaxCards, 0);
+            } else if (!anyChipPressed()) {
+              wrap.classList.add('roster-hidden');
+            }
+          });
+        }
+
+        // Watch the roster box for re-renders
+        rosterMO.disconnect();
+        if (rosterBox) rosterMO.observe(rosterBox, { childList:true, subtree:true });
+
+        // Bind the user intent guard
+        bindUserIntent();
+
+        mo.disconnect();
+      });
+
+      mo.observe(mount, { childList:true, subtree:true });
+
+      // Hide spinner when TryoutUI says it's ready
+      window.addEventListener('tryoutui:ready', ()=>{
+        if (overlay) overlay.style.display = 'none';
+        setTimeout(enforceMaxCards, 0);
+      }, { once:true });
+
+      // Selection → assign to active lane (ONLY after user intent + recent card click)
+      window.addEventListener('tryoutui:select', (e)=>{
+        if (!allowSelectAssignments) return;
+        if (!pendingCardPick || !lastClickedCandidate) return;
+
+        const d = { ...(e?.detail?.player || {}) };
+
+        // Prefer the clicked card's values; force 3-digit tnum
+        if (lastClickedCandidate.tryout_num) d.tryout_num = toTri(lastClickedCandidate.tryout_num);
+        else if (d.tryout_num) d.tryout_num = toTri(d.tryout_num);
+
+        if (lastClickedCandidate.player_id) d.player_id = lastClickedCandidate.player_id;
+
+        const hit = normalizePlayer(d);
+        if (hit) assignToActiveLane(hit);
+
+        // Clear flags for next interaction
+        pendingCardPick = false;
+        lastClickedCandidate = null;
+      });
+    })();
+
+    // ---------- Active lane ----------
+    function setActiveLane(l){
+      activeLane = ['A','B','C','D'].includes(l) ? l : 'A';
+      qs('#coachBadge').textContent = `Active Lane: ${activeLane}`;
+      ['A','B','C','D'].forEach(L=>{
+        qs('#lane'+L).classList.toggle('lane-active', L===activeLane);
+      });
+    }
+
+    // Delegate lane activation (click anywhere in a lane)
+    document.addEventListener('click', (e)=>{
+      const laneEl = e.target.closest('.lane-card');
+      if (!laneEl) return;
+      const l = laneEl.dataset.lane || (laneEl.id||'').replace(/^lane/,'');
+      if (l) setActiveLane(l);
+    });
+
+    // Keep lane UI wired
+    ['A','B','C','D'].forEach(L=>{
+      const dsel = qs('#drill'+L);
+      const asel = qs('#att'+L);
+      if (dsel) {
+        dsel.addEventListener('focus',  ()=> setActiveLane(L));
+        dsel.addEventListener('change', ()=> { setActiveLane(L); renderCriteriaUI(L); });
+      }
+      if (asel) {
+        asel.addEventListener('focus',  ()=> setActiveLane(L));
+        asel.addEventListener('change', ()=> setActiveLane(L));
+      }
+      const saveBtn = qs('#save'+L);
+      if (saveBtn) saveBtn.addEventListener('click', ()=> setActiveLane(L));
+    });
+
+    // ---------- Lane chips / assign / clear ----------
+    function renderLaneChip(l){
+      const rec = lanePlayers[l];
+      const el = qs('#who'+l);
+      const saveBtn = qs('#save'+l);
+      if (rec){
+        const txt = `${rec.tryout_num||''} • ${rec.display_name||rec.player_id}${rec.primary_pos?` (${rec.primary_pos})`:''}`;
+        el.innerHTML = `${txt} <span class="x" title="Clear" aria-label="Clear" data-clear="${l}">✕</span>`;
+        el.style.display = '';
+        saveBtn.disabled = false;
+
+        el.querySelector('.x').addEventListener('click', (ev)=> {
+          ev.stopPropagation(); ev.preventDefault();
+          unassignLane(l);
+        }, { once:true });
+      } else {
+        el.style.display = 'none';
+        saveBtn.disabled = true;
+      }
+    }
+
+    function assignToActiveLane(rec){
+      const L = activeLane;
+      const prev = lanePlayers[L];
+      lanePlayers[L] = rec;
+
+      renderLaneChip(L);
+      const attSel = qs('#att'+L);
+      if (attSel) attSel.value = String(laneAttempt[L]||1);
+
+      if (prev && savedPlayers.has(prev.player_id || prev.tryout_num)) {
+        try { TryoutUI?.markDone?.(prev.player_id || prev.tryout_num); } catch {}
+      }
+    }
+
+    function unassignLane(L){
+      const rec = lanePlayers[L];
+      lanePlayers[L] = null;
+      renderLaneChip(L);
+      if (rec && savedPlayers.has(rec.player_id||rec.tryout_num)) {
+        try { TryoutUI?.markDone?.(rec.player_id || rec.tryout_num); } catch {}
+      }
+    }
+
+    // ---------- Save ratings ----------
+    function setSaving(lane, saving){
+      const btn = qs('#save'+lane);
+      if (!btn.dataset.label) btn.dataset.label = btn.textContent;
+      if (saving){
+        btn.classList.add('loading'); btn.disabled = true;
+        btn.innerHTML = '<span class="spin"></span>Saving…';
+      } else {
+        btn.classList.remove('loading');
+        btn.disabled = !lanePlayers[lane];
+        btn.textContent = btn.dataset.label || 'Save';
+      }
+    }
+
+    async function saveLane(lane){
+      const statusEl = qs('#status'+lane);
+      statusEl.textContent = '';
+
+      const coachSel = qs('#coachSelect');
+      const stationSel = qs('#stationSelect');
+      const drillSel = qs('#drill'+lane);
+
+      const c = ctx();
+      if (!c.tryout_id){ statusEl.textContent='Set a Tryout ID first.'; statusEl.className='status warn'; return; }
+
+      const player = lanePlayers[lane];
+      if(!(player?.tryout_num || player?.player_id)){
+        statusEl.textContent=`Assign a player to Lane ${lane}.`;
+        statusEl.className='status warn';
+        return;
+      }
+
+      const drill = drillMap.get(drillSel.value);
+      if(!drill){ statusEl.textContent='Choose a drill.'; statusEl.className='status warn'; return; }
+
+      const att = Number(qs('#att'+lane).value || 1);
+      const notes = (qs('#notes'+lane).value || '').trim();
+
+      const critBox = qs('#crit'+lane);
+      const critRows = [...(critBox?.querySelectorAll('.crit')||[])].map(el => {
+        const id = el.getAttribute('data-crit-id');
+        const label = el.querySelector('label')?.textContent || id;
+        const val = Number(el.querySelector('input[type="range"]')?.value || 3);
+        return { id, label, value: val, weight: 1 };
+      });
+
+      const tsUTC = new Date().toISOString();
+      const repId = uuid();
+      const clientId = (localStorage.getItem('client_id') || (function(){ const id=uuid(); localStorage.setItem('client_id', id); return id; })());
+
+      const base = {
+        rating_id: uuid(),
+        ts_utc: tsUTC,
+        tryout_id:   c.tryout_id || '',
+        period_code: c.period_code || '',
+        station_id:  String(stationSel.value || drill.station_id || '').toUpperCase(),
+        coach_id:    coachSel.value || '',
+        coach_name:  coachSel.selectedOptions?.[0]?.textContent || coachSel.value || '',
+        player_id:   String(player.player_id || '').trim(),
+        tryout_num:  String(player.tryout_num || '').trim(),
+        group_code:  resolveGroupCode(player.player_id, '', player) || '',
+        position_group: String(player.primary_pos || '').trim(),
+        drill_id:    drill.drill_id,
+        lane:        lane,
+        attempt:     att,
+        rep_id:      repId,
+        notes:       notes,
+        source_app:  'coaches_corner_v1',
+        client_id:   clientId
+      };
+
+      const ops = critRows.map(cr => ({
+        route: 'tryout_coach_ratings',
+        ensure_headers: [
+          'rating_id','ts_utc','tryout_id','period_code','station_id','coach_id','coach_name','player_id',
+          'tryout_num','group_code','position_group','drill_id','criterion_id','criterion_label','rating_value',
+          'weight','lane','attempt','rep_id','notes','source_app','client_id'
+        ],
+        row: {
+          ...base,
+          criterion_id: cr.id,
+          criterion_label: cr.label,
+          rating_value: cr.value,
+          weight: cr.weight
+        }
+      }));
+
+      setSaving(lane, true);
+      let ok=true, err='';
+      try{
+        const res = await apiPost({ action:'batch', ops });
+        ok = !!res?.ok;
+        if (!ok) err = res?.error || 'Save failed.';
+      } catch(e){ ok=false; err = e?.message || 'Save failed.'; }
+      setSaving(lane, false);
+
+      if(!ok){
+        statusEl.textContent = err;
+        statusEl.className = 'status err';
+        return;
+      }
+
+      statusEl.textContent = `Saved ✔ · ${ops.length} slider${ops.length===1?'':'s'} recorded`;
+      statusEl.className = 'status ok';
+
+      const next = (att % 3) + 1; laneAttempt[lane] = next;
+      qs('#att'+lane).value = String(next);
+
+      savedPlayers.add(player.player_id || player.tryout_num);
+      try { TryoutUI?.markDone?.(player.player_id || player.tryout_num); } catch {}
+      try { window.dispatchEvent(new CustomEvent('tryoutui:done', { detail:{ player_id: player.player_id, tryout_num: player.tryout_num } })); } catch {}
+    }
+
+    // ---------- Top-level events ----------
+    qs('#coachSelect').addEventListener('change', (e)=> localStorage.setItem('coach_id', e.target.value));
+    qs('#stationSelect').addEventListener('change', async ()=>{
+      await loadDrills(); // reload drills + criteria
+    });
+    qs('#coachDrill').addEventListener('change', ()=>{
+      const did = coachDrillId();
+      ['A','B','C','D'].forEach(L=>{
+        const sel = qs('#drill'+L);
+        if (sel && [...sel.options].some(o=>o.value===did)) {
+          sel.value = did;
+          renderCriteriaUI(L);
+        }
+      });
+    });
+
+    ['A','B','C','D'].forEach(L=>{
+      qs('#save'+L).addEventListener('click', ()=> saveLane(L));
+    });
+
+    // ---------- Init ----------
+    (async function init(){
+      setActiveLane('A');
+      await Promise.all([loadCoaches(), loadRoster(), loadLatestGroups(), loadDrills()]);
+      // No "honor existing selection" here — prevents auto-assign on load.
+    })();
+  </script>
+
+</body>
+</html>
