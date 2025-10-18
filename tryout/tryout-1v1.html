@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="gsds-api-base" content="https://script.google.com/macros/s/AKfycbw8Jb7RpQ7j9L2q32YDSBuNSPLFMjPzKdvuI_BgkutfNk5COrEYUdsUWZYXDOJRAeH3kA/exec">
-  <title>1 v 1 — Tryouts</title>
+  <meta name="gsds-api-base" content="https://script.google.com/macros/s/AKfycbxCHO9P5zOf_LjEztGUPalzGRweBAr_Y3U9v4iVn9jHir1pB0yueLp22_ltGSTFc6qzfA/exec">
+  <title>1v1 Station — Tryouts</title>
 
   <!-- Simple auth guard -->
   <script>
@@ -23,6 +23,9 @@
 
   <style>
     .container{ max-width:1100px; margin:0 auto; padding:16px; }
+    .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    @media (max-width:1000px){ .grid-2{ grid-template-columns:1fr; } }
+
     .card{ background: rgba(255,255,255,.05); border:1px solid var(--border);
            border-radius:16px; padding:16px; box-shadow: var(--shadow-soft, 0 8px 24px rgba(0,0,0,.18)); }
     .toolbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
@@ -30,8 +33,11 @@
            border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.06); font-weight:700; }
     .chip.badge{ background:linear-gradient(135deg,#7C4DFF,#8B5CF6); color:#071018; border:0; }
     .chip.ghost{ background:transparent; }
-    .small{ font-size:.85rem; opacity:.8; }
-    .muted{ opacity:.75; }
+
+    .seg{ display:inline-flex; background:rgba(255,255,255,.06); border:1px solid var(--border);
+          border-radius:10px; overflow:hidden; }
+    .seg button{ appearance:none; border:0; padding:6px 10px; font-weight:800; color:#fff; background:transparent; cursor:pointer; }
+    .seg button[aria-pressed="true"]{ background:#8B5CF6; color:#071018; }
 
     .field{ margin:10px 0; }
     .label{ font-weight:800; font-size:.95rem; opacity:.9; margin-bottom:6px; display:block; }
@@ -39,12 +45,18 @@
       background:rgba(255,255,255,.08); color:#fff; }
     .row{ display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; }
     .row3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; }
-    .row4{ display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; }
-    @media (max-width:900px){ .row, .row3, .row4{ grid-template-columns:1fr; } }
 
-    .seg{ display:inline-flex; background:rgba(255,255,255,.06); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
-    .seg button{ appearance:none; border:0; padding:6px 10px; font-weight:800; color:#fff; background:transparent; cursor:pointer; }
-    .seg button[aria-pressed="true"]{ background:#8B5CF6; color:#071018; }
+    .toggle-switch{ display:inline-flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
+    .toggle-switch input{ position:absolute; opacity:0; width:0; height:0; }
+    .toggle-slider{ position:relative; width:50px; height:26px; background:rgba(255,255,255,.15); border-radius:999px; transition:all .3s ease; border:1px solid rgba(255,255,255,.25); }
+    .toggle-slider::before{ content:''; position:absolute; width:20px; height:20px; border-radius:50%; background:#fff; top:2px; left:3px; transition:all .3s ease; box-shadow:0 2px 4px rgba(0,0,0,.2); }
+    .toggle-switch input:checked + .toggle-slider{ background:linear-gradient(135deg,#16A34A,#10B981); border-color:#16A34A; }
+    .toggle-switch input:checked + .toggle-slider::before{ transform:translateX(23px); }
+    .toggle-label{ font-weight:700; font-size:.9rem; }
+
+    /* Small timer */
+    .timer{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .time{ font-variant-numeric:tabular-nums; font-weight:900; font-size:1.15rem; min-width:70px; text-align:right; }
 
     .btn{ appearance:none; border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08); color:#fff;
           padding:.55rem .8rem; border-radius:10px; font-weight:800; cursor:pointer; transition: all .2s ease; }
@@ -54,38 +66,21 @@
     .btn.ghost{ background:transparent; }
     .btn:disabled{ opacity:.55; cursor:not-allowed; }
     .btn.loading{ position:relative; pointer-events:none; }
-    .btn.loading .spin{ width:14px; height:14px; border:2px solid rgba(255,255,255,.45);
-                        border-top-color:#fff; border-radius:50%; display:inline-block;
-                        margin-right:8px; vertical-align:-2px; animation:spin .8s linear infinite; }
+    .btn.loading .spin{ width:14px; height:14px; border:2px solid rgba(255,255,255,.45); border-top-color:#fff; border-radius:50%;
+                        display:inline-block; margin-right:8px; vertical-align:-2px; animation:spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .status{ margin-top:8px; font-weight:700; }
-    .status.ok{ color:#34D399; } .status.err{ color:#F87171; } .status.warn{ color:#F59E0B; } .status.avg{ color:#8B5CF6; }
+    .status{ margin-top:6px; font-weight:700; }
+    .status.ok{ color:#34D399; } .status.err{ color:#F87171; } .status.warn{ color:#F59E0B; }
 
-    .table{ width:100%; border-collapse:collapse; font-size:.95rem; margin-top:10px; }
-    .table th,.table td{ padding:6px 8px; border-bottom:1px solid rgba(255,255,255,.12); text-align:left; }
-
-    .role-chip{ display:inline-flex; align-items:center; gap:8px; padding:4px 8px; border-radius:999px;
-                border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); font-weight:800; font-size:.9rem; }
-    .role-chip .x{ opacity:.75; cursor:pointer; padding:0 .25rem; }
-
-    /* Toggle switches */
-    .toggle-switch{ display:inline-flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
-    .toggle-switch input[type="checkbox"]{ position:absolute; opacity:0; width:0; height:0; }
-    .toggle-slider{ position:relative; width:50px; height:26px; background:rgba(255,255,255,.15); border-radius:999px; transition:all .3s ease; border:1px solid rgba(255,255,255,.25); }
-    .toggle-slider::before{ content:''; position:absolute; width:20px; height:20px; border-radius:50%; background:#fff; top:2px; left:3px; transition:all .3s ease; box-shadow:0 2px 4px rgba(0,0,0,.2); }
-    .toggle-switch input:checked + .toggle-slider{ background:linear-gradient(135deg,#16A34A,#10B981); border-color:#16A34A; }
-    .toggle-switch input:checked + .toggle-slider::before{ transform:translateX(23px); }
-    .toggle-label{ font-weight:700; font-size:.9rem; }
-
-    /* Tiny timer text */
-    .time{ font-variant-numeric:tabular-nums; font-weight:900; min-width:72px; text-align:right; }
+    /* Hard cap 10 roster cards */
+    #tryout-shared ._limit-hide { display:none !important; }
   </style>
 </head>
 
 <body class="theme-atl practice-page">
   <header class="page-header">
-    <h1>1 v 1</h1>
+    <h1>1v1 Station</h1>
     <nav class="menu-actions">
       <a class="menu-btn" href="../index.html">Home</a>
       <a class="menu-btn" href="../tryout/index.html">Tryout Hub</a>
@@ -94,154 +89,130 @@
 
   <main>
     <div class="container">
-      <!-- Shared: context bar, roster, filters -->
+      <!-- Shared: context bar, filter chips, roster cards -->
       <div id="tryout-shared" style="margin-bottom:12px"></div>
 
-      <!-- Top control bar -->
+      <!-- Assignment -->
       <section class="card" style="margin-bottom:14px">
         <div class="toolbar">
           <span class="chip">Station: <strong>1v1</strong></span>
 
-          <div class="field" style="min-width:220px; margin:0;">
-            <label class="label">Matchup Type</label>
-            <select id="matchTypeSel" class="form-select">
-              <option value="WR-DB">WR vs DB</option>
-              <option value="TE-DB">TE vs DB</option>
-              <option value="OL-DL">OL vs DL (Pass Pro)</option>
-              <option value="RB-LB">RB vs LB (Pass Pro)</option>
-            </select>
-            <div id="matchHint" class="small muted" style="margin-top:6px"></div>
+          <div class="seg" role="tablist" aria-label="Assign selected roster card to role">
+            <button id="segOff" role="tab" aria-pressed="true">Offense</button>
+            <button id="segDef" role="tab" aria-pressed="false">Defense</button>
+            <button id="segQB"  role="tab" aria-pressed="false">QB</button>
           </div>
 
-          <span id="drillBadge" class="chip badge">Saving to: 71_Fact_Tryout_Position</span>
-
-          <!-- Assign selection role -->
-          <div class="seg" role="tablist" aria-label="Assign selection to" style="margin-left:auto">
-            <button id="asOff" role="tab" aria-pressed="true">Assign to Offense</button>
-            <button id="asDef" role="tab" aria-pressed="false">Assign to Defense</button>
-          </div>
-
-          <button id="swapBtn" class="btn ghost" title="Swap Offense/Defense">Swap</button>
+          <span class="chip ghost small" style="margin-left:auto">Tip: click roster card or search → assigns to active role.</span>
         </div>
 
-        <!-- Pickers -->
         <div class="row" style="margin-top:10px">
           <div>
-            <label class="label">Offense (filtered)</label>
-            <input id="offPicker" class="form-input" list="v_roster" placeholder="number • name"/>
+            <label class="label">Search Player (number or name)</label>
+            <input id="playerPicker" class="form-input" list="onevone_roster" placeholder="e.g., 1 • Carter Hall"/>
+            <datalist id="onevone_roster"></datalist>
           </div>
-          <div>
-            <label class="label">Defense (filtered)</label>
-            <input id="defPicker" class="form-input" list="v_roster" placeholder="number • name"/>
-          </div>
-        </div>
-
-        <!-- Optional QB (filters to QBs) -->
-        <div class="row" style="margin-top:6px">
-          <div>
-            <label class="label">QB (optional)</label>
-            <input id="qbPicker" class="form-input" list="qb_roster" placeholder="number • QB name"/>
-          </div>
-          <div>
-            <label class="label">Route or Rush (offense tag)</label>
-            <input id="routeInput" class="form-input" placeholder="route name or protection/rush tag"/>
-          </div>
-        </div>
-
-        <datalist id="v_roster"></datalist>
-        <datalist id="qb_roster"></datalist>
-
-        <!-- Current assignments -->
-        <div class="toolbar" style="margin-top:8px;gap:12px">
-          <span id="chipOff" class="role-chip" style="display:none"></span>
-          <span id="chipDef" class="role-chip" style="display:none"></span>
-          <span id="chipQB" class="role-chip" style="display:none"></span>
-          <span id="filterChip" class="chip ghost small"></span>
-          <span class="small muted">Tip: tap a roster card above to assign to the active role.</span>
-        </div>
-
-        <!-- Attempt + outcome + context booleans and numeric -->
-        <div class="row3" style="margin-top:10px">
-          <div>
-            <label class="label">Attempt</label>
-            <select id="vAttempt" class="form-select">
-              <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
-              <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
-            </select>
-          </div>
-          <div>
-            <label class="label">Outcome</label>
-            <div class="seg" role="tablist" aria-label="Outcome">
-              <button id="outOff" role="tab" aria-pressed="true">Offense Win</button>
-              <button id="outDef" role="tab" aria-pressed="false">Defense Win</button>
-              <button id="outDraw" role="tab" aria-pressed="false">Draw</button>
-            </div>
-          </div>
-          <div>
-            <label class="label">Yards (est)</label>
-            <input id="yardsEst" type="number" class="form-number" inputmode="numeric" step="1" min="-50" max="99" placeholder="e.g., 8"/>
-          </div>
-        </div>
-
-        <!-- Toggles that map directly to fact columns -->
-        <div id="factToggles" class="row4" style="margin-top:8px">
-          <!-- WR/TE view shows: targeted, catch, pbu, int -->
-        </div>
-
-        <!-- Contextual numeric: separation or time-to-pressure -->
-        <div id="contextRow" class="row" style="margin-top:8px">
-          <div id="sepWrap" style="display:none">
-            <label class="label">Separation (1–5)</label>
-            <select id="sepSel" class="form-select">
-              <option value="">—</option>
-              <option value="1">1 — Strapped</option>
-              <option value="2">2</option>
-              <option value="3">3 — Even</option>
-              <option value="4">4</option>
-              <option value="5">5 — Clean</option>
-            </select>
-          </div>
-          <div id="pressWrap" style="display:none">
-            <label class="label">Time to Pressure (sec)</label>
-            <div class="toolbar" style="gap:8px">
-              <span class="time" id="pressTime">0.00</span>
-              <button id="pressToggle" class="btn">Start</button>
-              <button id="pressReset" class="btn ghost">Reset</button>
-              <input id="pressManual" class="form-number" type="number" step="0.01" min="0" placeholder="or type value"/>
-            </div>
-          </div>
-        </div>
-
-        <!-- Notes + Save -->
-        <div class="row" style="margin-top:10px">
           <div>
             <label class="label">Notes</label>
-            <input id="vNotes" class="form-input" placeholder="QB late, slip, PI, etc."/>
-          </div>
-          <div style="display:flex; align-items:flex-end; gap:8px;">
-            <button id="saveOne" class="btn success" disabled>Save Rep</button>
-            <button id="clearSel" class="btn ghost">Clear</button>
+            <input id="notes" class="form-input" placeholder="release, leverage, placement, etc."/>
           </div>
         </div>
 
-        <div id="vStatus" class="status"></div>
+        <div class="toolbar" style="gap:10px; margin-top:10px;">
+          <span id="whoOff" class="chip badge" style="display:none"></span>
+          <span id="whoDef" class="chip badge" style="display:none"></span>
+          <span id="whoQB"  class="chip" style="display:none"></span>
+        </div>
       </section>
 
-      <!-- Recent reps -->
+      <!-- Rep form (aligned to 72_Fact_Tryout_1v1 columns) -->
       <section class="card">
+        <div class="row3">
+          <div>
+            <label class="label">Matchup Type</label>
+            <select id="matchupType" class="form-select">
+              <option>WR-DB</option>
+              <option>TE-DB</option>
+              <option>RB-LB</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">Route / Rush</label>
+            <input id="routeOrRush" class="form-input" list="routes_list" placeholder="Slant, Fade, Out, In, Post, Corner, Go, Comeback, Curl, Dig, Screen, Rush"/>
+            <datalist id="routes_list">
+              <option>Slant</option><option>Fade</option><option>Out</option><option>In</option>
+              <option>Post</option><option>Corner</option><option>Go</option><option>Comeback</option>
+              <option>Curl</option><option>Dig</option><option>Screen</option><option>Rush</option>
+            </datalist>
+          </div>
+          <div>
+            <label class="label">Win Side</label>
+            <div class="seg" style="width:100%">
+              <button data-win="offense" class="wbtn" aria-pressed="true">Offense</button>
+              <button data-win="defense" class="wbtn" aria-pressed="false">Defense</button>
+              <button data-win="tie"     class="wbtn" aria-pressed="false">Tie</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="row3">
+          <div>
+            <label class="label">Targeted</label>
+            <label class="toggle-switch"><input id="targeted" type="checkbox"><span class="toggle-slider"></span><span class="toggle-label">Yes</span></label>
+          </div>
+          <div>
+            <label class="label">Catch</label>
+            <label class="toggle-switch"><input id="catch" type="checkbox"><span class="toggle-slider"></span><span class="toggle-label">Yes</span></label>
+          </div>
+          <div>
+            <label class="label">PBU</label>
+            <label class="toggle-switch"><input id="pbu" type="checkbox"><span class="toggle-slider"></span><span class="toggle-label">Yes</span></label>
+          </div>
+        </div>
+
+        <div class="row3">
+          <div>
+            <label class="label">INT</label>
+            <label class="toggle-switch"><input id="int" type="checkbox"><span class="toggle-slider"></span><span class="toggle-label">Yes</span></label>
+          </div>
+          <div>
+            <label class="label">Separation (1–5)</label>
+            <input id="sep" type="range" min="1" max="5" step="1" value="3" class="form-input" oninput="document.getElementById('sepVal').textContent=this.value">
+            <div class="small">Value: <strong id="sepVal">3</strong></div>
+          </div>
+          <div>
+            <label class="label">Yards (est.)</label>
+            <input id="yards" class="form-number" type="number" step="1" placeholder="e.g., 12"/>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label class="label">Time to Release (sec)</label>
+            <div class="timer">
+              <span class="time" id="tPress">0.00</span>
+              <button class="btn" id="pressToggle" aria-pressed="false">Start</button>
+              <button class="btn ghost" id="pressReset">Reset</button>
+            </div>
+          </div>
+          <div style="display:flex; align-items:flex-end; gap:8px; justify-content:flex-end">
+            <button id="saveBtn" class="btn success" disabled>Save 1v1 Rep</button>
+          </div>
+        </div>
+
+        <div class="status" id="status"></div>
+      </section>
+
+      <!-- Recent writes -->
+      <section class="card" style="margin-top:14px">
         <div class="toolbar">
-          <span class="chip ghost small">Recent Reps</span>
+          <button id="toggleRecent" class="btn ghost">Recent Writes ▾</button>
           <span id="recentCount" class="small muted"></span>
         </div>
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Att</th><th>Matchup</th><th>Offense</th><th>Defense</th><th>QB</th>
-              <th>Outcome</th><th>Yds</th><th>Target</th><th>Catch</th><th>PBU</th><th>INT</th><th>Sep</th><th>TTP</th>
-            </tr>
-          </thead>
-          <tbody id="repLog"></tbody>
-        </table>
+        <div id="recentPanel" style="display:none; margin-top:8px">
+          <ul id="recentList" style="margin:0; padding-left:18px"></ul>
+        </div>
       </section>
     </div>
   </main>
@@ -261,453 +232,285 @@
       window.API_BASE = (meta && meta.content || '').trim();
     })();
     GameContext.configure({ apiBase: window.API_BASE, server: true, pollMs: 1000 });
-    TryoutUI.init('#tryout-shared', { showGroup:true, filterMode:'groups', allowPresence:false });
 
-    // ---------- 1v1 Station -> 71_Fact_Tryout_Position ----------
-    const MATCH_GROUPS = {
-      'WR-DB': ['WR','DB'],
-      'TE-DB': ['TE','DB'],
-      'OL-DL': ['OL','DL'],
-      'RB-LB': ['RB','LB']
+    // Show roster grid + chips; hard-cap visible cards to 10
+    TryoutUI.init('#tryout-shared', {
+      showGroup: true,
+      showRoster: true,        // <- render roster grid
+      filterMode: 'groups',
+      allowPresence: false,
+      pageSize: 10,
+      maxCards: 10
+    });
+
+    // Start unfiltered so cards appear immediately
+    GameContext.setGroup('ALL');
+
+    // Hard clamp to 10 even if internal paging changes
+    const CARD_SEL = '#tryout-shared .tu-player, #tryout-shared [data-role="roster-card"], #tryout-shared .roster-card';
+    const clampRosterCards = ()=>{
+      const cards = document.querySelectorAll(CARD_SEL);
+      cards.forEach((el, i) => el.classList.toggle('_limit-hide', i >= 10));
     };
-    const QB_GROUPS = ['QB'];
+    new MutationObserver(clampRosterCards)
+      .observe(document.getElementById('tryout-shared'), { childList:true, subtree:true });
+    window.addEventListener('tryoutui:filter', clampRosterCards);
+    window.addEventListener('tryoutui:roster', clampRosterCards);
+    window.addEventListener('tryoutui:ready', clampRosterCards);
+    setTimeout(clampRosterCards, 400);
+
+    // ---------- Page State ----------
+    const STATION_ID = '1v1';
+    const lane = { offense:null, defense:null, qb:null };
+    let activeRole = 'offense';
 
     let roster = [];
-    let qbRoster = [];
-    let filteredRoster = [];
     const groupLatest = new Map();
-
-    let CURR_MATCH = 'WR-DB';
-    const selState = { off:null, def:null, qb:null, outcome:'OFF' };
-    const recent = []; const RECENT_MAX = 20;
-
-    let activeAssign = 'OFF';
+    const pageLog = [];
+    const PAGE_LOG_LIMIT = 12;
 
     // ------- helpers -------
     const qs  = (s,p=document)=>p.querySelector(s);
-    const qsa = (s,p=document)=>[...p.querySelectorAll(s)];
     const labelFor = (r)=> [r.tryout_num, '•', r.display_name, r.primary_pos?`(${r.primary_pos})`:'' ].filter(Boolean).join(' ');
+    const fmtTime = (d)=>{ const pad=n=>String(n).padStart(2,'0'); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
     function ctx(){ return GameContext.get ? GameContext.get() : {}; }
 
-    function resolveGroupCode(pid, fallback, rec){
-      if (pid) {
-        const direct = groupLatest.get(String(pid).trim());
-        if (direct) return direct.toUpperCase();
-        const r = roster.find(x => String(x.player_id).trim() === String(pid).trim());
-        return (r?.group_code || r?.primary_pos || fallback || '').toUpperCase();
-      }
-      return (rec?.group_code || rec?.primary_pos || fallback || '').toUpperCase();
-    }
-
-    function groupAllowed(group){
-      const allow = MATCH_GROUPS[CURR_MATCH] || [];
-      return allow.includes(String(group||'').toUpperCase());
-    }
-    function playerAllowed(p){ return groupAllowed(resolveGroupCode(p?.player_id, '', p)); }
-    function isQB(p){
-      const g = resolveGroupCode(p?.player_id, '', p);
-      return QB_GROUPS.includes(g);
-    }
-
-    function rebuildDatalists(){
-      const dl = document.getElementById('v_roster');
+    async function loadRoster(){
+      const res = await API.tryout.read.roster();
+      if(!res?.ok) return;
+      const tid = ctx().tryout_id || '';
+      roster = (res.roster||[]).filter(r => !tid || String(r.tryout_id||'')===String(tid))
+        .map(r => ({
+          player_id: r.player_id || '',
+          display_name: r.display_name || r.player_name || '',
+          primary_pos: r.primary_pos || r.position || '',
+          tryout_num: r.tryout_num || r.jersey_number || '',
+          group_code: r.group_code || r.primary_pos || ''
+        }));
+      const dl = document.getElementById('onevone_roster');
       dl.innerHTML = '';
-      filteredRoster.forEach(rec=>{
+      roster.forEach(rec=>{
         const opt = document.createElement('option');
         opt.value = labelFor(rec);
         opt.dataset.pid = rec.player_id;
         dl.appendChild(opt);
       });
-
-      const qbdl = document.getElementById('qb_roster');
-      qbdl.innerHTML = '';
-      qbRoster.forEach(rec=>{
-        const opt = document.createElement('option');
-        opt.value = labelFor(rec);
-        opt.dataset.pid = rec.player_id;
-        qbdl.appendChild(opt);
-      });
-
-      qs('#filterChip').textContent = `Filter: ${(MATCH_GROUPS[CURR_MATCH]||[]).join(' + ')} (QB optional)`;
     }
 
-    function findByLabel(txt, pool){
-      const s = String(txt||'').toLowerCase();
-      return pool.find(r => labelFor(r).toLowerCase()===s) ||
-             pool.find(r => String(r.tryout_num||'').toLowerCase()===s) ||
-             pool.find(r => String(r.display_name||'').toLowerCase()===s);
-    }
-
-    // Timer for Time-to-Pressure
-    function makeTimer(viewEl, onState){
-      let running=false, t0=0, acc=0, raf=null;
-      const fmt = ms => (ms/1000).toFixed(2);
-      const tick = ()=>{ const now=performance.now(); const ms=acc + (running ? (now-t0) : 0); viewEl.textContent = fmt(ms); if(running) raf=requestAnimationFrame(tick); };
-      const start = ()=>{ if(running) return; running=true; t0=performance.now(); tick(); onState?.(true); };
-      const stop  = ()=>{ if(!running) return; running=false; acc += performance.now()-t0; cancelAnimationFrame(raf); tick(); onState?.(false); };
-      const reset = ()=>{ running=false; acc=0; cancelAnimationFrame(raf); tick(); onState?.(false); };
-      const toggle= ()=> running ? stop() : start();
-      tick();
-      return { start, stop, reset, toggle, isRunning:()=>running, getSeconds:()=>parseFloat(viewEl.textContent||'0')||0 };
-    }
-
-    // Toggles -> HTML
-    function toggleHTML(id,label){
-      return `
-        <div>
-          <label class="label" style="margin-bottom:6px">${label}</label>
-          <label class="toggle-switch">
-            <input type="checkbox" id="${id}">
-            <span class="toggle-slider"></span>
-            <span class="toggle-label">Yes</span>
-          </label>
-        </div>`;
-    }
-
-    function renderFactControls(){
-      const mt = CURR_MATCH;
-      const box = qs('#factToggles');
-      // base toggles present for WR/TE flows; hidden for trenches unless you want them
-      if (mt==='WR-DB' || mt==='TE-DB'){
-        box.innerHTML = toggleHTML('tgTargeted','Targeted') +
-                        toggleHTML('tgCatch','Catch') +
-                        toggleHTML('tgPBU','Pass Breakup') +
-                        toggleHTML('tgINT','Interception');
-        qs('#sepWrap').style.display = '';
-        qs('#pressWrap').style.display = 'none';
-      } else {
-        // OL-DL / RB-LB
-        box.innerHTML = ''; // no WR/DB toggles
-        qs('#sepWrap').style.display = 'none';
-        qs('#pressWrap').style.display = '';
-      }
-    }
-
-    // API writers
-    async function writeFactPosition(row){
-      try{
-        if (API?.tryout?.write?.factPosition) return await API.tryout.write.factPosition(row);
-      }catch(_){}
-      try{
-        if (API?.tryout?.write?.position) return await API.tryout.write.position(row);
-      }catch(_){}
-      // final fallback: raw POST to a conventional route
-      try{
-        if (API?.post) return await API.post('/tryout/write/71_Fact_Tryout_Position', row);
-      }catch(_){}
-      return { ok:false, error:'No writer for 71_Fact_Tryout_Position' };
-    }
-
-    // Roster + groups
-    async function loadRoster(){
-      const res = await API.tryout.read.roster();
-      if(!res?.ok) return;
-      const tid = ctx().tryout_id || '';
-      const all = (res.roster||[]).filter(r => !tid || String(r.tryout_id||'')===String(tid));
-
-      roster = all;
-      qbRoster = all.filter(p => isQB(p));
-    }
     async function loadLatestGroups(){
       const res = await API.tryout.read.groupsLatest(ctx().tryout_id);
       if(!res?.ok || !Array.isArray(res.latest)) return;
       groupLatest.clear();
       res.latest.forEach(row => { if(row.player_id && row.group_code) groupLatest.set(String(row.player_id).trim(), String(row.group_code).trim()); });
     }
-
-    function applyMatchFilter(){
-      const allow = MATCH_GROUPS[CURR_MATCH] || [];
-      filteredRoster = roster.filter(r => allow.includes(resolveGroupCode(r.player_id, '', r)));
-      rebuildDatalists();
-
-      // prune invalid selections
-      if (selState.off && !playerAllowed(selState.off)){ selState.off=null; qs('#offPicker').value=''; }
-      if (selState.def && !playerAllowed(selState.def)){ selState.def=null; qs('#defPicker').value=''; }
-
-      const hint = `Only showing ${allow.join(' & ')} (QB optional).`;
-      qs('#matchHint').textContent = hint;
-
-      renderRoleChips();
-      refreshSaveEnabled();
-    }
-
-    // UI state
-    function setOutcome(which){
-      selState.outcome = which; // 'OFF' | 'DEF' | 'DRAW'
-      qs('#outOff').setAttribute('aria-pressed', which==='OFF'?'true':'false');
-      qs('#outDef').setAttribute('aria-pressed', which==='DEF'?'true':'false');
-      qs('#outDraw').setAttribute('aria-pressed', which==='DRAW'?'true':'false');
-    }
-    function refreshSaveEnabled(){ qs('#saveOne').disabled = !(selState.off && selState.def); }
-    function setActiveAssign(role){
-      activeAssign = (role==='DEF') ? 'DEF' : 'OFF';
-      qs('#asOff').setAttribute('aria-pressed', activeAssign==='OFF' ? 'true':'false');
-      qs('#asDef').setAttribute('aria-pressed', activeAssign==='DEF' ? 'true':'false');
-    }
-    function renderRoleChips(){
-      const off = selState.off, def = selState.def, qb = selState.qb;
-      const offEl = qs('#chipOff'), defEl = qs('#chipDef'), qbEl = qs('#chipQB');
-
-      if (off){
-        const txt = `${off.tryout_num||''} • ${off.display_name||off.player_id}${off.primary_pos?` (${off.primary_pos})`:''}`;
-        offEl.innerHTML = `Offense: ${txt} <span class="x" data-clear="OFF">✕</span>`;
-        offEl.style.display = '';
-      } else offEl.style.display='none';
-
-      if (def){
-        const txt = `${def.tryout_num||''} • ${def.display_name||def.player_id}${def.primary_pos?` (${def.primary_pos})`:''}`;
-        defEl.innerHTML = `Defense: ${txt} <span class="x" data-clear="DEF">✕</span>`;
-        defEl.style.display = '';
-      } else defEl.style.display='none';
-
-      if (qb){
-        const txt = `${qb.tryout_num||''} • ${qb.display_name||qb.player_id}${qb.primary_pos?` (${qb.primary_pos})`:''}`;
-        qbEl.innerHTML = `QB: ${txt} <span class="x" data-clear="QB">✕</span>`;
-        qbEl.style.display = '';
-      } else qbEl.style.display='none';
-
-      qsa('[data-clear="OFF"]').forEach(x=> x.onclick = ()=>{ selState.off=null; qs('#offPicker').value=''; renderRoleChips(); refreshSaveEnabled(); });
-      qsa('[data-clear="DEF"]').forEach(x=> x.onclick = ()=>{ selState.def=null; qs('#defPicker').value=''; renderRoleChips(); refreshSaveEnabled(); });
-      qsa('[data-clear="QB"]').forEach(x=> x.onclick = ()=>{ selState.qb=null; qs('#qbPicker').value=''; renderRoleChips(); });
-    }
-    function assignTo(role, rec){
-      if (role==='QB'){
-        if (!isQB(rec)){ qs('#vStatus').textContent='Only QBs allowed in the QB picker.'; qs('#vStatus').className='status warn'; return; }
-        selState.qb = rec; qs('#qbPicker').value = labelFor(rec); renderRoleChips(); return;
+    function resolveGroupCode(pid, fallback, rec){
+      if (pid) {
+        const direct = groupLatest.get(String(pid).trim());
+        if (direct) return direct;
+        const r = roster.find(x => String(x.player_id).trim() === String(pid).trim());
+        return r?.group_code || r?.primary_pos || fallback || '';
       }
-      if (!playerAllowed(rec)){
-        const allow = (MATCH_GROUPS[CURR_MATCH]||[]).join(' & ');
-        qs('#vStatus').textContent = `Selection blocked — only ${allow} in ${CURR_MATCH}.`;
-        qs('#vStatus').className = 'status warn'; return;
-      }
-      if (role==='DEF'){ selState.def = rec; qs('#defPicker').value = labelFor(rec); }
-      else { selState.off = rec; qs('#offPicker').value = labelFor(rec); }
-      renderRoleChips(); refreshSaveEnabled();
-      if (role==='OFF') setActiveAssign('DEF');
+      return rec?.group_code || rec?.primary_pos || fallback || '';
     }
+
+    function setRole(role){
+      activeRole = role;
+      ['segOff','segDef','segQB'].forEach(id=>{
+        const pressed = (id==='segOff' && role==='offense') || (id==='segDef' && role==='defense') || (id==='segQB' && role==='qb');
+        document.getElementById(id).setAttribute('aria-pressed', pressed?'true':'false');
+      });
+    }
+    document.getElementById('segOff').onclick = ()=> setRole('offense');
+    document.getElementById('segDef').onclick = ()=> setRole('defense');
+    document.getElementById('segQB').onclick  = ()=> setRole('qb');
+
+    // Timer for pressure
+    function makeTimer(timeEl, onState){
+      let running=false, t0=0, acc=0, raf=null;
+      const fmt = ms => (ms/1000).toFixed(2);
+      const tick = ()=>{ const now=performance.now(); const ms=acc + (running ? (now-t0) : 0); timeEl.textContent = fmt(ms); if(running) raf=requestAnimationFrame(tick); };
+      const start = ()=>{ if(running) return; running=true; t0=performance.now(); tick(); onState?.(true); };
+      const stop  = ()=>{ if(!running) return; running=false; acc += performance.now()-t0; cancelAnimationFrame(raf); tick(); onState?.(false); };
+      const reset = ()=>{ running=false; acc=0; cancelAnimationFrame(raf); tick(); onState?.(false); };
+      const toggle= ()=> running ? stop() : start();
+      tick();
+      return { start, stop, reset, toggle, isRunning:()=>running, read:()=>parseFloat(timeEl.textContent||'0') };
+    }
+    const pressTimer = makeTimer(document.getElementById('tPress'), (running)=>{
+      const btn = document.getElementById('pressToggle');
+      btn.textContent = running ? 'Stop' : 'Start';
+      btn.setAttribute('aria-pressed', running ? 'true' : 'false');
+      btn.classList.toggle('warn', running);
+    });
+    document.getElementById('pressToggle').onclick = pressTimer.toggle;
+    document.getElementById('pressReset').onclick  = pressTimer.reset;
+
+    // Win side segmented
+    let winSide = 'offense';
+    document.querySelectorAll('.wbtn').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        winSide = b.getAttribute('data-win');
+        document.querySelectorAll('.wbtn').forEach(x=> x.setAttribute('aria-pressed', x===b?'true':'false'));
+      });
+    });
+
+    // Assign selection to active role
+    function renderWho(){
+      const badge = (el, rec, label) => {
+        if(!rec){ el.style.display='none'; return; }
+        const txt = `${rec.tryout_num||''} • ${rec.display_name}${rec.primary_pos?` (${rec.primary_pos})`:''}`;
+        el.textContent = `${label}: ${txt}`; el.style.display='';
+      };
+      badge(document.getElementById('whoOff'), lane.offense, 'Offense');
+      badge(document.getElementById('whoDef'), lane.defense, 'Defense');
+      badge(document.getElementById('whoQB'),  lane.qb,      'QB');
+      document.getElementById('saveBtn').disabled = !(lane.offense && lane.defense);
+    }
+    function assignToActiveRole(rec){
+      lane[activeRole] = rec;
+      document.getElementById('playerPicker').value = labelFor(rec);
+      renderWho();
+    }
+
+    // From roster cards
+    window.addEventListener('tryoutui:select', (e)=>{
+      const d = e?.detail?.player; if(!d) return;
+      const hit = roster.find(r => r.player_id===d.player_id) || d;
+      assignToActiveRole(hit);
+    });
+    // Search box
+    document.getElementById('playerPicker').addEventListener('change', (e)=>{
+      const txt = (e.target.value||'').toLowerCase();
+      const hit = roster.find(r => labelFor(r).toLowerCase() === txt) ||
+                  roster.find(r => String(r.tryout_num||'').toLowerCase() === txt) ||
+                  roster.find(r => String(r.display_name||'').toLowerCase() === txt);
+      if(hit) assignToActiveRole(hit);
+    });
+
+    // ----- Recent writes (bottom) -----
+    function addRecent(summary){
+      pageLog.unshift({ ts:new Date(), summary });
+      pageLog.splice(PAGE_LOG_LIMIT);
+      const ul = qs('#recentList');
+      const cnt = qs('#recentCount');
+      ul.innerHTML = pageLog.map(it => `<li><strong>${fmtTime(it.ts)}</strong> — ${it.summary}</li>`).join('');
+      cnt.textContent = pageLog.length ? `${pageLog.length} item${pageLog.length===1?'':'s'}` : '';
+    }
+    document.getElementById('toggleRecent').addEventListener('click', ()=>{
+      const p = document.getElementById('recentPanel');
+      const open = p.style.display !== 'none';
+      p.style.display = open ? 'none' : '';
+      document.getElementById('toggleRecent').textContent = open ? 'Recent Writes ▾' : 'Recent Writes ▴';
+    });
+
+    // Mutually-helpful toggles
+    document.getElementById('catch').addEventListener('change', (e)=>{
+      if (e.target.checked){ document.getElementById('pbu').checked=false; document.getElementById('int').checked=false; }
+    });
+    document.getElementById('int').addEventListener('change', (e)=>{
+      if (e.target.checked){ document.getElementById('catch').checked=false; }
+    });
 
     // Save
-    function setSaving(on){
-      const btn = qs('#saveOne');
-      if (!btn.dataset.label) btn.dataset.label = btn.textContent;
-      if (on){ btn.classList.add('loading'); btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Saving…'; }
-      else { btn.classList.remove('loading'); btn.textContent = btn.dataset.label; refreshSaveEnabled(); }
-    }
-
-    function addRecentRow(att, matchup, offTxt, defTxt, qbTxt, outcome, yds, tgt, cat, pbu, inte, sep, ttp){
-      const tb = qs('#repLog');
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${att}</td><td>${matchup}</td><td>${offTxt}</td><td>${defTxt}</td><td>${qbTxt||'—'}</td>
-        <td>${outcome}</td><td>${yds ?? '—'}</td><td>${tgt? 'Y':'N'}</td><td>${cat? 'Y':'N'}</td><td>${pbu? 'Y':'N'}</td><td>${inte? 'Y':'N'}</td>
-        <td>${sep ?? '—'}</td><td>${(ttp!=null && ttp!=='' ? Number(ttp).toFixed(2) : '—')}</td>`;
-      tb.prepend(tr);
-      while (tb.children.length > 20) tb.removeChild(tb.lastChild);
-
-      recent.unshift({ts:new Date(), att, matchup, offTxt, defTxt, qbTxt, outcome, yds, tgt, cat, pbu, inte, sep, ttp});
-      recent.splice(RECENT_MAX);
-      qs('#recentCount').textContent = `${recent.length} rep${recent.length===1?'':'s'}`;
-    }
-
     async function saveRep(){
-      const statusEl = qs('#vStatus');
+      const statusEl = document.getElementById('status');
       statusEl.textContent = '';
       const c = ctx();
       if(!c.tryout_id){ statusEl.textContent='Set a Tryout ID first.'; statusEl.className='status warn'; return; }
-      if(!selState.off || !selState.def){ statusEl.textContent='Pick both players.'; statusEl.className='status warn'; return; }
+      if(!(lane.offense && lane.defense)){ statusEl.textContent='Assign Offense and Defense.'; statusEl.className='status warn'; return; }
 
-      const attempt = Number(qs('#vAttempt').value||1);
-      const outcome = selState.outcome; // 'OFF' | 'DEF' | 'DRAW'
-      const offGroup = resolveGroupCode(selState.off.player_id, '', selState.off);
-      const defGroup = resolveGroupCode(selState.def.player_id, '', selState.def);
-
-      // Booleans & numeric mapped 1:1 to the fact columns
-      const isWRFlow = (CURR_MATCH==='WR-DB' || CURR_MATCH==='TE-DB');
-
-      const targeted = !!qs('#tgTargeted')?.checked;
-      const caught   = !!qs('#tgCatch')?.checked;
-      const pbu      = !!qs('#tgPBU')?.checked;
-      const intrcpt  = !!qs('#tgINT')?.checked;
-
-      const sep15 = isWRFlow ? (qs('#sepSel').value ? Number(qs('#sepSel').value) : null) : null;
-
-      let ttp = null;
-      if (!isWRFlow){
-        const tEl = qs('#pressTime');
-        const manual = qs('#pressManual')?.value;
-        ttp = manual!=='' ? Number(manual) : Number(tEl?.textContent||'0');
-        if (isNaN(ttp)) ttp = null;
-      }
-
-      const yardsEst = (qs('#yardsEst').value!=='' ? Number(qs('#yardsEst').value) : null);
-
-      const qbId = selState.qb?.player_id || '';
-      const routeOrRush = (qs('#routeInput').value||'').trim();
+      if (pressTimer.isRunning()) pressTimer.toggle();
 
       const row = {
+        // REQUIRED: exact columns for 72_Fact_Tryout_1v1
         timestamp: new Date().toISOString(),
         tryout_id: c.tryout_id || '',
         period_code: c.period_code || '',
-        offense_id: String(selState.off.player_id||'').trim(),
-        offense_group: offGroup,
-        defense_id: String(selState.def.player_id||'').trim(),
-        defense_group: defGroup,
-        qb_id: qbId ? String(qbId).trim() : '',
-        matchup_type: CURR_MATCH,
-        route_or_rush: routeOrRush,
-        targeted: targeted ? 1 : 0,
-        catch: caught ? 1 : 0,
-        pbu: pbu ? 1 : 0,
-        int: intrcpt ? 1 : 0,
-        separation_1_5: sep15,
-        time_to_pressure_sec: ttp,
-        win_side: outcome, // OFF | DEF | DRAW
-        yards_est: yardsEst,
-        notes: (qs('#vNotes').value||'').trim()
+        offense_id: String(lane.offense.player_id||'').trim(),
+        offense_group: resolveGroupCode(lane.offense.player_id,'', lane.offense) || '',
+        defense_id: String(lane.defense.player_id||'').trim(),
+        defense_group: resolveGroupCode(lane.defense.player_id,'', lane.defense) || '',
+        qb_id: lane.qb ? String(lane.qb.player_id||'').trim() : '',
+        matchup_type: (document.getElementById('matchupType').value||'').trim(),
+        route_or_rush: (document.getElementById('routeOrRush').value||'').trim(),
+        targeted: document.getElementById('targeted').checked ? 1 : 0,
+        catch:    document.getElementById('catch').checked ? 1 : 0,
+        pbu:      document.getElementById('pbu').checked ? 1 : 0,
+        int:      document.getElementById('int').checked ? 1 : 0,
+        separation_1_5: Number(document.getElementById('sep').value||3),
+        time_to_pressure_sec: Number(pressTimer.read()||0),
+        win_side: winSide, // offense | defense | tie
+        yards_est: (function(v){ const n=parseFloat(v); return isNaN(n)?'':n; })(document.getElementById('yards').value),
+        notes: (document.getElementById('notes').value||'').trim(),
+
+        // helpful extras (ignored by sheet if not mapped)
+        source_app: 'station-1v1',
+        client_id: (localStorage.getItem('client_id')||'web')
+      };
+
+      const saveBtn = document.getElementById('saveBtn');
+      if (!saveBtn.dataset.label) saveBtn.dataset.label = saveBtn.textContent;
+
+      const setSaving = (s)=>{
+        if (s){
+          saveBtn.classList.add('loading'); saveBtn.disabled=true;
+          saveBtn.innerHTML = '<span class="spin"></span>Saving…';
+        } else {
+          saveBtn.classList.remove('loading'); saveBtn.disabled=false;
+          saveBtn.textContent = saveBtn.dataset.label;
+        }
       };
 
       setSaving(true);
       let res;
-      try { res = await writeFactPosition(row); }
-      finally { setSaving(false); }
+      try {
+        if (API?.tryout?.write?.onevone) {
+          res = await API.tryout.write.onevone(row);
+        } else {
+          res = await API.tryout.write.station({ station_id: STATION_ID, ...row });
+        }
+      } catch(e){
+        res = { ok:false, error: e?.message || 'Error' };
+      } finally {
+        setSaving(false);
+      }
 
       if(!res?.ok){
         statusEl.textContent = res?.error || 'Save failed.';
-        statusEl.className = 'status err';
+        statusEl.className='status err';
         return;
       }
 
-      const offTxt = `${selState.off.tryout_num||''} • ${selState.off.display_name||selState.off.player_id}`;
-      const defTxt = `${selState.def.tryout_num||''} • ${selState.def.display_name||selState.def.player_id}`;
-      const qbTxt  = selState.qb ? `${selState.qb.tryout_num||''} • ${selState.qb.display_name||selState.qb.player_id}` : '';
-      addRecentRow(
-        attempt, CURR_MATCH, offTxt, defTxt, qbTxt,
-        outcome==='OFF'?'Off W': outcome==='DEF'?'Def W':'Draw',
-        yardsEst, targeted, caught, pbu, intrcpt, sep15, ttp
-      );
+      addRecent(`1v1 • ${lane.offense.tryout_num||lane.offense.player_id} vs ${lane.defense.tryout_num||lane.defense.player_id} • ${row.matchup_type} • ${row.route_or_rush || '—'} • ${row.win_side} • tgt:${row.targeted} catch:${row.catch} pbu:${row.pbu} int:${row.int} • sep ${row.separation_1_5} • pr ${row.time_to_pressure_sec.toFixed(2)}s • yds ${row.yards_est||'—'}`);
 
-      try { TryoutUI?.markDone?.(selState.off.player_id || selState.off.tryout_num); } catch {}
-      try { TryoutUI?.markDone?.(selState.def.player_id || selState.def.tryout_num); } catch {}
+      try { TryoutUI?.markDone?.(lane.offense.player_id || lane.offense.tryout_num); } catch {}
+      try { TryoutUI?.markDone?.(lane.defense.player_id || lane.defense.tryout_num); } catch {}
 
-      // Next attempt + light reset of flow-specific bits
-      const next = Math.min((attempt % 10) + 1, 10);
-      qs('#vAttempt').value = String(next);
-      qs('#vNotes').value='';
-      qs('#routeInput').value='';
-      qs('#yardsEst').value='';
-      qs('#sepSel').value='';
-      if (qs('#tgTargeted')) qs('#tgTargeted').checked=false;
-      if (qs('#tgCatch'))    qs('#tgCatch').checked=false;
-      if (qs('#tgPBU'))      qs('#tgPBU').checked=false;
-      if (qs('#tgINT'))      qs('#tgINT').checked=false;
+      // soft reset toggles & pressure timer, keep players
+      ['targeted','catch','pbu','int'].forEach(id=> document.getElementById(id).checked=false);
+      document.getElementById('sep').value = '3'; document.getElementById('sepVal').textContent='3';
+      document.getElementById('yards').value = '';
+      document.getElementById('routeOrRush').value = '';
+      pressTimer.reset();
+      document.getElementById('notes').value = '';
 
-      // reset TTP timer
-      if (pressTimer){ pressTimer.reset(); qs('#pressManual').value=''; }
-
-      statusEl.textContent = `Saved ✔ to 71_Fact_Tryout_Position`;
-      statusEl.className = 'status ok';
+      statusEl.textContent = 'Saved ✔';
+      statusEl.className='status ok';
     }
 
-    // ---------- Init ----------
-    let pressTimer = null;
+    document.getElementById('saveBtn').addEventListener('click', saveRep);
 
+    // Init
     (async function init(){
+      setRole('offense');
       await Promise.all([ loadRoster(), loadLatestGroups() ]);
 
-      // default matchup & UI
-      CURR_MATCH = qs('#matchTypeSel').value;
-      renderFactControls();
-
-      // Apply initial filter + datalists
-      (function applyFilters(){
-        const allow = MATCH_GROUPS[CURR_MATCH] || [];
-        filteredRoster = roster.filter(r => allow.includes(resolveGroupCode(r.player_id, '', r)));
-        qbRoster = roster.filter(r => QB_GROUPS.includes(resolveGroupCode(r.player_id, '', r)));
-        rebuildDatalists();
-      })();
-
-      // Timer wiring
-      pressTimer = makeTimer(qs('#pressTime'), (running)=>{
-        const btn = qs('#pressToggle');
-        btn.textContent = running ? 'Stop' : 'Start';
-        btn.classList.toggle('warn', running);
-      });
-      qs('#pressToggle').addEventListener('click', ()=> pressTimer.toggle());
-      qs('#pressReset').addEventListener('click', ()=> { pressTimer.reset(); qs('#pressManual').value=''; });
-
-      // Outcome seg
-      setOutcome('OFF');
-      qs('#outOff').addEventListener('click', ()=> setOutcome('OFF'));
-      qs('#outDef').addEventListener('click', ()=> setOutcome('DEF'));
-      qs('#outDraw').addEventListener('click',()=> setOutcome('DRAW'));
-
-      // Assign role toggle
-      setActiveAssign('OFF');
-      qs('#asOff').addEventListener('click', ()=> setActiveAssign('OFF'));
-      qs('#asDef').addEventListener('click', ()=> setActiveAssign('DEF'));
-
-      // Match type change
-      qs('#matchTypeSel').addEventListener('change', ()=>{
-        CURR_MATCH = qs('#matchTypeSel').value;
-        renderFactControls();
-        applyMatchFilter();
-      });
-
-      function applyMatchFilter(){
-        const allow = MATCH_GROUPS[CURR_MATCH] || [];
-        filteredRoster = roster.filter(r => allow.includes(resolveGroupCode(r.player_id, '', r)));
-        rebuildDatalists();
-
-        if (selState.off && !playerAllowed(selState.off)){ selState.off=null; qs('#offPicker').value=''; }
-        if (selState.def && !playerAllowed(selState.def)){ selState.def=null; qs('#defPicker').value=''; }
-
-        const hint = `Only showing ${allow.join(' & ')} (QB optional).`;
-        qs('#matchHint').textContent = hint;
-
-        renderRoleChips();
-        refreshSaveEnabled();
-      }
-
-      // Pickers
-      qs('#offPicker').addEventListener('change', (e)=>{ const hit=findByLabel(e.target.value, filteredRoster); if(hit){ assignTo('OFF', hit); } });
-      qs('#defPicker').addEventListener('change', (e)=>{ const hit=findByLabel(e.target.value, filteredRoster); if(hit){ assignTo('DEF', hit); } });
-      qs('#qbPicker').addEventListener('change',  (e)=>{ const hit=findByLabel(e.target.value, qbRoster); if(hit){ assignTo('QB',  hit); } });
-
-      // Save + clear
-      qs('#saveOne').addEventListener('click', saveRep);
-      qs('#clearSel').addEventListener('click', ()=>{
-        qs('#offPicker').value=''; qs('#defPicker').value=''; qs('#qbPicker').value='';
-        qs('#routeInput').value=''; qs('#vNotes').value=''; qs('#yardsEst').value='';
-        if (qs('#tgTargeted')) qs('#tgTargeted').checked=false;
-        if (qs('#tgCatch'))    qs('#tgCatch').checked=false;
-        if (qs('#tgPBU'))      qs('#tgPBU').checked=false;
-        if (qs('#tgINT'))      qs('#tgINT').checked=false;
-        qs('#sepSel').value='';
-        pressTimer && pressTimer.reset(); qs('#pressManual').value='';
-        selState.off=null; selState.def=null; selState.qb=null;
-        setOutcome('OFF'); setActiveAssign('OFF');
-        renderRoleChips(); refreshSaveEnabled(); qs('#vStatus').textContent='';
-      });
-
-      // Tap roster card to assign (filtered)
-      window.addEventListener('tryoutui:select', (e)=>{
-        const p = e?.detail?.player; if(!p) return;
-        // route taps according to role: QB picker only accepts QB, OFF/DEF accept only matchup groups
-        if (isQB(p)) assignTo('QB', p);
-        else assignTo(activeAssign, p);
-      });
-
-      // Optional preload from TryoutUI
+      // preload if TryoutUI has a current selection
       if (window.TryoutUI?.getSelectedPlayers) {
-        const cur = TryoutUI.getSelectedPlayers() || [];
-        cur.forEach(p=>{
-          if (isQB(p)) assignTo('QB', p);
-          else if (!selState.off && playerAllowed(p)) assignTo('OFF', p);
-          else if (!selState.def && playerAllowed(p)) assignTo('DEF', p);
-        });
+        const cur = TryoutUI.getSelectedPlayers();
+        if (Array.isArray(cur) && cur[0]) assignToActiveRole(cur[0]);
       }
-
-      refreshSaveEnabled();
+      renderWho();
     })();
   </script>
 </body>
