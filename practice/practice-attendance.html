@@ -18,51 +18,23 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../style.css"/>
 
-  <!-- Light theme (white tiles) -->
   <style>
     :root{
-      /* Surface & text */
-      --page-bg: #f5f7fb;
-      --tile: #ffffff;
-      --tile-bd: #e6e9f2;
-      --tile-shadow: 0 10px 22px rgba(9, 14, 34, .08);
-      --text-strong: #111827;
-      --text: #1f2937;
-      --text-subtle: #6b7280;
-
-      /* Accents */
-      --accent: #7C4DFF;
-      --accent2:#8B5CF6;
-
-      /* Status colors */
-      --late:   #F59E0B;
-      --present:#22C55E;
-      --excused:#3B82F6;
-      --exlate: #8B5CF6;
-
-      /* Chips / misc */
-      --chip-bg: #f3f4f6;
-      --chip-bd: #e5e7eb;
-
-      /* Focus */
-      --focus-ring: 0 0 0 3px rgba(124,77,255,.25);
+      --page-bg:#f5f7fb; --tile:#fff; --tile-bd:#e6e9f2; --tile-shadow:0 10px 22px rgba(9,14,34,.08);
+      --text:#1f2937; --text-strong:#111827; --text-subtle:#6b7280;
+      --accent:#7C4DFF; --accent2:#8B5CF6;
+      --late:#F59E0B; --present:#22C55E; --excused:#3B82F6; --exlate:#8B5CF6;
+      --chip-bg:#f3f4f6; --chip-bd:#e5e7eb; --focus-ring:0 0 0 3px rgba(124,77,255,.25);
+      --border:#e6e9f2;
     }
 
-    /* Page */
-    body{ background:var(--page-bg); color:var(--text); font-family: Manrope, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
-    .page-header{
-      display:flex;align-items:center;justify-content:space-between;
-      padding:14px 16px 0 16px; max-width:1100px; margin:0 auto;
-    }
-    .page-header h1{ margin:0; font-weight:800; letter-spacing:.2px; color:var(--text-strong) }
+    body{ background:var(--page-bg); color:var(--text); font-family:Manrope,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; }
+    .page-header{ display:flex;align-items:center;justify-content:space-between; padding:14px 16px 0; max-width:1100px; margin:0 auto; }
+    .page-header h1{ margin:0; font-weight:800; color:var(--text-strong) }
     .menu-actions{display:flex;gap:.5rem}
-    .menu-btn{
-      display:inline-flex;align-items:center;gap:.4rem;padding:.55rem .85rem;border-radius:10px;
-      background:#fff;border:1px solid var(--tile-bd);box-shadow: var(--tile-shadow);color:var(--text-strong);text-decoration:none;font-weight:700
-    }
-    .menu-btn.secondary{ background:#fafbff }
+    .menu-btn{ display:inline-flex;align-items:center;gap:.4rem;padding:.55rem .85rem;border-radius:10px;background:#fff;border:1px solid var(--tile-bd);box-shadow:var(--tile-shadow);color:var(--text-strong);text-decoration:none;font-weight:700 }
 
-    /* Layout (mobile first) */
+    /* Layout – mobile first */
     .container{
       max-width:1100px;margin:0 auto;padding:16px;
       display:grid;gap:16px;
@@ -71,134 +43,84 @@
         "setup"
         "tools"
         "roster"
+        "notchecked"
         "log";
     }
     @media (min-width:980px){
       .container{
-        grid-template-columns:1fr 1fr;
+        grid-template-columns:2fr 1fr;
         grid-template-areas:
-          "setup tools"
-          "roster roster"
-          "log    log";
+          "setup      tools"
+          "roster     notchecked"
+          "log        log";
       }
     }
 
     /* Cards */
-    .card{
-      background:var(--tile);
-      border:1px solid var(--tile-bd);
-      border-radius:16px;
-      padding:16px;
-      color:var(--text);
-      box-shadow:var(--tile-shadow);
-    }
+    .card{ background:var(--tile); border:1px solid var(--tile-bd); border-radius:16px; padding:16px; color:var(--text); box-shadow:var(--tile-shadow) }
     .section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
     .section-title h2{margin:0;font-size:1.15rem;color:var(--text-strong)}
     .tiny{font-size:.9rem;color:var(--text-subtle)}
 
     /* Inputs */
     label{display:block;font-size:.9rem;color:var(--text-subtle);margin:0 0 .35rem}
-    input,select,textarea{
-      width:100%;padding:.7rem .85rem;border-radius:12px;
-      border:1px solid #d1d5db;
-      background:#fff;color:var(--text);font-size:1rem;
+    input,select{
+      width:100%;padding:.7rem .85rem;border-radius:12px;border:1px solid #d1d5db;background:#fff;color:var(--text);font-size:1rem;
       transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
     }
-    input::placeholder,textarea::placeholder{color:#9ca3af}
-    input:focus,select:focus,textarea:focus{
-      outline:none;border-color:#a78bfa;box-shadow:var(--focus-ring);background:#fff;
-    }
-    input[type="number"]{-moz-appearance:textfield;}
+    input:focus,select:focus{ outline:none;border-color:#a78bfa;box-shadow:var(--focus-ring);background:#fff; }
+
+    /* Make number inputs (Grace) match style; remove spinners */
+    input[type="number"]{ appearance:textfield; -moz-appearance:textfield; background:#fff; border:1px solid #d1d5db; border-radius:12px; padding:.7rem .85rem; }
     input[type="number"]::-webkit-outer-spin-button,
     input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+    #prac_grace{ background:#fff; border:1px solid #d1d5db; border-radius:12px; }
 
-    /* Rows */
     .row{display:grid;gap:12px}
-    .row.cols-2{grid-template-columns:1fr 1fr}
     .row.cols-3{grid-template-columns:repeat(3,1fr)}
-    @media (max-width:680px){ .row.cols-2,.row.cols-3{grid-template-columns:1fr} }
+    @media (max-width:680px){ .row.cols-3{grid-template-columns:1fr} }
 
     /* Buttons */
     .btnbar{display:flex;gap:.5rem;flex-wrap:wrap}
-    .btn{
-      padding:.65rem 1rem;border-radius:999px;border:1px solid transparent;cursor:pointer;
+    .btn{ padding:.65rem 1rem;border-radius:999px;border:1px solid transparent;cursor:pointer;
       background:linear-gradient(135deg,var(--accent) 0%, var(--accent2) 100%);color:#fff;font-weight:800;
-      box-shadow:0 10px 24px rgba(124,77,255,.25);
-      transition:transform .15s ease,filter .15s ease;
-    }
+      box-shadow:0 10px 24px rgba(124,77,255,.25); transition:transform .15s ease,filter .15s ease; }
     .btn:hover{transform:translateY(-2px);filter:saturate(1.05)}
-    .btn.subtle{
-      background:#fff;border-color:#d1d5db;color:var(--text-strong);box-shadow:var(--tile-shadow)
-    }
-    .btn.warn{background:#F59E0B;color:#1f1300;border-color:#a66b07}
+    .btn.subtle{ background:#fff;border-color:#d1d5db;color:var(--text-strong);box-shadow:var(--tile-shadow) }
+    .btn.warn{ background:#F59E0B;color:#1f1300;border-color:#a66b07 }
+    .btn.neutral{ background:#2b2f3a; color:#fff; border:1px solid rgba(255,255,255,.35) }
 
-    /* Toggle pill */
-    .toggle{display:flex;align-items:center}
-    .toggle-input{position:absolute;opacity:0;pointer-events:none}
-    .toggle-btn{
-      position:relative;cursor:pointer;
-      padding:.55rem .9rem .55rem 2.2rem;border-radius:999px;
-      background:#fff;color:var(--text-strong);border:1px solid #d1d5db;
-      font-weight:800;transition:all .15s ease; box-shadow: var(--tile-shadow);
-    }
-    .toggle-btn::before{
-      content:"";position:absolute;left:.7rem;top:50%;transform:translateY(-50%);
-      width:16px;height:16px;border-radius:50%;background:#e5e7eb;
-    }
-    .toggle-input:checked + .toggle-btn{
-      background:linear-gradient(90deg,#16A34A,#10B981);border-color:transparent;color:#071a12;
-      box-shadow:0 8px 18px rgba(16,185,129,.28);
-    }
-    .toggle-input:checked + .toggle-btn::before{
-      content:"✓";display:grid;place-items:center;color:#0c2b1e;font-weight:900;background:#fff
-    }
-    .toggle-btn:focus-visible{outline:2px solid #93C5FD;outline-offset:2px}
-
-    /* Roster grid */
+    /* Player grid */
     .toolbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:.6rem}
     .search{flex:1 1 240px}
     .player-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.6rem}
-
     .plyr{
-      position:relative;border:1px solid #e5e7eb;border-radius:12px;padding:.72rem .8rem;
-      background:#ffffff;cursor:pointer;display:flex;gap:.65rem;align-items:center;min-height:58px;
-      transition:transform .06s ease, border-color .06s ease, background .06s ease, box-shadow .06s ease;user-select:none;color:var(--text);
-      box-shadow: var(--tile-shadow);
+      position:relative;border:1px solid #e5e7eb;border-radius:12px;padding:.72rem .8rem;background:#ffffff;cursor:pointer;
+      display:flex;gap:.65rem;align-items:center;min-height:58px;user-select:none;color:var(--text);box-shadow:var(--tile-shadow);
+      transition:transform .06s ease, border-color .06s ease, background .06s ease, box-shadow .06s ease;
     }
     .plyr:hover{transform:translateY(-1px);border-color:#d1d5db}
     .num{width:36px;height:36px;border-radius:9px;background:#f3f4f6;display:grid;place-items:center;font-weight:800;color:var(--text-strong)}
-
     .plyr .name{min-width:0}
     .plyr .name > div:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:800;letter-spacing:.2px;color:var(--text-strong)}
     .plyr .pos{color:var(--text-subtle)}
-
     .stamp{font-variant-numeric:tabular-nums;font-size:.82rem;color:#455a64;margin-left:auto}
+    .status{position:absolute;right:8px;top:8px;font-size:.72rem;padding:.16rem .48rem;border-radius:999px;border:1px solid var(--chip-bd);background:var(--chip-bg);color:var(--text-strong)}
+    .saved::after{content:'✓';position:absolute;left:-6px;top:-6px;width:18px;height:18px;border-radius:50%;background:#22c55e;color:#052e1a;font-size:.75rem;display:grid;place-items:center;border:1px solid #0a7a3a;}
+    .plyr.state-on  { background:#f0fdf4; border-color:rgba(34,197,94,.4) }
+    .plyr.state-late{ background:#fffbeb; border-color:rgba(245,158,11,.5) }
+    .plyr.state-exc { background:#eff6ff; border-color:rgba(59,130,246,.45) }
+    .plyr.state-excl{ background:#f5f3ff; border-color:rgba(139,92,246,.5) }
 
-    .status{
-      position:absolute;right:8px;top:8px;font-size:.72rem;padding:.16rem .48rem;border-radius:999px;
-      border:1px solid var(--chip-bd);background:var(--chip-bg);color:var(--text-strong)
-    }
-    .status.excl{background:#efeafe;border-color:#dcd4ff;color:#4b3ca6}
-
-    .saved::after{
-      content:'✓';position:absolute;left:-6px;top:-6px;width:18px;height:18px;border-radius:50%;
-      background:#22c55e;color:#052e1a;font-size:.75rem;display:grid;place-items:center;border:1px solid #0a7a3a;
-    }
-
-    /* State tints (light) */
-    .plyr.state-on  { background: #f0fdf4; border-color: rgba(34,197,94,.4); }
-    .plyr.state-late{ background: #fffbeb; border-color: rgba(245,158,11,.5); }
-    .plyr.state-exc { background: #eff6ff; border-color: rgba(59,130,246,.45); }
-    .plyr.state-excl{ background: #f5f3ff; border-color: rgba(139,92,246,.5); }
-
-    /* Chips / legend */
+    /* Chips + filters */
     .chip{display:inline-block;padding:.3rem .6rem;border-radius:999px;background:var(--chip-bg);border:1px solid var(--chip-bd);font-size:.85rem;color:var(--text)}
-    .legend{display:flex;gap:.5rem;align-items:center}
-    .legend .dot{width:12px;height:12px;border-radius:50%}
-    .dot.on{background:var(--present)}
-    .dot.late{background:var(--late)}
-    .dot.exc{background:var(--excused)}
-    .dot.excl{background:var(--exlate)}
+    .chipbar{display:flex;gap:.4rem;overflow:auto;padding:.2rem 0;-webkit-overflow-scrolling:touch}
+    .filter-chip{cursor:pointer;user-select:none;white-space:nowrap;background:var(--chip-bg);border:1px solid var(--chip-bd);color:var(--text);font-weight:800;border-radius:999px;padding:.42rem .8rem;transition:background .15s ease,border-color .15s ease,box-shadow .15s ease,transform .15s ease}
+    .filter-chip[aria-pressed="true"]{ background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#fff;border-color:transparent;box-shadow:0 8px 18px rgba(139,92,246,.28) }
+
+    /* Right column list (Not Checked In) */
+    .mini{display:flex;flex-direction:column;gap:8px}
+    .mini .mrow{display:grid;grid-template-columns:64px 1fr 90px;gap:8px;align-items:center;background:#fff;border:1px solid var(--border);border-radius:10px;padding:8px;box-shadow:var(--tile-shadow)}
 
     /* Log */
     #log{max-height:260px;overflow:auto;background:#fff;border:1px solid var(--tile-bd);border-radius:12px;padding:10px;color:var(--text);box-shadow:var(--tile-shadow)}
@@ -209,35 +131,20 @@
     }
     .popover button{display:block;width:100%;text-align:left;padding:.5rem .7rem;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--text)}
     .popover button:hover{background:#f3f4f6;border-color:#e5e7eb}
-    .hidden{display:none}
+    .hidden{ display:none !important; } /* keep menu hidden until opened */
 
-    /* Modal */
-    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:saturate(120%) blur(3px);display:none;align-items:center;justify-content:center;z-index:60}
-    .modal-backdrop.open{display:flex}
-    .modal{background:#ffffff;color:var(--text);border:1px solid var(--tile-bd);border-radius:14px;padding:16px;max-width:520px;width:92%;box-shadow:0 20px 40px rgba(0,0,0,.18)}
-    .modal h3{margin:.2rem 0 .6rem 0;color:var(--text-strong)}
-    .row-tight{display:flex;gap:.6rem;flex-wrap:wrap}
-    .row-tight > *{flex:1 1 160px}
-    .modal-backdrop.hidden{display:none !important}
-
-    /* Filters (chips) */
-    .filters{display:flex;flex-direction:column;gap:.35rem;margin:4px 0 10px}
-    .chipbar{display:flex;gap:.4rem;overflow:auto;padding:.2rem 0;-webkit-overflow-scrolling:touch}
-    .filter-chip{
-      cursor:pointer;user-select:none;white-space:nowrap;
-      background:var(--chip-bg);border:1px solid var(--chip-bd);color:var(--text);
-      font-weight:800;border-radius:999px;padding:.42rem .8rem;
-      transition:background .15s ease,border-color .15s ease,box-shadow .15s ease,transform .15s ease;
-    }
-    .filter-chip[aria-pressed="true"]{
-      background:linear-gradient(90deg,var(--accent),var(--accent2));
-      color:#fff;border-color:transparent;box-shadow:0 8px 18px rgba(139,92,246,.28)
-    }
-    .filter-chip:focus-visible{outline:2px solid #93C5FD;outline-offset:2px}
+    /* Busy / Loading */
+    .loading-overlay{ position:absolute; inset:44px 10px 10px 10px; display:none; align-items:center; justify-content:center;
+      background:rgba(7,9,18,.10); border:1px dashed #ccd2e4; border-radius:12px; }
+    .loading-overlay.active{ display:flex; }
+    .spinner{width:22px;height:22px;border-radius:50%;border:3px solid rgba(0,0,0,.18);border-top-color:#7C4DFF;animation:spin .8s linear infinite;margin-right:8px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .busy{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;background:#141a28;border:1px solid rgba(255,255,255,.18);color:#fff;padding:8px 10px;border-radius:10px;display:none;z-index:1000;align-items:center}
+    .busy.active{display:flex}
+    .busy .spinner{border-color:rgba(255,255,255,.28);border-top-color:#9b87f5}
 
     /* Mobile tweaks */
     @media (max-width:700px){
-      .container{padding:12px}
       .player-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.5rem}
       .plyr{padding:.6rem .65rem;min-height:56px;border-radius:10px}
       .num{width:32px;height:32px;border-radius:8px;font-size:.9rem}
@@ -248,12 +155,6 @@
       .player-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem}
       .plyr{padding:.55rem .6rem;gap:.5rem}
       .num{width:30px;height:30px;border-radius:8px}
-      .plyr .name > div:first-child{font-size:.92rem}
-      .plyr .pos{font-size:.74rem}
-      .chip.tiny{font-size:.78rem;padding:.16rem .5rem}
-      .btnbar,.toolbar{gap:.4rem}
-      .modal{max-width:96%}
-      .row-tight > *{flex:1 1 100%}
     }
   </style>
 </head>
@@ -263,7 +164,7 @@
     <h1>Practice Attendance</h1>
     <nav class="menu-actions">
       <a href="../index.html" class="menu-btn">Home</a>
-      <a href="practice.html" class="menu-btn secondary">Practice</a>
+      <a href="practice.html" class="menu-btn">Practice</a>
     </nav>
   </header>
 
@@ -284,19 +185,9 @@
 
         <div class="btnbar" style="margin-top:.6rem">
           <button class="btn subtle" id="setNowBtn">Set start = now</button>
-
-          <!-- Autosave toggle -->
-          <div class="toggle" aria-live="polite">
-            <input type="checkbox" id="autosave" class="toggle-input" checked>
-            <label for="autosave" class="toggle-btn">Autosave on click</label>
-          </div>
-
-          <span class="chip tiny legend" style="margin-left:auto">
-            <span class="dot on"></span> On time
-            <span class="dot late" style="margin-left:.5rem"></span> Late
-            <span class="dot exc" style="margin-left:.5rem"></span> Excused
-            <span class="dot excl" style="margin-left:.5rem"></span> Excused Late
-          </span>
+          <label class="chip tiny" style="margin-left:auto;display:flex;align-items:center;gap:.5rem">
+            <input type="checkbox" id="autosave" checked style="accent-color:#7C4DFF; width:16px; height:16px"> Autosave on click
+          </label>
         </div>
       </section>
 
@@ -310,46 +201,49 @@
           <button class="btn" id="saveAllBtn">Save all unsaved</button>
           <button class="btn warn" id="finalizeBtn">Finalize: mark remaining Absent</button>
           <button class="btn subtle" id="reloadRosterBtn">Reload Roster</button>
-          <button class="btn subtle" id="addPlayerBtn">Add to Roster</button>
+          <button class="btn neutral" id="clearSelectedBtn">Clear Selected</button>
         </div>
         <div class="tiny" style="margin-top:.5rem;">
-          Tip: tap = On time/Late (auto). Long-press or right-click a card for <strong>Excused</strong>, <strong>Excused Late</strong>, or to switch status.
+          Tip: tap = On time/Late (auto). Long-press or right-click a card for <strong>Excused</strong> or <strong>Excused Late</strong>.
         </div>
       </section>
 
       <!-- Roster -->
-      <section class="card" style="grid-area:roster">
+      <section class="card" style="grid-area:roster; position:relative;">
         <div class="section-title">
           <h2>Roster</h2>
           <div class="toolbar">
             <input id="search" class="search" placeholder="Search by name/number/position…"/>
+            <span class="chip tiny" id="graceBadge">Grace: 0m</span>
             <span class="chip tiny" id="countBadge">0 players</span>
           </div>
         </div>
 
-        <!-- Quick Filters -->
-        <div class="filters">
-          <div class="chipbar" id="groupChips" role="tablist" aria-label="Groups">
-            <button class="chip filter-chip" data-group="ALL" aria-pressed="true">All</button>
-            <button class="chip filter-chip" data-group="OFF">Offense</button>
-            <button class="chip filter-chip" data-group="DEF">Defense</button>
-            <button class="chip filter-chip" data-group="ST">Special Teams</button>
-            <button class="chip filter-chip" data-group="PV">PV</button>
-            <button class="chip filter-chip" data-group="COACH">Coaches</button>
-          </div>
-          <div class="chipbar" id="posChips" aria-label="Positions"></div>
+        <div class="chipbar" id="groupChips" role="tablist" aria-label="Groups">
+          <button class="chip filter-chip" data-group="ALL" aria-pressed="true">All</button>
+          <button class="chip filter-chip" data-group="OFF">Offense</button>
+          <button class="chip filter-chip" data-group="DEF">Defense</button>
+          <button class="chip filter-chip" data-group="ST">Special Teams</button>
+          <button class="chip filter-chip" data-group="COACH">Coaches</button>
         </div>
+        <div class="chipbar" id="posChips" aria-label="Positions"></div>
 
         <div id="grid" class="player-grid" aria-live="polite"></div>
 
-        <!-- PV subgroup -->
-        <div id="pvGroup" style="margin-top:1rem; display:none">
-          <div class="section-title" style="margin-top:.2rem">
-            <h2 style="font-size:1.05rem">PV / Special</h2>
-            <span class="chip tiny" id="countBadgePV">0 PV</span>
-          </div>
-          <div id="grid_pv" class="player-grid" aria-live="polite"></div>
+        <!-- Loading overlay -->
+        <div id="gridLoading" class="loading-overlay" aria-live="polite">
+          <div class="spinner" role="progressbar" aria-label="Loading"></div>
+          <div>Loading roster…</div>
         </div>
+      </section>
+
+      <!-- Not Checked In -->
+      <section class="card" style="grid-area:notchecked">
+        <div class="section-title">
+          <h2>Not Checked In</h2>
+        </div>
+        <div class="tiny" style="margin-bottom:.4rem">Updates live as you mark arrivals.</div>
+        <div id="notCheckedList" class="mini"></div>
       </section>
 
       <!-- Log -->
@@ -370,35 +264,10 @@
     <button data-action="clear">Clear</button>
   </div>
 
-  <!-- Add Player / Coach modal -->
-  <div id="modalBackdrop" class="modal-backdrop hidden" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="newPlayerTitle" tabindex="-1">
-      <h3 id="newPlayerTitle">Add to Roster</h3>
-      <div class="row-tight">
-        <div><label>Player Name</label><input id="np_name" placeholder="Full name"/></div>
-        <div><label>Position</label><input id="np_pos" placeholder="e.g., WR, RB, OL or OFF/DEF/ST for coaches"/></div>
-      </div>
-
-      <!-- Coach toggle -->
-      <div class="row-tight" style="margin-top:.6rem">
-        <label class="toggle" style="gap:.5rem; align-items:center">
-          <input type="checkbox" id="np_isCoach" class="toggle-input" style="position:static; opacity:1; pointer-events:auto; width:auto; height:auto">
-          <span class="toggle-btn" style="padding:.4rem .75rem">This is a Coach</span>
-        </label>
-      </div>
-
-      <div class="row-tight" id="np_jersey_row" style="margin-top:.6rem">
-        <div><label>Jersey #</label><input id="np_num" placeholder="e.g., 12"/></div>
-        <div><label>Player ID (optional)</label><input id="np_pid" placeholder="auto if blank"/></div>
-      </div>
-      <div class="btnbar" style="margin-top:.8rem">
-        <button class="btn" id="np_save">Save to Roster</button>
-        <button class="btn subtle" id="np_cancel">Cancel</button>
-      </div>
-      <div class="tiny" style="opacity:.85;margin-top:.4rem">
-        Writes to your roster sheet (adds headers if needed): <code>player_id, player_name, position, jersey_number</code>.
-      </div>
-    </div>
+  <!-- Global busy indicator -->
+  <div id="busy" class="busy" aria-live="polite">
+    <div class="spinner" role="progressbar" aria-label="Working"></div>
+    <div class="busy-text">Working…</div>
   </div>
 
   <footer class="site-footer" style="max-width:1100px;margin:24px auto;padding:0 16px;">
@@ -411,19 +280,12 @@
      * CONFIG
      * ======================= */
     const API_BASE = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
-
     const ROSTER_SHEET_ID = '1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI';
     const ROSTER_TAB = '00_Dim_Roster';
-
     const ATTEND_SHEET_ID = '1pT-7cXhfzJB5mjswsXayvjt_qC2hIp9WflWggIAyh8g';
     const ATTEND_TAB = '60_Fact_PracticeAttendance';
 
-    const ATTEND_HEADERS = [
-      'timestamp','date','practice_start','grace_minutes',
-      'player_id','player_name','position','jersey_number',
-      'status','arrived_at','minutes_late'
-    ];
-    const ROSTER_HEADERS = ['player_id','player_name','position','jersey_number'];
+    const ATTEND_HEADERS = ['timestamp','date','practice_start','grace_minutes','player_id','player_name','position','jersey_number','status','arrived_at','minutes_late'];
 
     /* =======================
      * STATE + LOG
@@ -439,6 +301,18 @@
       const st = document.getElementById('status'); if(st) st.textContent = (type==='error'?'Error':'Ready');
     };
 
+    // Busy helpers (bottom toast + grid overlay)
+    const busy = { count:0 };
+    function setBusy(on, label){
+      busy.count += on ? 1 : -1;
+      busy.count = Math.max(0, busy.count);
+      const b = el('busy');
+      if(!b) return;
+      if(label) b.querySelector('.busy-text').textContent = label;
+      b.classList.toggle('active', busy.count>0);
+    }
+    function setGridLoading(on){ el('gridLoading')?.classList.toggle('active', !!on); }
+
     let roster = [];
     const playersById = new Map();
     const attendance = new Map();
@@ -446,8 +320,7 @@
     // Session persistence
     const SESSION_KEY = 'ATTEND_SESS_V1';
     function sessionSnapshot(){
-      const att = {};
-      attendance.forEach((v, k)=>{ att[k] = v; });
+      const att = {}; attendance.forEach((v, k)=>{ att[k] = v; });
       return {
         date: el('prac_date').value || '',
         time: el('prac_time').value || '',
@@ -458,19 +331,11 @@
         finalized: false
       };
     }
-    function saveSession(){
-      try { localStorage.setItem(SESSION_KEY, JSON.stringify(sessionSnapshot())); } catch(e){}
-    }
-    function clearSession(){
-      try { localStorage.removeItem(SESSION_KEY); } catch(e){}
-    }
+    function saveSession(){ try { localStorage.setItem(SESSION_KEY, JSON.stringify(sessionSnapshot())); } catch(e){} }
+    function clearSession(){ try { localStorage.removeItem(SESSION_KEY); } catch(e){} }
     function loadSession(){
-      try {
-        const raw = localStorage.getItem(SESSION_KEY);
-        if(!raw) return null;
-        const data = JSON.parse(raw);
-        return data && typeof data==='object' ? data : null;
-      } catch(e){ return null; }
+      try { const raw = localStorage.getItem(SESSION_KEY); if(!raw) return null; const data = JSON.parse(raw); return (data && typeof data==='object') ? data : null; }
+      catch(e){ return null; }
     }
 
     // Filters
@@ -490,21 +355,12 @@
       return r.json();
     }
     async function apiPost(payload){
-      const r = await fetch(API_BASE, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
-      });
+      const r = await fetch(API_BASE, { method:'POST', headers:{ 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
       if(!r.ok) throw new Error(`HTTP ${r.status}`);
       return r.json();
     }
     async function appendRowTable(sheet_id, sheet_name, row, ensure=[]){
       const res = await apiPost({ action:'append', sheet_id, sheet_name, row, ensure_headers: ensure });
-      if(!res.ok) throw new Error(res.error||'Append failed');
-      return res;
-    }
-    async function appendRowWithId(sheet_id, sheet_name, row, idPrefix, idField, ensure=[]){
-      const res = await apiPost({ action:'append', sheet_id, sheet_name, row, id_prefix:idPrefix, id_field:idField, ensure_headers: ensure });
       if(!res.ok) throw new Error(res.error||'Append failed');
       return res;
     }
@@ -518,28 +374,29 @@
      * ROSTER
      * ======================= */
     function isCoachId(id){ return /^CO/i.test(String(id||'')); }
-
     function normalizeRoster(rows){
       return rows.map(r=>{
         const id  = (r.player_id||r.id||'').toString().trim();
         const pos = (r.position||r.pos||'').toString().trim().toUpperCase();
         const name= (r.player_name||r.name||'').toString().trim();
-        const num = (r.jersey_number||r.jersey||'').toString().trim(); // blank OK for coaches
+        const num = (r.jersey_number||r.jersey||'').toString().trim();
         const role = isCoachId(id) ? 'Coach' : 'Player';
         return { id, name, pos, num, role };
       }).filter(p=>p.id && p.name);
     }
     async function loadRoster(){
       try{
+        setGridLoading(true); setBusy(true,'Loading roster…');
         const res = await apiGet({ action:'roster', sheet_id: ROSTER_SHEET_ID, sheet_name: ROSTER_TAB });
         if(!res.ok) throw new Error(res.error||'Roster fetch failed');
         roster = normalizeRoster(res.roster||[]);
         playersById.clear(); roster.forEach(p=>playersById.set(p.id,p));
-        buildPosChips();
-        restoreFromSession(); // restore after roster available
+        buildPosChips(); wireGroupChips();
+        restoreFromSession();
         renderGrid();
         log(`Roster loaded (${roster.length} people).`, 'success');
       }catch(err){ log(err.message,'error'); }
+      finally{ setGridLoading(false); setBusy(false); }
     }
 
     /* =======================
@@ -548,24 +405,19 @@
     function inGroup(pos, group, role){
       const p = (pos||'').toUpperCase();
       if(group==='ALL') return true;
-      if(group==='PV')  return p==='PV';
       if(group==='COACH') return role === 'Coach';
-
       const OFF = ['QB','RB','WR','TE','OL','FB','HB','TB','OT','OG','OC','C','LT','RT','LG','RG','OFF'];
       const DEF = ['DL','DE','DT','NT','LB','ILB','OLB','MLB','CB','DB','S','FS','SS','NB','DEF'];
       const ST  = ['K','P','LS','KR','PR','PK','K/P','ST'];
-
       const hasPrefix = arr => arr.some(k => p===k || p.startsWith(k));
       if(group==='OFF') return hasPrefix(OFF);
       if(group==='DEF') return hasPrefix(DEF);
       if(group==='ST')  return hasPrefix(ST);
       return true;
     }
-
     function wireGroupChips(){
       if(groupChipsWired) return;
-      const wrap = document.getElementById('groupChips');
-      if(!wrap) return;
+      const wrap = document.getElementById('groupChips'); if(!wrap) return;
       wrap.querySelectorAll('.filter-chip').forEach(btn=>{
         btn.addEventListener('click', ()=>{
           wrap.querySelectorAll('.filter-chip').forEach(b=>b.setAttribute('aria-pressed','false'));
@@ -576,52 +428,41 @@
       });
       groupChipsWired = true;
     }
-
     function buildPosChips(){
-      const holder = document.getElementById('posChips');
-      if(!holder) return;
-
+      const holder = document.getElementById('posChips'); if(!holder) return;
       const all = Array.from(new Set(roster.map(r=>(r.pos||'').toUpperCase())))
-        .filter(x => x && x!=='PV')
+        .filter(x => x)
         .sort((a,b)=>a.localeCompare(b));
-
       holder.innerHTML = [
         `<button class="chip filter-chip" data-clear="1" aria-pressed="false">Clear</button>`,
         ...all.map(p => `<button class="chip filter-chip" data-pos="${p}" aria-pressed="${filterState.positions.has(p) ? 'true' : 'false'}">${p}</button>`)
       ].join('');
-
       holder.querySelector('[data-clear]').addEventListener('click', ()=>{
         filterState.positions.clear();
         holder.querySelectorAll('[data-pos]').forEach(b=>b.setAttribute('aria-pressed','false'));
         renderGrid();
       });
-
       holder.querySelectorAll('[data-pos]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
           const pos = btn.dataset.pos;
-          if(filterState.positions.has(pos)){
-            filterState.positions.delete(pos);
-            btn.setAttribute('aria-pressed','false');
-          } else {
-            filterState.positions.add(pos);
-            btn.setAttribute('aria-pressed','true');
-          }
+          if(filterState.positions.has(pos)){ filterState.positions.delete(pos); btn.setAttribute('aria-pressed','false'); }
+          else { filterState.positions.add(pos); btn.setAttribute('aria-pressed','true'); }
           renderGrid();
         });
       });
     }
 
     /* =======================
-     * TIME HELPERS
+     * TIME + BADGES
      * ======================= */
     function practiceStartMs(){
-      const d = el('prac_date').value;
-      const t = el('prac_time').value;
+      const d = el('prac_date').value, t = el('prac_time').value;
       if(!d || !t) return null;
       const [yy,mm,dd] = d.split('-').map(Number);
       const [h,mi] = t.split(':').map(Number);
       return new Date(yy, mm-1, dd, h, mi, 0, 0).getTime();
     }
+    function toLocalT(dt){ const d = (dt instanceof Date) ? dt : new Date(dt); return d.toLocaleString('sv-SE').replace(' ','T'); }
     function classifyArrival(arriveMs){
       const start = practiceStartMs();
       if(!start) return { status:'On time', minutesLate:0 };
@@ -632,20 +473,16 @@
     function setNowAsStart(){
       const now = new Date();
       el('prac_date').value = now.toISOString().slice(0,10);
-      const hh = String(now.getHours()).padStart(2,'0');
-      const mm = String(now.getMinutes()).padStart(2,'0');
-      el('prac_time').value = `${hh}:${mm}`;
-      saveSession();
+      el('prac_time').value = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      saveSession(); updateGraceBadge();
     }
-
-    // Convert Date or ms epoch to local "yyyy-MM-ddTHH:mm:ss" (no Z, no ms)
-    function toLocalT(dt) {
-      const d = (dt instanceof Date) ? dt : new Date(dt);
-      return d.toLocaleString('sv-SE').replace(' ', 'T');
+    function updateGraceBadge(){
+      const g = Number(el('prac_grace').value||0);
+      const b = el('graceBadge'); if(b) b.textContent = `Grace: ${g}m`;
     }
 
     /* =======================
-     * UI: GRID
+     * UI: GRID + NOT CHECKED LIST
      * ======================= */
     function statusChip(rec){
       if(!rec) return '';
@@ -667,13 +504,8 @@
           rec.status==='Late'         ? 'state-late' : 'state-on';
       }
       const stamp = rec?.arrivedAt ? new Date(rec.arrivedAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
-
-      const leftBox = p.role === 'Coach'
-        ? `<div class="num" title="Coach">CO</div>`
-        : `<div class="num">#${p.num||'—'}</div>`;
-
+      const leftBox = (p.role === 'Coach') ? `<div class="num" title="Coach">CO</div>` : `<div class="num">#${p.num||'—'}</div>`;
       const coachBadge = p.role === 'Coach' ? `<span class="chip tiny" style="margin-left:.4rem">Coach</span>` : '';
-
       return `
         <button class="plyr ${clsSaved} ${stateCls}" data-id="${p.id}" aria-pressed="${rec?'true':'false'}">
           ${leftBox}
@@ -686,140 +518,123 @@
         </button>
       `;
     }
-
+    function renderNotChecked(){
+      const notChecked = roster.filter(p=>!attendance.has(p.id));
+      const list = el('notCheckedList'); list.innerHTML = '';
+      notChecked.sort((a,b)=> (parseInt(a.num||'9999',10) - parseInt(b.num||'9999',10)) || a.name.localeCompare(b.name))
+        .forEach(p=>{
+          const row = document.createElement('div');
+          row.className = 'mrow';
+          row.innerHTML = `<div style="font-variant-numeric:tabular-nums;text-align:right;font-weight:800">#${p.num||'—'}</div>
+                           <div>${p.name}</div>
+                           <div style="color:#6b7280">${p.pos||''}</div>`;
+          list.appendChild(row);
+        });
+    }
     function renderGrid(){
       const q = el('search').value.trim().toUpperCase();
-
-      const textMatch = p => !q ||
-        p.name.toUpperCase().includes(q) ||
-        (p.num||'').toString().includes(q) ||
-        (p.pos||'').toUpperCase().includes(q);
+      const textMatch = p => !q || p.name.toUpperCase().includes(q) || (p.num||'').toString().includes(q) || (p.pos||'').toUpperCase().includes(q);
 
       const posMatch = (pos) => {
         const up = (pos||'').toUpperCase();
-        if(filterState.positions.size > 0 && up !== 'PV'){
-          return filterState.positions.has(up);
-        }
+        if(filterState.positions.size > 0){ return filterState.positions.has(up); }
         return true;
       };
-
       const byFilters = p => inGroup(p.pos, filterState.group, p.role) && posMatch(p.pos);
 
-      const numKey = p => {
-        const n = parseInt((p.num||'').toString(), 10);
-        return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
-      };
+      const numKey = p => { const n = parseInt((p.num||'').toString(), 10); return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY; };
       const sortByNum = (a,b) => (numKey(a) - numKey(b)) || a.name.localeCompare(b.name);
-      const isPV = p => (p.pos||'').toUpperCase()==='PV';
 
-      const main = roster.filter(p=>!isPV(p) && textMatch(p) && byFilters(p)).sort(sortByNum);
-      const pv   = roster.filter(p=> isPV(p) && textMatch(p) && byFilters(p)).sort(sortByNum);
-
+      const main = roster.filter(p=> textMatch(p) && byFilters(p)).sort(sortByNum);
       el('grid').innerHTML = main.map(playerCard).join('');
       el('countBadge').textContent = `${main.length} players`;
 
-      el('grid_pv').innerHTML = pv.map(playerCard).join('');
-      const pvGroup = document.getElementById('pvGroup');
-      document.getElementById('countBadgePV').textContent = `${pv.length} PV`;
-      pvGroup.style.display = pv.length ? '' : 'none';
+      renderNotChecked();
+      updateGraceBadge();
     }
 
     /* =======================
      * SAVE HELPERS
      * ======================= */
     function buildRow(p, rec){
-      const startLocal = (()=>{ 
-        const ms = practiceStartMs(); 
-        return ms ? toLocalT(ms) : ''; 
-      })();
+      const startLocal = (()=>{ const ms=practiceStartMs(); return ms? toLocalT(ms) : ''; })();
       return {
         timestamp: toLocalT(new Date()),
         date: el('prac_date').value || '',
         practice_start: startLocal,
         grace_minutes: Number(el('prac_grace').value||0),
-        player_id: p.id,
-        player_name: p.name,
-        position: p.pos||'',
-        jersey_number: p.num||'',
+        player_id: p.id, player_name: p.name, position: p.pos||'', jersey_number: p.num||'',
         status: rec.status,
         arrived_at: rec.arrivedAt ? toLocalT(rec.arrivedAt) : '',
         minutes_late: (rec.status==='Late' || rec.status==='Excused Late') ? rec.minutesLate : ''
       };
     }
-
     async function saveOne(pId){
       const rec = attendance.get(pId); if(!rec || rec.saved) return;
       const p = playersById.get(pId);
       const row = buildRow(p, rec);
       await appendRowTable(ATTEND_SHEET_ID, ATTEND_TAB, row, ATTEND_HEADERS);
       rec.saved = true; attendance.set(pId, rec);
-      saveSession();
-      renderGrid();
+      saveSession(); renderGrid();
     }
-
-    // --- Helper: autosave only when autosave is ON, and not for Clear ---
     function maybeAutosave(id, action){
-      if (!el('autosave').checked) return;  // only when toggle is ON
-      if (action === 'clear') return;       // never write on Clear
-      if (!attendance.has(id)) return;      // nothing to write
-      saveOne(id).catch(err=>log(String(err),'error'));
+      if (!el('autosave').checked) return;
+      if (action === 'clear') return;
+      if (!attendance.has(id)) return;
+      setBusy(true,'Saving…');
+      saveOne(id).catch(err=>log(String(err),'error')).finally(()=>setBusy(false));
     }
-
     async function saveAllUnsaved(){
+      setBusy(true,'Saving all…');
       const ops = [];
       attendance.forEach((rec, pId)=>{
         if(rec.saved) return;
         const p = playersById.get(pId);
         ops.push({ sheet_id: ATTEND_SHEET_ID, sheet_name: ATTEND_TAB, row: buildRow(p, rec), ensure_headers: ATTEND_HEADERS });
       });
-      if(!ops.length){ log('Nothing to save (all up to date).'); return; }
-      await batchAppend(ops);
-      attendance.forEach((rec)=>{ if(!rec.saved) rec.saved=true; });
-      saveSession();
-      renderGrid();
-      log(`Saved ${ops.length} attendance rows.`, 'success');
+      if(!ops.length){ log('Nothing to save (all up to date).'); setBusy(false); return; }
+      try{
+        await batchAppend(ops);
+        attendance.forEach((rec)=>{ if(!rec.saved) rec.saved=true; });
+        saveSession(); renderGrid();
+        log(`Saved ${ops.length} attendance rows.`, 'success');
+      }catch(e){ log(String(e),'error'); }
+      finally{ setBusy(false); }
     }
-
     function resetSetupToNow(){
       const now = new Date();
       el('prac_date').value = now.toISOString().slice(0,10);
-      const hh = String(now.getHours()).padStart(2,'0');
-      const mm = String(now.getMinutes()).padStart(2,'0');
-      el('prac_time').value = `${hh}:${mm}`;
-      el('prac_grace').value = 0;
-      saveSession();
+      el('prac_time').value = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      el('prac_grace').value = 0; saveSession(); updateGraceBadge();
     }
-
     async function finalizeAbsent(){
-      const absentees = roster.filter(p=>!attendance.has(p.id));
-      if(!absentees.length){ 
-        log('No absentees to mark.'); 
-      } else {
-        const ops = absentees.map(p=>({
-          sheet_id: ATTEND_SHEET_ID, sheet_name: ATTEND_TAB,
-          row: {
-            timestamp: toLocalT(new Date()),
-            date: el('prac_date').value || '',
-            practice_start: (()=>{ const ms=practiceStartMs(); return ms? toLocalT(ms) : '';})(),
-            grace_minutes: Number(el('prac_grace').value||0),
-            player_id: p.id, player_name: p.name, position: p.pos||'', jersey_number: p.num||'',
-            status: 'Absent', arrived_at: '', minutes_late: ''
-          },
-          ensure_headers: ATTEND_HEADERS
-        }));
-        await batchAppend(ops);
-        log(`Finalized: marked ${ops.length} absent.`, 'success');
-      }
-
-      // mark session finalized & clear
-      clearSession();
-      attendance.clear();
-      resetSetupToNow();
-      renderGrid();
+      setBusy(true,'Finalizing…');
+      try{
+        const absentees = roster.filter(p=>!attendance.has(p.id));
+        if(!absentees.length){ log('No absentees to mark.'); }
+        else{
+          const ops = absentees.map(p=>({
+            sheet_id: ATTEND_SHEET_ID, sheet_name: ATTEND_TAB,
+            row: {
+              timestamp: toLocalT(new Date()),
+              date: el('prac_date').value || '',
+              practice_start: (()=>{ const ms=practiceStartMs(); return ms? toLocalT(ms) : '';})(),
+              grace_minutes: Number(el('prac_grace').value||0),
+              player_id: p.id, player_name: p.name, position: p.pos||'', jersey_number: p.num||'',
+              status: 'Absent', arrived_at: '', minutes_late: ''
+            },
+            ensure_headers: ATTEND_HEADERS
+          }));
+          await batchAppend(ops);
+          log(`Finalized: marked ${ops.length} absent.`, 'success');
+        }
+        clearSession(); attendance.clear(); resetSetupToNow(); renderGrid();
+      }catch(e){ log(String(e),'error'); }
+      finally{ setBusy(false); }
     }
 
     /* =======================
-     * STATUS UX (Autosave on ANY change)
+     * STATUS UX
      * ======================= */
     function presentNow(id){
       const now = Date.now();
@@ -827,7 +642,6 @@
       attendance.set(id, { arrivedAt: now, status, minutesLate, saved: false });
       saveSession();
     }
-
     function setStatus(id, type){
       if(type==='on'){
         presentNow(id);
@@ -847,13 +661,10 @@
         attendance.set(id, { arrivedAt: null, status:'Excused Late', minutesLate, saved:false });
         saveSession();
       } else if(type==='clear'){
-        attendance.delete(id); // skip write
-        saveSession();
+        attendance.delete(id); saveSession();
       }
-      renderGrid();
-      hideMenu();
+      renderGrid(); hideMenu();
     }
-
     function showMenu(id, x, y){
       menuTargetId = id;
       menu.style.left = Math.max(8, x-8)+'px';
@@ -866,35 +677,19 @@
       menu.setAttribute('aria-hidden','true');
       menuTargetId = null;
     }
-
     function clickPlayer(ev){
       const btn = ev.target.closest('.plyr'); if(!btn) return;
       const id = btn.dataset.id;
       const rec = attendance.get(id);
 
       if (rec && (rec.status==='Excused' || rec.status==='Excused Late')){
-        // Quick-tap on an excused record → mark present now
-        presentNow(id);
-        renderGrid();
-        maybeAutosave(id, 'on');   // save On time/Late as appropriate
-        return;
+        presentNow(id); renderGrid(); maybeAutosave(id, 'on'); return;
       }
-
       if (rec){
-        // Had a record (On time/Late/etc) → quick-tap clears it locally
-        attendance.delete(id);
-        saveSession();
-        renderGrid();
-        // Do NOT save on clear (your preference)
-        return;
+        attendance.delete(id); saveSession(); renderGrid(); return; // no autosave on clear
       }
-
-      // No record yet → mark present now
-      presentNow(id);
-      renderGrid();
-      maybeAutosave(id, 'on');
+      presentNow(id); renderGrid(); maybeAutosave(id, 'on');
     }
-
     let longTimer=null;
     function gridPointerDown(e){
       const btn = e.target.closest('.plyr'); if(!btn) return;
@@ -905,108 +700,41 @@
     function gridPointerUp(){ if(longTimer){ clearTimeout(longTimer); longTimer=null; } }
     function gridContextMenu(e){
       const btn = e.target.closest('.plyr'); if(!btn) return;
-      e.preventDefault();
-      showMenu(btn.dataset.id, e.clientX, e.clientY);
+      e.preventDefault(); showMenu(btn.dataset.id, e.clientX, e.clientY);
     }
-
-    // Use pointerup so it fires reliably for right-click menu + long-press
     menu.addEventListener('pointerup', (e)=>{
       const btn = e.target.closest('button'); if(!btn) return;
       e.preventDefault(); e.stopPropagation();
       const act = btn.dataset.action;
       if(!menuTargetId) return;
-
-      setStatus(menuTargetId, act);       // updates local attendance + UI
-      maybeAutosave(menuTargetId, act);   // autosave for all except Clear
+      setStatus(menuTargetId, act);
+      maybeAutosave(menuTargetId, act);
     });
-
     document.addEventListener('click', (e)=>{ if(!e.target.closest('#statusMenu')) hideMenu(); });
 
     /* =======================
-     * ADD PLAYER / COACH (roster)
-     * ======================= */
-    const backdrop = el('modalBackdrop');
-    const coachToggle = document.getElementById('np_isCoach');
-    const jerseyRow = document.getElementById('np_jersey_row');
-
-    function refreshCoachUI(){
-      const isCoach = coachToggle?.checked;
-      if(jerseyRow){
-        jerseyRow.style.display = isCoach ? 'none' : '';
-      }
-    }
-
-    function openAddPlayer(){
-      backdrop.classList.add('open');
-      backdrop.classList.remove('hidden');
-      backdrop.setAttribute('aria-hidden','false');
-      refreshCoachUI();
-      setTimeout(()=>document.getElementById('np_name')?.focus(), 0);
-    }
-    function closeAddPlayer(){
-      backdrop.classList.remove('open');
-      backdrop.classList.add('hidden');
-      backdrop.setAttribute('aria-hidden','true');
-      ['np_name','np_pos','np_num','np_pid'].forEach(i=>el(i).value='');
-      if(coachToggle){ coachToggle.checked = false; }
-      refreshCoachUI();
-    }
-    coachToggle?.addEventListener('change', refreshCoachUI);
-
-    async function saveNewPlayer(){
-      const name = el('np_name').value.trim();
-      const pos  = el('np_pos').value.trim().toUpperCase();
-      const isCoach = !!el('np_isCoach')?.checked;
-      const num  = isCoach ? '' : el('np_num').value.trim();
-      const pid  = el('np_pid').value.trim();
-
-      if(!name){ log('Name required','error'); return; }
-      if(!pos){ log('Position / group required','error'); return; }
-
-      const row = { player_id: pid || '', player_name: name, position: pos, jersey_number: num };
-      const idPrefix = pid ? null : (isCoach ? 'CO' : 'PLYR');
-
-      if(idPrefix){
-        await appendRowWithId(ROSTER_SHEET_ID, ROSTER_TAB, row, idPrefix, 'player_id', ROSTER_HEADERS);
-      } else {
-        await appendRowTable(ROSTER_SHEET_ID, ROSTER_TAB, row, ROSTER_HEADERS);
-      }
-
-      log(`${isCoach ? 'Coach' : 'Player'} added: ${name}.`, 'success');
-      closeAddPlayer();
-      await loadRoster();
-    }
-    backdrop.addEventListener('click', (e)=>{ if(e.target === backdrop) closeAddPlayer(); });
-    document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && !backdrop.classList.contains('hidden')) closeAddPlayer(); });
-
-    /* =======================
-     * SESSION RESTORE
+     * CLEAR / SESSION / INIT
      * ======================= */
     function restoreFromSession(){
-      const ss = loadSession();
-      if(!ss || ss.finalized) return;
-
+      const ss = loadSession(); if(!ss || ss.finalized) return;
       if(ss.date) el('prac_date').value = ss.date;
       if(ss.time) el('prac_time').value = ss.time;
       if(typeof ss.grace === 'number') el('prac_grace').value = ss.grace;
       if(typeof ss.autosave === 'boolean') el('autosave').checked = ss.autosave;
-
       attendance.clear();
       if(ss.attendance && typeof ss.attendance === 'object'){
         Object.keys(ss.attendance).forEach(pid=>{
           const rec = ss.attendance[pid];
-          if(rec && typeof rec==='object' && ('status' in rec)){
-            attendance.set(pid, rec);
-          }
+          if(rec && typeof rec==='object' && ('status' in rec)){ attendance.set(pid, rec); }
         });
       }
-      renderGrid();
-      log('Session restored.', 'success');
+      updateGraceBadge();
+    }
+    function clearSelected(){
+      if(!attendance.size){ log('Nothing to clear.'); return; }
+      attendance.clear(); saveSession(); renderGrid(); log('Cleared selected attendance state.');
     }
 
-    /* =======================
-     * INIT
-     * ======================= */
     (function seedStart(){
       const now = new Date();
       if(!loadSession()){
@@ -1016,18 +744,18 @@
     })();
 
     // Persist setup inputs on change
-    el('prac_date').addEventListener('change', saveSession);
-    el('prac_time').addEventListener('change', saveSession);
-    el('prac_grace').addEventListener('change', saveSession);
-    el('autosave').addEventListener('change', saveSession);
+    el('prac_date').addEventListener('change', ()=>{ saveSession(); });
+    el('prac_time').addEventListener('change', ()=>{ saveSession(); });
+    el('prac_grace').addEventListener('change', ()=>{ saveSession(); updateGraceBadge(); });
 
     el('setNowBtn').addEventListener('click', setNowAsStart);
     el('reloadRosterBtn').addEventListener('click', loadRoster);
     el('saveAllBtn').addEventListener('click', ()=>saveAllUnsaved().catch(e=>log(String(e),'error')));
     el('finalizeBtn').addEventListener('click', ()=>finalizeAbsent().catch(e=>log(String(e),'error')));
+    el('clearSelectedBtn').addEventListener('click', clearSelected);
     el('search').addEventListener('input', renderGrid);
 
-    ['grid','grid_pv'].forEach(id=>{
+    ['grid'].forEach(id=>{
       const root = el(id);
       if(!root) return;
       root.addEventListener('click', clickPlayer);
@@ -1039,11 +767,7 @@
     document.addEventListener('touchend', gridPointerUp);
     document.addEventListener('pointercancel', gridPointerUp);
 
-    el('addPlayerBtn').addEventListener('click', openAddPlayer);
-    el('np_cancel').addEventListener('click', closeAddPlayer);
-    el('np_save').addEventListener('click', ()=>saveNewPlayer().catch(e=>log(String(e),'error')));
-
-    wireGroupChips();
+    // Load
     loadRoster();
   </script>
 </body>
