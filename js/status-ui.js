@@ -180,6 +180,10 @@
        */
       fromResponse(res, onRetry = null, successMsg = 'Saved', errorMsg = 'Failed') {
         if (res && res.ok) {
+          // Handle idempotency "already_saved" as success
+          if (res.data?.status === 'already_saved') {
+            return this.success('Already saved');
+          }
           return this.success(successMsg);
         } else {
           const msg = res?.error?.message || errorMsg;
