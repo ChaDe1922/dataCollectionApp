@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <!-- Apps Script endpoint -->
-  <meta name="gsds-api-base" content="https://script.google.com/macros/s/AKfycbxCHO9P5zOf_LjEztGUPalzGRweBAr_Y3U9v4iVn9jHir1pB0yueLp22_ltGSTFc6qzfA/exec"/>
+  <!-- Config (load FIRST - before any API usage) -->
+  <script src="../js/config.js"></script>
 
-  <title>Tryout Roster</title>
+  <title>Tryout Roster — Football Data Tracker</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -242,13 +242,14 @@
     }
 
     /* ---------------- GameContext bootstrap ---------------- */
-    (function(){
-      const meta = document.querySelector('meta[name="gsds-api-base"]');
-      window.API_BASE = (window.API_BASE || (meta && meta.content) || '').trim();
-      GameContext.configure({ apiBase: window.API_BASE, server: true, pollMs: 1000 });
-      GameContext.mountBanner('#ctxBanner');
-      GameContext.bindInputs({ tryout_id:'#ctx_tryout', period_code:'#ctx_period' });
-    })();
+    // Config loaded in head via config.js
+    GameContext.configure({
+      apiBase: window.GSDS_API_BASE,
+      server: !!window.GSDS_SERVER_SYNC,
+      pollMs: Number(window.GSDS_POLL_MS || 1000)
+    });
+    GameContext.mountBanner('#ctxBanner');
+    GameContext.bindInputs({ tryout_id:'#ctx_tryout', period_code:'#ctx_period' });
 
     /* ---------------- state ---------------- */
     const DEFAULT_POSITION_GROUPS = ['QB','RB','WR','TE','OL','DL','LB','DB','ST','PV'];

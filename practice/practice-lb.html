@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <!-- Config (load FIRST - before any API usage) -->
+  <script src="../js/config.js"></script>
+
   <script>
   (function(){
     const ok = localStorage.getItem('auth_ok')==='1' &&
@@ -335,7 +339,7 @@
 
   <script>
     /* ===== CONFIG ===== */
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
+    const APPS_SCRIPT_URL = window.GSDS_API_BASE;
     const PRACTICE_SHEET_ID = '1pT-7cXhfzJB5mjswsXayvjt_qC2hIp9WflWggIAyh8g';
     const ROSTER_SHEET_ID   = '1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI';
     const ROSTER_TAB        = '00_Dim_Roster';

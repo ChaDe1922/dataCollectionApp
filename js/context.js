@@ -81,9 +81,15 @@
     };
   }
 
-  // ---------- server sync ----------
+  // ---------- server sync (uses API.request if available) ----------
   async function getServerCtx(){
     if (!API_BASE) return null;
+    // Prefer API.request if available
+    if (window.API && window.API.request) {
+      const res = await window.API.request({ action:'ctx_get' }, { method:'GET' });
+      return res.ok ? res.data : null;
+    }
+    // Fallback to direct fetch
     const url = new URL(API_BASE);
     url.searchParams.set('action','ctx_get');
     const r = await fetch(url.toString(), { method:'GET', credentials:'omit' });
@@ -91,13 +97,18 @@
   }
   async function setServerCtx(ctx){
     if (!API_BASE) return null;
-    // Always send aliases so old server code works (Apps Script accepts these)
     const payload = {
       action: 'ctx_set',
       game_id:  ctx.tryout_id || ctx.game_id || '',
       drive_id: ctx.station_id || ctx.drive_id || '',
       play_id:  ctx.rep_id || ctx.play_id || ''
     };
+    // Prefer API.request if available
+    if (window.API && window.API.request) {
+      const res = await window.API.request(payload);
+      return res.ok ? res.data : null;
+    }
+    // Fallback to direct fetch
     const r = await fetch(API_BASE, {
       method:'POST',
       headers:{ 'Content-Type':'text/plain;charset=utf-8' },
@@ -497,18 +508,37 @@
     }
   }
 
-  // ---------- Dictionary fetch ----------
+  // ---------- Dictionary fetch (uses API.request if available) ----------
   async function refreshFromDictionary(){
-    if (!window.API_BASE) {
-      try {
-        const m = document.querySelector('meta[name="gsds-api-base"]');
-        window.API_BASE = (m && m.content || '').trim();
-      } catch {}
-    }
-    const base = window.API_BASE || '';
+    const base = window.GSDS_API_BASE || window.API_BASE || '';
     if (!base) return [];
 
     const ctx = (window.GameContext && GameContext.get && GameContext.get()) || {};
+
+    // Prefer API.request if available
+    if (window.API && window.API.request) {
+      const params = { action: 'tryout_periods' };
+      if (ctx.tryout_id) params.tryout_id = ctx.tryout_id;
+      const res = await window.API.request(params, { method: 'GET' });
+      if (!res.ok) {
+        if (window.GSDS_DEBUG) console.warn('Failed to fetch periods:', res.error);
+        return [];
+      }
+      const rows = (res.data && (res.data.periods || res.data.rows || [])) || [];
+      const periods = rows.map(x => ({
+        code:  x.period_code || x.code,
+        label: x.label || x.period_label || x.code,
+        start: x.start_time || x.start || x.start_local,
+        end:   x.end_time   || x.end   || x.end_local
+      })).filter(p => p.code && p.start);
+
+      currentPeriods = periods;
+      scheduleNotifications();
+      lastActivePeriod = detectActivePeriod(periods);
+      return periods;
+    }
+
+    // Fallback to direct fetch
     const url = new URL(base);
     url.searchParams.set('action', 'tryout_periods');
     if (ctx.tryout_id) url.searchParams.set('tryout_id', ctx.tryout_id);

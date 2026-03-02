@@ -4,8 +4,8 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <!-- Apps Script base -->
-  <meta name="gsds-api-base" content="https://script.google.com/macros/s/AKfycbxCHO9P5zOf_LjEztGUPalzGRweBAr_Y3U9v4iVn9jHir1pB0yueLp22_ltGSTFc6qzfA/exec">
+  <!-- Config (load FIRST - before any API usage) -->
+  <script src="../js/config.js"></script>
 
   <title>Agility — Tryouts</title>
 
@@ -300,13 +300,12 @@
 
   <script>
     // ---------- Boot shared context/UI ----------
-    (function(){
-      const meta = document.querySelector('meta[name="gsds-api-base"]');
-      window.API_BASE = (window.API_BASE || (meta && meta.content) || '').trim();
-    })();
-
-    // Live server ctx + hub-style banner
-    GameContext.configure({ apiBase: window.API_BASE, server: true, pollMs: 1000 });
+    // Config loaded in head via config.js
+    GameContext.configure({
+      apiBase: window.GSDS_API_BASE,
+      server: !!window.GSDS_SERVER_SYNC,
+      pollMs: Number(window.GSDS_POLL_MS || 1000)
+    });
     GameContext.mountBanner('#ctxBanner');
 
     // Show the shared TryoutUI roster (number bands) — this renders the player cards

@@ -19,6 +19,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../style.css"/>
+
+  <!-- Config (load FIRST - before any API usage) -->
+  <script src="../js/config.js"></script>
 </head>
 
 <body class="theme-atl practice-page">
@@ -63,16 +66,16 @@
   </footer>
 
   <!-- Shared plumbing -->
-  <script>
-    // Your Apps Script Web App endpoint
-    window.API_BASE = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
-  </script>
   <script src="../js/api.js"></script>
   <script src="../js/context.js"></script>
 
   <script>
     // Boot GameContext with server sync enabled
-    GameContext.configure({ apiBase: window.API_BASE, server: true, pollMs: 1000 });
+    GameContext.configure({
+      apiBase: window.GSDS_API_BASE,
+      server: !!window.GSDS_SERVER_SYNC,
+      pollMs: Number(window.GSDS_POLL_MS || 1000)
+    });
 
     // Banner shows "Game / Drive / Play" live
     GameContext.mountBanner('#ctxBanner');

@@ -320,9 +320,16 @@
     </div>
   </div>
 
+  <!-- Config (load FIRST - before any API usage) -->
+  <script src="js/config.js"></script>
+
   <!-- Auth Script -->
   <script>
-    const API_BASE = 'https://script.google.com/macros/s/AKfycbwueIg8spHArqPBOhJnOxCvij8tiTC1nIWc9GY4RnaOUNNaCgaLnsJSEx3Dq1gvAd3rHw/exec';
+    const API_BASE = window.GSDS_API_BASE;
+    if (!API_BASE) {
+      document.getElementById('loginMsg').textContent = 'Missing API configuration. Check /js/config.js.';
+      document.getElementById('loginMsg').className = 'error';
+    }
     const AUTH_SHEET_ID = '1PcHHdLAJMSV2R_5-uwax172FM7RMnMgA1p9n4VW24lk';
     const AUTH_TAB = 'Auth_Users';
 

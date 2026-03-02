@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="gsds-api-base" content="https://script.google.com/macros/s/AKfycbxCHO9P5zOf_LjEztGUPalzGRweBAr_Y3U9v4iVn9jHir1pB0yueLp22_ltGSTFc6qzfA/exec">
+
+  <!-- Config (load FIRST - before any API usage) -->
+  <script src="../js/config.js"></script>
+
   <title>1v1 Station — Tryouts</title>
 
   <!-- Simple auth guard -->
@@ -219,6 +222,9 @@
 
   <footer class="site-footer"><p>&copy; 2025 Game Speed Data Systems</p></footer>
 
+  <!-- Config (load FIRST - before any API usage) -->
+  <script src="../js/config.js"></script>
+
   <!-- libs -->
   <script src="../js/api.js"></script>
   <script src="../js/rules.js"></script>
@@ -227,11 +233,12 @@
 
   <script>
     // ---------- Boot shared context/UI ----------
-    (function(){
-      const meta = document.querySelector('meta[name="gsds-api-base"]');
-      window.API_BASE = (meta && meta.content || '').trim();
-    })();
-    GameContext.configure({ apiBase: window.API_BASE, server: true, pollMs: 1000 });
+    // Config loaded in head via config.js
+    GameContext.configure({
+      apiBase: window.GSDS_API_BASE,
+      server: !!window.GSDS_SERVER_SYNC,
+      pollMs: Number(window.GSDS_POLL_MS || 1000)
+    });
 
     // Show roster grid + chips; hard-cap visible cards to 10
     TryoutUI.init('#tryout-shared', {

@@ -62,9 +62,15 @@
     };
   }
 
-  // ---------- Server sync (optional) ----------
+  // ---------- Server sync (optional) - uses API.request if available ----------
   async function getServerCtx(){
     if (!API_BASE) return null;
+    // Prefer API.request if available
+    if (window.API && window.API.request) {
+      const res = await window.API.request({ action:'ctx_get' }, { method:'GET' });
+      return res.ok ? res.data : null;
+    }
+    // Fallback to direct fetch
     const url = new URL(API_BASE);
     url.searchParams.set('action','ctx_get');
     const r = await fetch(url.toString(), { method:'GET', credentials:'omit' });
@@ -78,9 +84,15 @@
       drive_id: ctx.drive_id || '',
       play_id:  ctx.play_id || ''
     };
+    // Prefer API.request if available
+    if (window.API && window.API.request) {
+      const res = await window.API.request(payload);
+      return res.ok ? res.data : null;
+    }
+    // Fallback to direct fetch
     const r = await fetch(API_BASE, {
       method:'POST',
-      headers:{ 'Content-Type':'application/json' },
+      headers:{ 'Content-Type':'text/plain;charset=utf-8' },
       body: JSON.stringify(payload),
       credentials:'omit'
     });

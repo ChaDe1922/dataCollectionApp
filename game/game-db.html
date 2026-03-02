@@ -14,6 +14,9 @@
     })();
   </script>
 
+  <!-- Config (load FIRST - before any API usage) -->
+  <script src="../js/config.js"></script>
+
   <!-- Fonts + site theme -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -244,12 +247,6 @@
   <footer><p>&copy; 2025 Game Speed Data Systems</p></footer>
 
   <!-- === Shared plumbing === -->
-  <script>
-    // Configure GameContext auto-sync
-    window.GSDS_API_BASE   = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
-    window.GSDS_SERVER_SYNC = true;
-    window.GSDS_POLL_MS     = 1000;
-  </script>
   <script src="../js/api.js"></script>
   <script src="../js/context.js"></script>
   <script src="../js/presence.js"></script>

@@ -4,8 +4,8 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <!-- Apps Script base -->
-  <meta name="gsds-api-base" content="https://script.google.com/macros/s/AKfycbxCHO9P5zOf_LjEztGUPalzGRweBAr_Y3U9v4iVn9jHir1pB0yueLp22_ltGSTFc6qzfA/exec">
+  <!-- Config (load FIRST - before any API usage) -->
+  <script src="../js/config.js"></script>
 
   <title>Tryouts – Football Data Tracker</title>
 
@@ -143,14 +143,12 @@
   <script src="../js/context.js"></script>
 
   <script>
-    // Resolve API base from <meta> so both api.js and GameContext use the same endpoint
-    (function(){
-      const meta = document.querySelector('meta[name="gsds-api-base"]');
-      window.API_BASE = (window.API_BASE || (meta && meta.content) || '').trim();
-    })();
-
     // Boot unified App/GameContext with server sync
-    GameContext.configure({ apiBase: window.API_BASE, server: true, pollMs: 1000 });
+    GameContext.configure({
+      apiBase: window.GSDS_API_BASE,
+      server: !!window.GSDS_SERVER_SYNC,
+      pollMs: Number(window.GSDS_POLL_MS || 1000)
+    });
     GameContext.mountBanner('#ctxBanner');
 
     // Hub does not use a group; clear any sticky value so banner never shows "Group"

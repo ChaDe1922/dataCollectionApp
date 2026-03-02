@@ -13,11 +13,10 @@
                  Number(localStorage.getItem('auth_until')||0) > Date.now();
       if(!ok){ window.location.href = '../index.html#login'; }
     })();
-    /* Shared API config (BEFORE loading /js/api.js) */
-    window.GSDS_API_BASE   = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
-    window.GSDS_SERVER_SYNC = true;
-    window.GSDS_POLL_MS      = 1000;
   </script>
+
+  <!-- Config (load FIRST - before any API usage) -->
+  <script src="../js/config.js"></script>
 
   <!-- Fonts + site theme -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -279,7 +278,11 @@
   <!-- Page logic -->
   <script>
   // Configure shared context + banner (same as Primary)
-  GameContext.configure({ apiBase: window.GSDS_API_BASE, server: true, pollMs: window.GSDS_POLL_MS||1000 });
+  GameContext.configure({
+    apiBase: window.GSDS_API_BASE,
+    server: !!window.GSDS_SERVER_SYNC,
+    pollMs: Number(window.GSDS_POLL_MS || 1000)
+  });
   GameContext.mountBanner('#ctxBanner');
 
   window.addEventListener('DOMContentLoaded', () => {
