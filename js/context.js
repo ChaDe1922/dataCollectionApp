@@ -23,6 +23,8 @@
   let lastServerTs = 0;
   let pushTimer = null;
   let pushDelay = 150;
+  let leaderElection = null;  // leader election controller for single-tab polling
+  let ctxChannel = null;      // BroadcastChannel for context updates
 
   // ---------- utils ----------
   function safeParse(json, fallback){ try { return JSON.parse(json); } catch { return fallback; } }
@@ -51,26 +53,55 @@
   }
 
   // ---------- storage core ----------
+  let lastBroadcastCtx = null; // track last ctx to avoid duplicate broadcasts
+
   function read(){
     const ctx = safeParse(localStorage.getItem(KEY), {});
     return (ctx && typeof ctx==='object')?ctx:{};
   }
-  function writeLocal(ctx, notify=true){
+  function writeLocal(ctx, notify=true, source='local'){
     localStorage.setItem(KEY, JSON.stringify(ctx));
-    if (chan) chan.postMessage({ type:'ctx', ctx });
+    // Broadcast via BroadcastChannel if available
+    if (chan) chan.postMessage({ type:'ctx', ctx, source });
+    if (ctxChannel) ctxChannel.postMessage({ type:'CTX_UPDATE', ctx, source, ts:Date.now() });
+    // Also mirror to localStorage for non-BC tabs
+    try {
+      localStorage.setItem('GSDS_CTX_LAST', JSON.stringify({ ctx, ts: Date.now(), source }));
+    } catch {}
     if (notify) subs.forEach(fn => { try{ fn(ctx); }catch{} });
   }
   function merge(partial, opts){
     const cur = read();
     const n = applyBidirectionalMapping({ ...cur, ...partial }, !!(opts && opts.fromServer));
-    writeLocal(n, true);
+    const source = (opts && opts.fromServer) ? 'server' : 'local';
+    writeLocal(n, true, source);
     if (SERVER_SYNC && !(opts && opts.fromServer)) schedulePush(n);
+    // If this was a local change (user action), broadcast to followers
+    if (source === 'local' && leaderElection && leaderElection.isLeader()) {
+      broadcastContextUpdate(n, 'local');
+    }
     return n;
   }
 
   // ---------- cross-tab sync ----------
   function onStorage(e){
-    if (e.key !== KEY) return;
+    if (e.key !== KEY && e.key !== 'GSDS_CTX_LAST') return;
+    // Don't process our own broadcasts if we already have them via BroadcastChannel
+    if (e.key === 'GSDS_CTX_LAST') {
+      try {
+        const data = safeParse(e.newValue || '{}', {});
+        if (data.ctx && data.source !== 'local') {
+          // Check if ctx actually changed
+          const cur = read();
+          const isDifferent = JSON.stringify(cur) !== JSON.stringify(data.ctx);
+          if (isDifferent) {
+            writeLocal(data.ctx, false, 'storage'); // Don't notify again to avoid loops
+            subs.forEach(fn => { try{ fn(data.ctx); }catch{} });
+          }
+        }
+      } catch {}
+      return;
+    }
     const ctx = safeParse(e.newValue || '{}', {});
     subs.forEach(fn => { try{ fn(ctx); }catch{} });
   }
@@ -79,6 +110,23 @@
     if (chan) chan.onmessage = ev => {
       if (ev.data && ev.data.type === 'ctx') subs.forEach(fn => { try{ fn(ev.data.ctx); }catch{} });
     };
+    // Setup dedicated context update channel
+    if ('BroadcastChannel' in global) {
+      ctxChannel = new BroadcastChannel('gsds_ctx_updates');
+      ctxChannel.onmessage = ev => {
+        if (ev.data && ev.data.type === 'CTX_UPDATE' && ev.data.ctx) {
+          // Only process if not from this tab (avoid loops)
+          if (ev.data.source === 'local' && ev.data.tabId === (leaderElection?._debug?.tabId || 'unknown')) return;
+          // Apply update from another tab/leader
+          const cur = read();
+          const isDifferent = JSON.stringify(cur) !== JSON.stringify(ev.data.ctx);
+          if (isDifferent) {
+            writeLocal(ev.data.ctx, false, 'broadcast');
+            subs.forEach(fn => { try{ fn(ev.data.ctx); }catch{} });
+          }
+        }
+      };
+    }
   }
 
   // ---------- server sync (uses API.request if available) ----------
@@ -131,7 +179,7 @@
       const srv = res.ctx;
       if (Number(srv.ts||0) > Number(lastServerTs||0)) {
         lastServerTs = Number(srv.ts)||0;
-        merge(
+        const newCtx = merge(
           {
             game_id:  srv.game_id || '',
             drive_id: srv.drive_id || '',
@@ -144,16 +192,102 @@
           },
           { fromServer:true }
         );
+        // Leader broadcasts the update to all followers
+        broadcastContextUpdate(newCtx, 'poll');
       }
     } catch {}
   }
-  function startServerPoll(){
+
+  // Broadcast context update to all tabs (leader only)
+  function broadcastContextUpdate(ctx, source='local'){
+    const ctxStr = JSON.stringify(ctx);
+    if (lastBroadcastCtx === ctxStr) return; // dedupe
+    lastBroadcastCtx = ctxStr;
+
+    const msg = {
+      type: 'CTX_UPDATE',
+      ctx,
+      source,
+      ts: Date.now(),
+      tabId: leaderElection?._debug?.tabId || 'unknown'
+    };
+
+    // Broadcast via BroadcastChannel
+    if (ctxChannel) {
+      try { ctxChannel.postMessage(msg); } catch {}
+    }
+
+    // Mirror to localStorage for non-BC tabs
+    try {
+      localStorage.setItem('GSDS_CTX_LAST', JSON.stringify({ ctx, ts: Date.now(), source, tabId: msg.tabId }));
+    } catch {}
+  }
+
+  // ---------- Leader election integration ----------
+  function initLeaderElection() {
     if (!SERVER_SYNC || !API_BASE) return;
+    if (!global.GSDSLeader) {
+      console.warn('GSDSLeader not available, falling back to all-tab polling');
+      return;
+    }
+
+    // Stop any existing election
+    if (leaderElection) {
+      leaderElection.stop();
+      leaderElection = null;
+    }
+
+    leaderElection = global.GSDSLeader.start({
+      key: 'GSDS_POLL_LEADER:CTX',
+      pollMs: POLL_MS,
+      debugLabel: 'CTX',
+      onBecameLeader: () => {
+        // This tab became leader - start polling
+        if (global.GSDS_DEBUG) console.log('[LEADER][CTX] Started polling as leader');
+        startPollInterval();
+      },
+      onLostLeadership: () => {
+        // Lost leadership - stop polling
+        if (global.GSDS_DEBUG) console.log('[LEADER][CTX] Stopped polling (lost leadership)');
+        stopPollInterval();
+      }
+    });
+
+    // If we're already leader, start polling immediately
+    if (leaderElection.isLeader()) {
+      startPollInterval();
+    }
+  }
+
+  function startPollInterval() {
     if (pollTimer) clearInterval(pollTimer);
     pollOnce();
     pollTimer = setInterval(pollOnce, Math.max(300, POLL_MS|0));
   }
-  function stopServerPoll(){ if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+
+  function stopPollInterval() {
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+  }
+
+  function startServerPoll(){
+    if (!SERVER_SYNC || !API_BASE) return;
+    // Stop old-style polling
+    stopServerPollLegacy();
+    // Start leader election (which manages polling)
+    initLeaderElection();
+  }
+
+  function stopServerPollLegacy(){ if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+  function stopServerPoll(){
+    stopServerPollLegacy();
+    if (leaderElection) {
+      leaderElection.stop();
+      leaderElection = null;
+    }
+  }
 
   // ---------- public API ----------
   const api = {
@@ -247,8 +381,13 @@
       get API_BASE(){ return API_BASE; },
       get SERVER_SYNC(){ return SERVER_SYNC; },
       get POLL_MS(){ return POLL_MS; },
+      get isLeader(){ return leaderElection ? leaderElection.isLeader() : false; },
+      get leaderTabId(){ return leaderElection?._debug?.currentLeader || null; },
+      get myTabId(){ return leaderElection?._debug?.tabId || 'unknown'; },
       forcePoll: pollOnce,
-      getServerCtx, setServerCtx
+      getServerCtx, setServerCtx,
+      broadcastContextUpdate,
+      get leaderElection() { return leaderElection; }
     }
   };
 
