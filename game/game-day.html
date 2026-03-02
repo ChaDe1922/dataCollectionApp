@@ -65,32 +65,7 @@
     <p>&copy; 2025 Game Speed Data Systems</p>
   </footer>
 
-  <!-- Shared plumbing -->
-  <script src="../js/api.js"></script>
-  <script src="../js/leader-election.js"></script>
-  <script src="../js/context.js"></script>
-
-  <script>
-    // Boot GameContext with server sync enabled
-    GameContext.configure({
-      apiBase: window.GSDS_API_BASE,
-      server: !!window.GSDS_SERVER_SYNC,
-      pollMs: Number(window.GSDS_POLL_MS || 1000)
-    });
-
-    // Banner shows "Game / Drive / Play" live
-    GameContext.mountBanner('#ctxBanner');
-
-    // Two-way bind inputs to shared context
-    GameContext.bindInputs({
-      game_id:  '#ctx_game',
-      drive_id: '#ctx_drive',
-      play_id:  '#ctx_play'
-    });
-
-    // Tiny “synced” hint feedback
-    const hint = document.getElementById('ctxSyncHint');
-    GameContext.subscribe(()=>{ hint.textContent = 'Synced'; });
-  </script>
+  <!-- ESM Entry Point -->
+  <script type="module" src="../src/entry/game-day.js"></script>
 </body>
 </html>

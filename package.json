@@ -1,0 +1,22 @@
+{
+  "name": "datacollectionapp",
+  "version": "1.0.0",
+  "description": "GSDS Data Collection App - Vite powered",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "keywords": [
+    "football",
+    "data-collection",
+    "vite",
+    "vanilla-js"
+  ],
+  "author": "",
+  "license": "MIT"
+}
