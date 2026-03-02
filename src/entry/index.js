@@ -36,12 +36,14 @@ function clearAuth() {
 }
 
 async function loginRequest(username, password) {
+  console.log('[Login] API Base:', window.GSDS_API_BASE);
   const url = new URL(window.GSDS_API_BASE);
   url.searchParams.set('action', 'auth_login');
   url.searchParams.set('sheet_id', AUTH_SHEET_ID);
   url.searchParams.set('sheet_name', AUTH_TAB);
   url.searchParams.set('username', username);
   url.searchParams.set('password', password);
+  console.log('[Login] URL:', url.toString());
   const r = await fetch(url.toString());
   return r.json();
 }
@@ -56,6 +58,8 @@ function initLoginOverlay() {
   if (!window.GSDS_API_BASE) {
     msg.textContent = 'Missing API configuration. Check /js/config.js.';
     msg.className = 'error';
+    console.error('[Login] GSDS_API_BASE is not set');
+    return;
   }
 
   async function handleSubmit(e) {
@@ -89,7 +93,8 @@ function initLoginOverlay() {
       }
     } catch (err) {
       msg.className = 'error';
-      msg.textContent = String(err);
+      msg.textContent = 'Error: ' + String(err.message || err);
+      console.error('[Login] Error:', err);
     }
   }
 
