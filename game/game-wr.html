@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <!-- Config (load FIRST) -->
+  <script src="../js/config.js"></script>
+
   <script>
   (function(){
     const ok = localStorage.getItem('auth_ok')==='1' &&
@@ -10,9 +14,14 @@
     if(!ok){ window.location.href = '../index.html#login'; }
   })();
   </script>
+
+  <!-- API layer + Status UI -->
+  <script src="../js/api.js"></script>
+  <script src="../js/status-ui.js"></script>
+  <script src="../js/game-context.js"></script>
+
   <title>WR / TE Tracking – Football Data Tracker</title>
   <link rel="stylesheet" href="../style.css"/>
-  <script src="../js/game-context.js"></script>
   <style>
     .container{max-width:1200px;margin:0 auto;padding:1rem}
     .grid{display:grid;gap:1rem}
@@ -259,9 +268,9 @@
 
   <script>
     /* =======================
-     * CONFIG
+     * CONFIG (from config.js)
      * ======================= */
-    const API_BASE = 'https://script.google.com/macros/s/AKfycbxQk6BgJLkZltXX7xijq9QKmTEfB51M65cHzrYCe6SCTykrSWnFDMecXfiLGRTd9iOCLg/exec';
+    const API_BASE = window.GSDS_API_BASE;
 
     // Schedule
     const SCHEDULE_SHEET_ID = '1_PXbtnooI9gRxKF6h7BnjQdSVbnQV6D2gwX0zURqtlI';
@@ -276,40 +285,13 @@
     const ROUTE_RECV = 'receive_detail';
 
     /* =======================
-     * STATE + LOG
+     * STATUS UI (GSDSStatus)
      * ======================= */
-    const el = id => document.getElementById(id);
-    const logBox = el('log');
-    const log = (msg, type='')=>{
-      const row=document.createElement('div');
-      if(type==='success') row.className='success';
-      if(type==='error') row.className='error';
-      row.textContent='['+new Date().toLocaleTimeString()+'] '+msg;
-      logBox.prepend(row);
-      el('status').textContent=(type==='error'?'Error':'Ready');
-    };
-
-    let schedule=[], scheduleMap={};
-    let roster=[];
-    const playersById=new Map();
-    const playersByName=new Map();
-    const playersByNum=new Map();
-    const receivers=[]; // names only for datalist
-    let recent=[];
+    const status = GSDSStatus.attach('#status');
 
     /* =======================
-     * API helpers
+     * API helpers (use global apiGet/apiPost from api.js)
      * ======================= */
-    async function apiGet(params){
-      const url = new URL(API_BASE);
-      Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,v));
-      const r = await fetch(url);
-      return r.json();
-    }
-    async function apiPost(payload){
-      const r = await fetch(API_BASE,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-      return r.json();
-    }
     async function appendRow(route,row,ensure=[]){
       const res = await apiPost({ action:'append', route, row, ensure_headers: ensure });
       if(!res.ok) throw new Error(res.error||'Append failed');
@@ -507,7 +489,7 @@
     });
 
     /* =======================
-     * SAVE
+     * SAVE (with status UI)
      * ======================= */
     const numVal = v => (v===''||v==null ? '' : Number(v));
     const ynTo01 = v => v==='Yes'?1 : (v==='No'?0 : '');
@@ -525,6 +507,7 @@
 
     el('saveBtn').addEventListener('click', async ()=>{
       try{
+        status.loading('Saving…');
         const { game_id, play_id, rcv_id } = ensureContext();
 
         // remember for hotbar
@@ -547,12 +530,13 @@
         };
 
         await appendRow(ROUTE_RECV, row, Object.keys(row));
+        status.success('Saved');
         log(`Receive detail saved for ${play_id} (WR/TE ${rcv_id}).`, 'success');
 
         // quick clear for next target (keep receiver & route)
         ['target','reception','drop','cont_target','cont_catch','rz_target','rz_td'].forEach(id=>setToggle(id,false));
         ['rec_yards','yac','sep_break'].forEach(id=>el(id).value='');
-      }catch(err){ log(err.message,'error'); }
+      }catch(err){ status.error(err.message); log(err.message,'error'); }
     });
 
     el('clearBtn').addEventListener('click', ()=>{

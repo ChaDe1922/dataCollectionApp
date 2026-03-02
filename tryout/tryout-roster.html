@@ -227,18 +227,12 @@
     };
 
     async function apiGet(params){
-      const url = new URL(window.API_BASE);
-      Object.entries(params||{}).forEach(([k,v])=> url.searchParams.set(k, v));
-      const r = await fetch(url, { credentials:'omit' });
-      return r.json();
+      const res = await API.request(params, { method: 'GET' });
+      return res.ok ? res.data : { ok: false, error: res.error?.message || 'Request failed' };
     }
     async function apiPostText(payload){
-      const r = await fetch(window.API_BASE, {
-        method:'POST',
-        headers:{ 'Content-Type':'text/plain', 'Accept':'application/json' },
-        body: JSON.stringify(payload)
-      });
-      return r.json().catch(()=>({ ok: r.ok }));
+      const res = await API.request(payload);
+      return res.ok ? res.data : { ok: false, error: res.error?.message || 'Request failed' };
     }
 
     /* ---------------- GameContext bootstrap ---------------- */

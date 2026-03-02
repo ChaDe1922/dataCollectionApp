@@ -7,6 +7,10 @@
   <!-- Config (load FIRST - before any API usage) -->
   <script src="../js/config.js"></script>
 
+  <!-- API layer + Status UI -->
+  <script src="../js/api.js"></script>
+  <script src="../js/status-ui.js"></script>
+
   <script>
   (function(){
     const ok = localStorage.getItem('auth_ok')==='1' &&
@@ -350,19 +354,8 @@
     let menuTargetId = null;
 
     /* =======================
-     * API helpers
+     * API helpers (use global apiGet/apiPost from api.js)
      * ======================= */
-    async function apiGet(params){
-      const url = new URL(API_BASE);
-      Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,v));
-      const r = await fetch(url);
-      return r.json();
-    }
-    async function apiPost(payload){
-      const r = await fetch(API_BASE, { method:'POST', headers:{ 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
-      if(!r.ok) throw new Error(`HTTP ${r.status}`);
-      return r.json();
-    }
     async function appendRowTable(sheet_id, sheet_name, row, ensure=[]){
       const res = await apiPost({ action:'append', sheet_id, sheet_name, row, ensure_headers: ensure });
       if(!res.ok) throw new Error(res.error||'Append failed');

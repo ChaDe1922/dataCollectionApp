@@ -294,6 +294,7 @@
   </footer>
 
   <script src="../js/api.js"></script>
+  <script src="../js/status-ui.js"></script>
   <script src="../js/rules.js"></script>
   <script src="../js/context.js"></script>
   <script src="../js/tryout-ui.js"></script>
@@ -309,15 +310,12 @@
     GameContext.mountBanner('#ctxBanner');
 
     async function apiGet(action, params={}) {
-      const url = new URL(window.API_BASE);
-      url.searchParams.set('action', action);
-      Object.entries(params).forEach(([k,v])=> url.searchParams.set(k, v));
-      const r = await fetch(url, { credentials:'omit' });
-      return r.json();
+      const res = await API.request({ action, ...params }, { method: 'GET' });
+      return res.ok ? res.data : { ok: false, error: res.error?.message || 'Request failed' };
     }
     async function apiPost(payload) {
-      const r = await fetch(window.API_BASE, { method:'POST', headers:{'Content-Type':'text/plain','Accept':'application/json'}, body: JSON.stringify(payload) });
-      return r.json();
+      const res = await API.request(payload);
+      return res.ok ? res.data : { ok: false, error: res.error?.message || 'Request failed' };
     }
 
     const PAGE_SIZE = 10;
