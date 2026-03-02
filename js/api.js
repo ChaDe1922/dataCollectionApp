@@ -44,7 +44,61 @@
   }
 
   // ============================================================================
-  // Core request — THE single network entry point
+  // Auth token management
+  // ============================================================================
+  const AUTH_TOKEN_KEY = 'gsds_auth_token';
+  const AUTH_USER_KEY = 'gsds_auth_user';
+
+  function getAuthToken() {
+    return localStorage.getItem(AUTH_TOKEN_KEY);
+  }
+
+  function setAuthToken(token) {
+    if (token) localStorage.setItem(AUTH_TOKEN_KEY, token);
+    else localStorage.removeItem(AUTH_TOKEN_KEY);
+  }
+
+  function setAuthUser(user) {
+    if (user) localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+    else localStorage.removeItem(AUTH_USER_KEY);
+  }
+
+  function getAuthUser() {
+    try {
+      const json = localStorage.getItem(AUTH_USER_KEY);
+      return json ? JSON.parse(json) : null;
+    } catch { return null; }
+  }
+
+  function clearAuth() {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(AUTH_USER_KEY);
+    localStorage.removeItem('auth_ok');
+    localStorage.removeItem('auth_until');
+  }
+
+  function isAuthenticated() {
+    const token = getAuthToken();
+    const user = getAuthUser();
+    if (!token || !user) return false;
+    if (user.expires_at && new Date(user.expires_at) < new Date()) {
+      clearAuth();
+      return false;
+    }
+    return true;
+  }
+
+  // ============================================================================
+  // Idempotency key generation
+  // ============================================================================
+  function makeIdempotencyKey(prefix = 'idmp') {
+    // Generate a unique key with timestamp and random component
+    // This should be called once per logical user action and reused for retries
+    return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+  }
+
+  // ============================================================================
+  // Core request — THE single network entry point (Phase 3: with auth)
   // ============================================================================
   async function request(payload = {}, opts = {}) {
     const base = getBase();
@@ -60,6 +114,14 @@
     const maxRetries = opts.retries ?? DEFAULTS.retries;
     const retryDelayMs = opts.retryDelayMs ?? DEFAULTS.retryDelayMs;
     const backoffMultiplier = opts.backoffMultiplier ?? DEFAULTS.backoffMultiplier;
+
+    // Attach auth token to all requests except auth_login
+    if (payload.action !== 'auth_login') {
+      const token = getAuthToken();
+      if (token) {
+        payload.auth_token = token;
+      }
+    }
 
     let url;
     if (asQuery) {
@@ -106,6 +168,35 @@
             try { data = JSON.parse(text); } catch (e) { parseError = e; data = text; }
           }
         } catch (e) { parseError = e; }
+
+        // Handle auth errors
+        if (data?.error?.code === 'AUTH_REQUIRED' || data?.error?.code === 'TOKEN_EXPIRED') {
+          clearAuth();
+          const authError = {
+            code: data.error.code,
+            message: 'Session expired. Please log in again.',
+            status: 401,
+            detail: data
+          };
+          state.lastError = authError;
+          // Trigger redirect to login if not already there
+          if (typeof window !== 'undefined' && !window.location.href.includes('index.html')) {
+            window.location.href = '../index.html#login';
+          }
+          return { ok: false, data: null, error: authError };
+        }
+
+        // Handle forbidden errors
+        if (data?.error?.code === 'FORBIDDEN') {
+          const forbiddenError = {
+            code: 'FORBIDDEN',
+            message: data.error.message || 'You do not have permission for this action.',
+            status: 403,
+            detail: data
+          };
+          state.lastError = forbiddenError;
+          return { ok: false, data: null, error: forbiddenError };
+        }
 
         let ok = res.ok;
         if (ok && typeof data === 'object' && data !== null) {
@@ -187,7 +278,25 @@
   function table({ sheet_id, sheet_name }) { return request({ action: 'table', sheet_id, sheet_name }, { method: 'GET' }); }
   function nextId(prefix) { return request({ action: 'next_id', prefix }, { method: 'GET' }); }
   function append(route, row, ensure_headers, idempotency_key) { return request({ action: 'append', route, row, ensure_headers, idempotency_key }); }
-  function authLogin({ sheet_id, sheet_name, username, password }) { return request({ action: 'auth_login', sheet_id, sheet_name, username, password }, { method: 'GET' }); }
+  function authLogin({ sheet_id, sheet_name, username, password }) {
+    return request({ action: 'auth_login', sheet_id, sheet_name, username, password }, { method: 'GET' })
+      .then(res => {
+        if (res.ok && res.data?.token) {
+          // Store token and user info
+          setAuthToken(res.data.token);
+          setAuthUser({
+            user_id: res.data.user_id,
+            username: res.data.username,
+            role: res.data.role,
+            expires_at: res.data.expires_at
+          });
+          // Also set legacy auth flags for compatibility
+          localStorage.setItem('auth_ok', '1');
+          localStorage.setItem('auth_until', String(Date.now() + 12 * 60 * 60 * 1000)); // 12 hours
+        }
+        return res;
+      });
+  }
   function ctxGet() { return request({ action: 'ctx_get' }, { method: 'GET' }); }
   function ctxSet(ctx) { return request({ action: 'ctx_set', game_id: ctx.game_id || '', drive_id: ctx.drive_id || '', play_id: ctx.play_id || '', tryout_id: ctx.tryout_id || '', station_id: ctx.station_id || '', rep_id: ctx.rep_id || '' }); }
   function presenceGet({ tryout_id, group } = {}) {
@@ -274,6 +383,7 @@
   g.apiGet = apiGet;
   g.apiPost = apiPost;
   g.toLocalISO = toLocalISO;
+  g.makeIdempotencyKey = makeIdempotencyKey;
   g.API = {
     request, get, post,
     DEFAULTS,
@@ -283,6 +393,10 @@
     ctxGet, ctxSet,
     presenceGet, presenceSet,
     authLogin,
+    // Auth helpers
+    getAuthToken, setAuthToken, getAuthUser, setAuthUser, clearAuth, isAuthenticated,
+    // Idempotency
+    makeIdempotencyKey,
     tryout: {
       headers: TRYOUT_HEADERS,
       write: { agility: tryoutAgility, station: tryoutStation, onevone: tryout1v1, team: tryoutTeam },
