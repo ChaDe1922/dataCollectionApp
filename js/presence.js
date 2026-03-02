@@ -20,6 +20,8 @@
   let lastServerTs = 0;           // last server ctx ts we've applied
   let pushTimer = null;           // debounce for outgoing pushes
   let pushDelay = 150;            // debounce ms to avoid spamming while typing
+  let leaderElection = null;      // leader election controller for single-tab polling
+  let presenceChannel = null;     // BroadcastChannel for presence updates
 
   // ---------- Storage core ----------
   function safeParse(json, fallback){ try { return JSON.parse(json); } catch { return fallback; } }
@@ -29,9 +31,10 @@
     const ctx = safeParse(localStorage.getItem(KEY), {});
     return ctx && typeof ctx === 'object' ? ctx : {};
   }
-  function writeLocal(ctx, notify = true){
+  function writeLocal(ctx, notify = true, source = 'local'){
     localStorage.setItem(KEY, JSON.stringify(ctx));
-    if (chan) chan.postMessage({ type:'ctx', ctx });
+    if (chan) chan.postMessage({ type:'ctx', ctx, source });
+    if (presenceChannel) presenceChannel.postMessage({ type:'PRESENCE_UPDATE', ctx, source, ts:Date.now() });
     if (notify) subs.forEach(fn => fn(ctx));
   }
   function merge(partial, opts){
@@ -41,10 +44,15 @@
     if (!Object.prototype.hasOwnProperty.call(partial, 'updated_at')) {
       next.updated_at = now();
     }
-    writeLocal(next, true);
+    const source = (opts && opts.fromServer) ? 'server' : 'local';
+    writeLocal(next, true, source);
     // If server sync is on and this wasn't a server-applied change, push upstream (debounced)
     if (SERVER_SYNC && !(opts && opts.fromServer)) {
       schedulePush(next);
+    }
+    // If this was a local change and we're leader, broadcast to followers
+    if (source === 'local' && leaderElection && leaderElection.isLeader()) {
+      broadcastPresenceUpdate(next, 'local');
     }
     return next;
   }
@@ -60,6 +68,21 @@
     if (chan) chan.onmessage = ev => {
       if (ev.data && ev.data.type === 'ctx') subs.forEach(fn => fn(ev.data.ctx));
     };
+    // Setup dedicated presence update channel
+    if ('BroadcastChannel' in global) {
+      presenceChannel = new BroadcastChannel('gsds_presence');
+      presenceChannel.onmessage = ev => {
+        if (ev.data && ev.data.type === 'PRESENCE_UPDATE' && ev.data.ctx) {
+          // Apply update from another tab/leader
+          const cur = read();
+          const isDifferent = JSON.stringify(cur) !== JSON.stringify(ev.data.ctx);
+          if (isDifferent) {
+            writeLocal(ev.data.ctx, false, 'broadcast');
+            subs.forEach(fn => fn(ev.data.ctx));
+          }
+        }
+      };
+    }
   }
 
   // ---------- Server sync (optional) - uses API.request if available ----------
@@ -114,7 +137,7 @@
       if (Number(srv.ts||0) > Number(lastServerTs||0)) {
         lastServerTs = Number(srv.ts)||0;
         // Merge from server WITHOUT pushing back (avoid loops)
-        merge(
+        const newCtx = merge(
           {
             game_id: srv.game_id || '',
             drive_id: srv.drive_id || '',
@@ -123,18 +146,102 @@
           },
           { fromServer:true }
         );
+        // Leader broadcasts the update to all followers
+        broadcastPresenceUpdate(newCtx, 'poll');
       }
     } catch {}
   }
+
+  // Broadcast presence update to all tabs (leader only)
+  let lastBroadcastCtx = null;
+  function broadcastPresenceUpdate(ctx, source='local'){
+    const ctxStr = JSON.stringify(ctx);
+    if (lastBroadcastCtx === ctxStr) return; // dedupe
+    lastBroadcastCtx = ctxStr;
+
+    const msg = {
+      type: 'PRESENCE_UPDATE',
+      ctx,
+      source,
+      ts: Date.now(),
+      tabId: leaderElection?._debug?.tabId || 'unknown'
+    };
+
+    // Broadcast via BroadcastChannel
+    if (presenceChannel) {
+      try { presenceChannel.postMessage(msg); } catch {}
+    }
+
+    // Mirror to localStorage for non-BC tabs
+    try {
+      localStorage.setItem('GSDS_PRESENCE_LAST', JSON.stringify({ ctx, ts: Date.now(), source, tabId: msg.tabId }));
+    } catch {}
+  }
+
+  // ---------- Leader election integration ----------
+  function initLeaderElection() {
+    if (!SERVER_SYNC || !API_BASE) return;
+    if (!global.GSDSLeader) {
+      console.warn('GSDSLeader not available, falling back to all-tab polling');
+      return;
+    }
+
+    // Stop any existing election
+    if (leaderElection) {
+      leaderElection.stop();
+      leaderElection = null;
+    }
+
+    leaderElection = global.GSDSLeader.start({
+      key: 'GSDS_POLL_LEADER:PRESENCE',
+      pollMs: POLL_MS,
+      debugLabel: 'PRESENCE',
+      onBecameLeader: () => {
+        // This tab became leader - start polling
+        if (global.GSDS_DEBUG) console.log('[LEADER][PRESENCE] Started polling as leader');
+        startPollInterval();
+      },
+      onLostLeadership: () => {
+        // Lost leadership - stop polling
+        if (global.GSDS_DEBUG) console.log('[LEADER][PRESENCE] Stopped polling (lost leadership)');
+        stopPollInterval();
+      }
+    });
+
+    // If we're already leader, start polling immediately
+    if (leaderElection.isLeader()) {
+      startPollInterval();
+    }
+  }
+
+  function startPollInterval() {
+    if (pollTimer) clearInterval(pollTimer);
+    pollOnce();
+    pollTimer = setInterval(pollOnce, Math.max(300, POLL_MS|0));
+  }
+
+  function stopPollInterval() {
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+  }
+
   function startServerPoll(){
     if (!SERVER_SYNC || !API_BASE) return;
-    if (pollTimer) clearInterval(pollTimer);
-    // immediate sync-once, then every POLL_MS
-    pollOnce();
-    pollTimer = setInterval(pollOnce, Math.max(300, POLL_MS|0)); // guard against crazy values
+    // Stop old-style polling
+    stopServerPollLegacy();
+    // Start leader election (which manages polling)
+    initLeaderElection();
   }
+
+  function stopServerPollLegacy(){ if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
   function stopServerPoll(){
-    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    stopServerPollLegacy();
+    if (leaderElection) {
+      leaderElection.stop();
+      leaderElection = null;
+    }
   }
 
   // ---------- Public API ----------
@@ -201,7 +308,11 @@
       get API_BASE(){ return API_BASE; },
       get SERVER_SYNC(){ return SERVER_SYNC; },
       get POLL_MS(){ return POLL_MS; },
-      forcePoll: pollOnce
+      get isLeader(){ return leaderElection ? leaderElection.isLeader() : false; },
+      get leaderTabId(){ return leaderElection?._debug?.currentLeader || null; },
+      get myTabId(){ return leaderElection?._debug?.tabId || 'unknown'; },
+      forcePoll: pollOnce,
+      get leaderElection() { return leaderElection; }
     }
   };
 
