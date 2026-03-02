@@ -26,18 +26,15 @@ function getSchemaKey() {
   return params.get('schema') || 'game-rb';
 }
 
-// Load schema dynamically
+// Load schema - for now, rely on inline script tag in HTML
+// Dynamic imports with variables cause issues in Vite builds
 async function loadSchema(key) {
-  if (SchemaRegistry[key]) return SchemaRegistry[key];
-
-  try {
-    const module = await import(`../../../forms/schemas/${key}.schema.js`);
-    SchemaRegistry[key] = module.default || module[key + 'Schema'];
-    return SchemaRegistry[key];
-  } catch (e) {
-    console.error('Failed to load schema:', key, e);
-    return null;
-  }
+  // Schema should be loaded via <script> tag in HTML
+  // Check window for schema object
+  const schemaVar = window[key.replace(/-/g, '') + 'Schema'] ||
+                   window[key + 'Schema'] ||
+                   window.gameRbSchema;
+  return schemaVar || null;
 }
 
 // Boot the form
